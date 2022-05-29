@@ -5,6 +5,7 @@ const REMOVE_EDGE = "removeEdge"
 const REMOVE_NODE = "removeNode"
 
 const MSG_ADD_NODE_AND_EDGE = "addData"
+const MSG_UPDATE_NODES = "updateNodes"
 
 class GraphController {
     constructor(nodes, edges, container, currentId = 1) {
@@ -19,9 +20,9 @@ class GraphController {
             },
             physics: {
                 hierarchicalRepulsion: {
-                  avoidOverlap: 0.2,
+                    avoidOverlap: 0.2,
                 },
-              },
+            },
         });
         this.undoHistory = []
         this.redoHistory = []
@@ -37,22 +38,22 @@ class GraphController {
                 _this.selectedNode = _this.nodes.get(selected[0])
             }
         });
-        
+
         this.network.on("oncontext", function (p) {
             p.event.preventDefault();
-           
+
             if (p.nodes.length == 1) {
                 const node = _this.nodes.get(p.nodes[0])
                 if ('address' in node.extra && 'networkController' in window) {
                     try {
-                    networkController.send(node.extra.address)
-                    } catch(e) {
+                        networkController.send(node.extra.address)
+                    } catch (e) {
                         console.log(e)
                     }
                 }
             }
         });
-        
+
 
     }
 
@@ -176,6 +177,26 @@ class GraphController {
         }
     }
 
+    updateNodes(selection, updateObj) {
+        const updates = this.nodes.get({
+            filter: item => {
+                const extra = item.extra
+                for (const [key, value] of selection) {
+                    if (!(key in extra)) return false;
+                    if (extra[key] != value) return false;
+                }
+                return true;
+            }
+
+        }).map(item => {
+            const newNodeExtra = { ...item.extra, ...updateObj }
+            updateNodeProperties(newNodeExtra)
+            return { id: item.id, label: newNodeExtra.label, extra: newNodeExtra }
+        })
+        this.nodes.updateOnly(updates)
+        this.network.redraw()
+    }
+
     stabilize() {
         this.network.stabilize()
     }
@@ -198,7 +219,6 @@ class NetworkController {
             const msg = JSON.parse(event.data);
             console.log("Received:", msg)
 
-            // TODO currently the only support message type is add node+edge
             if (msg.type == MSG_ADD_NODE_AND_EDGE) {
                 // 1. find the selected node
                 const selectedNode = graphController.selectedNode
@@ -209,8 +229,11 @@ class NetworkController {
                     graphController.addEdge({ from: selectedNode.id, to: newNode.id, ...(msg.edge || {}) })
                 // 4. selected added node
                 graphController.selectNode(newNode.id)
-
+            } else if (msg.type == MSG_UPDATE_NODES) {
+                graphController.updateNodes(msg.selection, msg.update)
             }
+
+
             ws.send("MAGIC")
         }
 
@@ -229,24 +252,13 @@ class NetworkController {
     }
 }
 
-
-function main() {
-    const savedData = restore()
-    const [id, nodes, edges] = savedData || [1, [], []]
-    const graphController = new GraphController(nodes, edges, document.getElementById("mynetwork"), id)
-
-    // for debugging
-    window.graphController = graphController
-}
-
-
 function event_connect() {
     const url = document.getElementById("socketUrl").value
 
     // close global network controller
     if (window.networkController)
         window.networkController.close()
-        
+
     window.networkController = new NetworkController(url, graphController)
 }
 
@@ -310,7 +322,7 @@ const NODE_COMPUTED_PROPERTIES = "computedProperties"
 /** Compute the computed properties, and update the given node */
 function updateNodeProperties(node) {
     if (NODE_COMPUTED_PROPERTIES in node) {
-        for (const { name, format, replacements } in NODE_COMPUTED_PROPERTIES) {
+        for (const { name, format, replacements } of node[NODE_COMPUTED_PROPERTIES]) {
             const realReplacements = replacements.map(fieldName => node[fieldName])
             node[name] = formatString(format, realReplacements)
         }
@@ -321,10 +333,20 @@ function formatString(s, replacements) {
     let str = s;
     if (replacements.length) {
         for (const key in replacements) {
-            str = str.replace(new RegExp("\\{" + key + "\\}", "gi"), args[key]);
+            str = str.replace(new RegExp("\\{" + key + "\\}", "gi"), replacements[key]);
         }
     }
     return str;
+}
+
+
+function main() {
+    const savedData = restore()
+    const [id, nodes, edges] = savedData || [1, [], []]
+    const graphController = new GraphController(nodes, edges, document.getElementById("mynetwork"), id)
+
+    // for debugging
+    window.graphController = graphController
 }
 
 main()
