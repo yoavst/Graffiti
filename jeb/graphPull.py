@@ -23,8 +23,7 @@ from graphUtils import *
 class graphPull(IScript):
     def run(self, ctx):
         try:
-            # FIXME
-            # Thread(RunOnBackground(ctx)).start()
+            Thread(RunOnBackground(ctx)).start()
 
             prj = ctx.getMainProject()
             dex = prj.findUnit(IDexUnit)
