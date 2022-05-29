@@ -43,7 +43,6 @@ class RenameListener(IEventListener):
 
   def onEvent(self, e):
     if isinstance(e, JebEvent) and e.type == J.UnitChange and e.data != None:
-        print('++++ %s' % e.data)
         if e.data.type == UnitChangeEventData.NameUpdate:
             target = e.data.target
             res = None
