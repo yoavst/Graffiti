@@ -188,12 +188,25 @@ class GraphController {
                 return true;
             }
 
-        }).map(item => {
-            const newNodeExtra = { ...item.extra, ...updateObj }
-            updateNodeProperties(newNodeExtra)
-            return { id: item.id, label: newNodeExtra.label, extra: newNodeExtra }
-        })
+        }).map(item => mergeToVisNode(item, updateObj))
         this.nodes.updateOnly(updates)
+
+        const updateUndoItem = item => {
+            if (item.type != ADD_NODE && item.type != REMOVE_NODE)
+                return item
+
+            const extra = item.data.extra
+                for (const [key, value] of selection) {
+                    if (!(key in extra)) return item;
+                    if (extra[key] != value) return item;
+                }
+            return ({ type: item.type, data: mergeToVisNode(item.data, updateObj) })
+        }
+
+        this.undoHistory = this.undoHistory.map(updateUndoItem)
+        this.redoHistory = this.redoHistory.map(updateUndoItem)
+
+
         this.network.redraw()
     }
 
@@ -327,6 +340,12 @@ function updateNodeProperties(node) {
             node[name] = formatString(format, realReplacements)
         }
     }
+}
+
+function mergeToVisNode(visNode, updateObj) {
+    const newNodeExtra = { ...visNode.extra, ...updateObj }
+    updateNodeProperties(newNodeExtra)
+    return { ...visNode, id: visNode.id, label: newNodeExtra.label, extra: newNodeExtra }
 }
 
 function formatString(s, replacements) {
