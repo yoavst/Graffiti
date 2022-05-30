@@ -3,9 +3,12 @@ const ADD_EDGE = "addEdge"
 const ADD_NODE = "addNode"
 const REMOVE_EDGE = "removeEdge"
 const REMOVE_NODE = "removeNode"
+const MARKER = "marker"
 
 const MSG_ADD_NODE_AND_EDGE = "addData"
 const MSG_UPDATE_NODES = "updateNodes"
+
+const HISTORY_MARKER = { type: MARKER, data: {} }
 
 class GraphController {
     constructor(nodes, edges, container, currentId = 1) {
@@ -143,37 +146,62 @@ class GraphController {
         this.selectedNode = this.nodes.get(id)
     }
 
+    addUndoMarker() {
+        this.undoHistory.push(HISTORY_MARKER)
+    }
+
     undo() {
+        console.log("Undo")
+        console.log("\t", "undo:", [...this.undoHistory], "redo:", [...this.redoHistory])
         if (this.undoHistory.length) {
-            const historyEntry = this.undoHistory.pop()
-            const { type, data } = historyEntry
-            if (type == ADD_NODE) {
-                this.nodes.remove(data.id)
-            } else if (type == ADD_EDGE) {
-                this.edges.remove(data.id)
-            } else if (type == REMOVE_NODE) {
-                this.nodes.add(data)
-            } else if (type == REMOVE_EDGE) {
-                this.edges.add(data)
+            this.redoHistory.push(HISTORY_MARKER)
+            while (this.undoHistory.length) {
+                const historyEntry = this.undoHistory.pop()
+                const { type, data } = historyEntry
+                if (type == MARKER) {
+                    break
+                } else if (type == ADD_NODE) {
+                    this.nodes.remove(data.id)
+                } else if (type == ADD_EDGE) {
+                    this.edges.remove(data.id)
+                } else if (type == REMOVE_NODE) {
+                    this.nodes.add(data)
+                } else if (type == REMOVE_EDGE) {
+                    this.edges.add(data)
+                }
+
+                
+
+                this.redoHistory.push(historyEntry)
+
             }
-            this.redoHistory.push(historyEntry)
+
+            this.network.redraw()
         }
+        console.log("---->", "undo:", [...this.undoHistory], "redo:", [...this.redoHistory])
     }
 
     redo() {
         if (this.redoHistory.length) {
-            const historyEntry = this.redoHistory.pop()
-            const { type, data } = historyEntry
-            if (type == ADD_NODE) {
-                this.nodes.add(data)
-            } else if (type == ADD_EDGE) {
-                this.edges.add(data)
-            } else if (type == REMOVE_NODE) {
-                this.nodes.remove(data.id)
-            } else if (type == REMOVE_EDGE) {
-                this.edges.remove(data.id)
+            this.undoHistory.push(HISTORY_MARKER)
+            while (this.redoHistory.length) {
+                const historyEntry = this.redoHistory.pop()
+                const { type, data } = historyEntry
+                if (type == MARKER) {
+                    break
+                } else if (type == ADD_NODE) {
+                    this.nodes.add(data)
+                } else if (type == ADD_EDGE) {
+                    this.edges.add(data)
+                } else if (type == REMOVE_NODE) {
+                    this.nodes.remove(data.id)
+                } else if (type == REMOVE_EDGE) {
+                    this.edges.remove(data.id)
+                }
+                this.undoHistory.push(historyEntry)
             }
-            this.undoHistory.push(historyEntry)
+
+            this.network.redraw()
         }
     }
 
@@ -233,6 +261,7 @@ class NetworkController {
             console.log("Received:", msg)
 
             if (msg.type == MSG_ADD_NODE_AND_EDGE) {
+                graphController.addUndoMarker()
                 // 1. find the selected node
                 const selectedNode = graphController.selectedNode
                 // 2. create a new node
@@ -284,7 +313,6 @@ function event_save() {
 }
 
 function event_undo() {
-    graphController.undo()
     graphController.undo()
 }
 

@@ -61,9 +61,9 @@ async def handle_web(websocket):
 
 
 async def main():
-    async with websockets.serve(handle_web, "localhost", WEBSOCKET_PORT):
-        async with await asyncio.start_server(handle_ide_push, 'localhost', PUSH_PORT):
-            async with await asyncio.start_server(handle_ide_pull, 'localhost', PULL_PORT):
+    async with websockets.serve(handle_web, "0.0.0.0", WEBSOCKET_PORT):
+        async with await asyncio.start_server(handle_ide_push, '0.0.0.0', PUSH_PORT):
+            async with await asyncio.start_server(handle_ide_pull, '0.0.0.0', PULL_PORT):
                 await asyncio.Future()  # run forever
 
 

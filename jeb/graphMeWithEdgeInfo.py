@@ -1,5 +1,5 @@
 #?description=Add node to graph with label
-#?shortcut=F4
+#?shortcut=Mod1+Mod2+X
 
 import sys
 import traceback
