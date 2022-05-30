@@ -261,16 +261,28 @@ class NetworkController {
             console.log("Received:", msg)
 
             if (msg.type == MSG_ADD_NODE_AND_EDGE) {
-                graphController.addUndoMarker()
-                // 1. find the selected node
+                // 1. Find the selected node
                 const selectedNode = graphController.selectedNode
-                // 2. create a new node
-                const newNode = graphController.addNode(msg.node, msg.design)
-                // 3. add new edge
-                if (selectedNode != null)
-                    graphController.addEdge({ from: selectedNode.id, to: newNode.id, ...(msg.edge || {}) })
-                // 4. selected added node
-                graphController.selectNode(newNode.id)
+                // 2. Check if dest node exists
+                const existingDestNode = 'address' in msg.node ? graphController.queryNode('address', msg.node.address) : null
+                if (existingDestNode != null) {
+                    // 3. Check if needs to add edge to the existing node
+                    if (selectedNode != null) {
+                        graphController.addUndoMarker()
+                        graphController.addEdge({ from: selectedNode.id, to: existingDestNode.id, ...(msg.edge || {}) })
+                    }
+                     // 4. selected existing node
+                     graphController.selectNode(existingDestNode.id)
+                } else {
+                    graphController.addUndoMarker()
+                    // 2. create a new node
+                    const newNode = graphController.addNode(msg.node, msg.design)
+                    // 3. add new edge
+                    if (selectedNode != null)
+                        graphController.addEdge({ from: selectedNode.id, to: newNode.id, ...(msg.edge || {}) })
+                    // 4. selected added node
+                    graphController.selectNode(newNode.id)
+                }
             } else if (msg.type == MSG_UPDATE_NODES) {
                 graphController.updateNodes(msg.selection, msg.update)
             }
@@ -339,12 +351,15 @@ function event_mermaid() {
             s += `N${edge.from} --> N${edge.to}\n`
         }
     }
-
-    navigator.clipboard.writeText(s).then(function () {
-        console.log('Copied to clipboard');
-    }, function (err) {
+    try {
+        navigator.clipboard.writeText(s).then(function () {
+            console.log('Copied to clipboard');
+        }, function (err) {
+            console.log(s)
+        });
+    } catch(err) {
         console.log(s)
-    });
+    }
 
 }
 
