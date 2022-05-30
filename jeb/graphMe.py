@@ -31,7 +31,7 @@ class graphMe(IScript):
                                 "replacements": ["class", "method"]
                             }
                         ]
-                    }
+                    }, "isNodeTarget": get_arrow_direction(ctx)
                 })
 
             else:

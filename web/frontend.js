@@ -151,8 +151,6 @@ class GraphController {
     }
 
     undo() {
-        console.log("Undo")
-        console.log("\t", "undo:", [...this.undoHistory], "redo:", [...this.redoHistory])
         if (this.undoHistory.length) {
             this.redoHistory.push(HISTORY_MARKER)
             while (this.undoHistory.length) {
@@ -178,7 +176,6 @@ class GraphController {
 
             this.network.redraw()
         }
-        console.log("---->", "undo:", [...this.undoHistory], "redo:", [...this.redoHistory])
     }
 
     redo() {
@@ -261,6 +258,8 @@ class NetworkController {
             console.log("Received:", msg)
 
             if (msg.type == MSG_ADD_NODE_AND_EDGE) {
+                const isNodeTarget = 'isNodeTarget' in msg ? msg.isNodeTarget : true
+
                 // 1. Find the selected node
                 const selectedNode = graphController.selectedNode
                 // 2. Check if dest node exists
@@ -269,7 +268,7 @@ class NetworkController {
                     // 3. Check if needs to add edge to the existing node
                     if (selectedNode != null) {
                         graphController.addUndoMarker()
-                        graphController.addEdge({ from: selectedNode.id, to: existingDestNode.id, ...(msg.edge || {}) })
+                        graphController.addEdge({...createFromTo(selectedNode.id, existingDestNode.id, isNodeTarget), ...(msg.edge || {})})
                     }
                      // 4. selected existing node
                      graphController.selectNode(existingDestNode.id)
@@ -278,8 +277,9 @@ class NetworkController {
                     // 2. create a new node
                     const newNode = graphController.addNode(msg.node, msg.design)
                     // 3. add new edge
-                    if (selectedNode != null)
-                        graphController.addEdge({ from: selectedNode.id, to: newNode.id, ...(msg.edge || {}) })
+                    if (selectedNode != null) {
+                        graphController.addEdge({...createFromTo(selectedNode.id, newNode.id, isNodeTarget), ...(msg.edge || {})})
+                    }
                     // 4. selected added node
                     graphController.selectNode(newNode.id)
                 }
@@ -389,6 +389,13 @@ function mergeToVisNode(visNode, updateObj) {
     const newNodeExtra = { ...visNode.extra, ...updateObj }
     updateNodeProperties(newNodeExtra)
     return { ...visNode, id: visNode.id, label: newNodeExtra.label, extra: newNodeExtra }
+}
+
+function createFromTo(currentNode, newNode, isNodeTarget) {
+    if (isNodeTarget) 
+        return {from: currentNode, to: newNode}
+    else
+        return {from: newNode, to: currentNode}
 }
 
 function formatString(s, replacements) {

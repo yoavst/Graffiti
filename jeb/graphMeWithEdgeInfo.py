@@ -31,7 +31,7 @@ class graphMeWithEdgeInfo(IScript):
                                 "replacements": ["class", "method"]
                             }
                         ]
-                    }
+                    }, "isNodeTarget": get_arrow_direction(ctx)
                 }
 
                 edge_text = ctx.displayQuestionBox('Input', 'Enter label for edge', '')
