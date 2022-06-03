@@ -4,8 +4,8 @@ import sys
 import traceback
 from com.pnfsoftware.jeb.client.api import IScript
 from com.pnfsoftware.jeb.core import RuntimeProjectUtil
-from com.pnfsoftware.jeb.core.units.code.android import IDexUnit, IDexDecompilerUnit
-from com.pnfsoftware.jeb.core.units.code.android.dex import IDexMethod, IDexClass
+from com.pnfsoftware.jeb.core.units.code.android import IDexUnit
+from com.pnfsoftware.jeb.core.units.code.android.dex import IDexMethod, IDexClass, IDexField
 
 from java.io import InputStreamReader, BufferedReader
 from com.pnfsoftware.jeb.core.units.code.java import IJavaSourceUnit
@@ -79,6 +79,15 @@ class RenameListener(IEventListener):
                             "class": target.getName(True) or target.getName(False)
                         }
                     }
+                elif isinstance(target, IDexField):
+                    res = {
+                        "type": "updateNodes",
+                        "selection": [["address", target.getSignature(False)]],
+                        "update": {
+                            "field": target.getName(True) or target.getName(False)
+                        }
+                    }
+
 
                 if res:
                     send_update(res)
