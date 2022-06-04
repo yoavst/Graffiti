@@ -22,7 +22,7 @@ from graphUtils import *
 
 class graphPull(IScript):
     def run(self, ctx):
-        addr_and_port = ctx.displayQuestionBox('Input', 'Enter address and port for conection', 'localhost:8763')
+        addr_and_port = ctx.displayQuestionBox('Input', 'Enter address and port for connection', 'localhost:8763')
         if not addr_and_port or not addr_and_port.strip():
             print("Aborting")
             return

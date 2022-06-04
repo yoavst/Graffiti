@@ -1,0 +1,44 @@
+<idea-plugin>
+    <id>com.yoavst.graffiti.intellij</id>
+    <name>Graffiti Support</name>
+    <vendor email="yoav.sternberg@gmail.com" url="https://yoavst.com">Yoav Sternberg</vendor>
+
+    <description><![CDATA[
+    Connector for Graffiti platform, for Intellij.
+    ]]></description>
+
+    <!-- please see https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html
+         on how to target different products -->
+    <depends>com.intellij.modules.platform</depends>
+    <depends>com.intellij.java</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <!-- Add your extensions here -->
+    </extensions>
+
+    <actions>
+        <!-- Add your actions here -->
+        <action id="com.yoavst.graffiti.intellij.AddToGraffitiWithEdgeInfoAction"
+                class="com.yoavst.graffiti.intellij.AddToGraffitiWithEdgeInfoAction" text="Add to graffiti with edge info"
+                description="Add the current function or method to graffiti graph with label on the edge">
+            <add-to-group group-id="EditorPopupMenu" anchor="first"/>
+        </action>
+        <action id="com.yoavst.graffiti.intellij.AddToGraffitiAction"
+                class="com.yoavst.graffiti.intellij.AddToGraffitiAction" text="Add to graffiti"
+                description="Add the current function or method to graffiti graph">
+            <add-to-group group-id="EditorPopupMenu" anchor="first"/>
+<!--            <keyboard-shortcut keymap="$default" first-keystroke="shift ctrl A"/>-->
+        </action>
+
+        <action id="com.yoavst.graffiti.intellij.EnableGraffitiSyncAction"
+                class="com.yoavst.graffiti.intellij.EnableGraffitiSyncAction" text="Enable graffiti sync">
+            <add-to-group group-id="ToolsMenu" anchor="last"/>
+        </action>
+
+        <action id="com.yoavst.graffiti.intellij.ChangeDirectionAction"
+                class="com.yoavst.graffiti.intellij.ChangeDirectionAction" text="Change arrow direction in Grafitti"
+                description="Change arrow direction in Grafitti">
+            <add-to-group group-id="ToolsMenu" anchor="after" relative-to-action="com.yoavst.graffiti.intellij.EnableGraffitiSyncAction"/>
+        </action>
+    </actions>
+</idea-plugin>
