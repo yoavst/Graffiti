@@ -3,28 +3,35 @@
 <html>
 
 <head>
-    <style>
-        #mynetwork {
-            width: 100%;
-            height: 90%;
-            border: 1px solid lightgray;
-        }
-    </style>
+    <title>Graffiti</title>
+    <link href="styles/style.css" rel="stylesheet">
 </head>
 
 <body>
-    <button onclick="event_reset()">Reset</button>
-    <button onclick="event_save()">Save</button>
-    <button onclick="event_undo()">Undo</button>
-    <button onclick="event_redo()">Redo</button>
-    <button onclick="event_stabilize()">Stabilize</button>
-    <button onclick="event_mermaid()">Export</button>
-    <input type="url" value="ws://localhost:8765" id="socketUrl"></input>
-    <button onclick="event_connect()" id="connectBtn">Connect</button>
-    <div id="mynetwork"></div>
+    <header>
+        <h1>Graffiti</h1>
+        <span class="subtitle">An experiment by yoavst</span>
+
+        <div class="buttons right">
+            <button onclick="event_reset()">Reset</button>
+            <button onclick="event_save()">Save</button>
+            <button onclick="event_undo()">Undo</button>
+            <button onclick="event_redo()">Redo</button>
+            <button onclick="event_mermaid()">Export</button>
+            <button onclick="event_center()">Center</button>
+            <input type="url" value="ws://localhost:8765" id="socketUrl"></input>
+            <button onclick="event_connect()" id="connectBtn">Connect</button>
+        </div>
+    </header>
+
+    <div id="content">
+        <div id="graph"></div>
+    </div>
     <br />
 
-    <script src="vis-network.min.js"></script>
+    <script src='scripts/d3.v6.min.js'></script>
+    <script src="scripts/mermaid.min.js"></script>
+    <script src="scripts/vis-network.min.js"></script>
     <script src="frontend.js"></script>
 </body>
 

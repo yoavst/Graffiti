@@ -14,50 +14,116 @@ class GraphController {
     constructor(nodes, edges, container, currentId = 1) {
         this.nodes = new vis.DataSet(nodes)
         this.edges = new vis.DataSet(edges)
-        this.network = new vis.Network(container, { nodes: this.nodes, edges: this.edges }, {
-            layout: {
-                hierarchical: {
-                    direction: "UD",
-                    sortMethod: "directed",
-                },
-            },
-            physics: {
-                hierarchicalRepulsion: {
-                    avoidOverlap: 0.2,
-                },
-            },
-        });
         this.undoHistory = []
         this.redoHistory = []
         this.idCounter = currentId
         this.selectedNode = null
+        this.container = container
 
         const _this = this
-        this.network.on('select', function (p) {
-            const selected = p.nodes
-            if (selected.length == 0) {
-                _this.selectedNode = null
+        container.addEventListener('click', (element) => {
+            _this.selectNode(null)
+        })
+
+        mermaid.initialize({
+            securityLevel: 'loose',
+            theme: 'forest'
+        });
+
+
+        const zoom = d3.zoom().on("zoom", function (event) {
+            const t = event.transform
+            t.k = 1
+            _this.container.style.transform = `translate(${t.x}px, ${t.y}px)`
+        });
+        d3.select(this.container.parentElement).call(zoom).on("wheel.zoom", null).on("dblclick.zoom", null);
+        this.zoom = zoom 
+
+
+        this.draw()
+    }
+
+    resetScrolling() {
+        d3.select(this.container.parentElement).call(this.zoom.transform, d3.zoomIdentity)
+        this.container.style.transform = ""
+    }
+
+    toMermaid(gui = false) {
+        const [_, nodes, edges] = this.export()
+
+        if (nodes.length == 0) {
+            return ""
+        }
+
+        let s = "flowchart TD\n"
+        for (const node of nodes) {
+            s += `  N${node.id}["${escapeHtml(node.label)}"]\n`
+        }
+        s += "\n\n"
+        for (const edge of edges) {
+            if ('label' in edge) {
+                s += `N${edge.from}-->|"${escapeHtml(edge.label)}"|N${edge.to}\n`
             } else {
-                _this.selectedNode = _this.nodes.get(selected[0])
+                s += `N${edge.from} --> N${edge.to}\n`
             }
-        });
+        }
 
-        this.network.on("oncontext", function (p) {
-            p.event.preventDefault();
-
-            if (p.nodes.length == 1) {
-                const node = _this.nodes.get(p.nodes[0])
-                if ('address' in node.extra && 'networkController' in window) {
-                    try {
-                        networkController.send(node.extra.address)
-                    } catch (e) {
-                        console.log(e)
-                    }
-                }
+        if (gui) {
+            s += "\n\n"
+            if (this.selectedNode != null) {
+                s += `style N${this.selectedNode.id} fill:#b9b9ff,stroke:#333,stroke-width:4px`
             }
-        });
+        }
+        return s
+    }
 
+    onClick(target, elementId) {
+        this.selectNode(elementId)
+    }
 
+    onRightClick(target, elementId) {
+        const node = this.nodes.get(elementId)
+        if ('address' in node.extra && 'networkController' in window) {
+            try {
+                networkController.send(node.extra.address)
+            } catch (e) {
+                console.log(e)
+            }
+        }
+    }
+
+    draw() {
+        const data = this.toMermaid(true)
+        if (data.length == 0) {
+            this.container.textContent = "empty graph"
+            return
+        }
+        this.container.textContent = data
+        this.container.removeAttribute('data-processed');
+        mermaid.init(undefined, this.container);
+
+        const _this = this
+
+        // hacks to add listeners
+        setTimeout(function () {
+            const nodesArray = [...document.querySelectorAll('.node')]
+            for (const node of nodesArray) {
+                // fix pointer
+                node.classList.add("clickable")
+                // add click event
+                node.addEventListener('click', (event) => {
+                    _this.onClick(event.currentTarget, parseInt(event.currentTarget.id.split('-')[1].substring(1)))
+                    event.preventDefault()
+                    event.stopPropagation()
+                })
+                // add right click event
+                node.addEventListener('contextmenu', (event) => {
+                    _this.onRightClick(event.currentTarget, parseInt(event.currentTarget.id.split('-')[1].substring(1)))
+                    event.preventDefault()
+                    event.stopPropagation()
+                })
+            }
+        }, 0)
     }
 
     export() {
@@ -67,18 +133,17 @@ class GraphController {
     reset() {
         this.edges.clear()
         this.nodes.clear()
+
+        this.selectedNode = null
+
+        this.draw()
     }
 
     addNode(node, design = null) {
         updateNodeProperties(node)
 
         // TODO make design customizable
-        const _design = design || {
-            size: 150,
-            color: "#FFCFCF",
-            shape: "box",
-            font: { face: "monospace", align: "center" }
-        }
+        const _design = design || {}
         // create the vis node
         const visNode = {
             id: this.idCounter++,
@@ -94,6 +159,8 @@ class GraphController {
         this.redoHistory = []
         this.undoHistory.push({ type: ADD_NODE, data: { ...visNode } })
 
+        this.draw()
+
         return visNode
     }
 
@@ -101,11 +168,7 @@ class GraphController {
         updateNodeProperties(edge)
 
         // TODO make design customizable
-        const _design = design || {
-            arrows: "to",
-            physics: false,
-            smooth: { type: "cubicBezier" }
-        }
+        const _design = design || {}
 
         // create the vis edge
         const visEdge = {
@@ -126,6 +189,8 @@ class GraphController {
         this.redoHistory = []
         this.undoHistory.push({ type: ADD_EDGE, data: { ...visEdge } })
 
+        this.draw()
+
         return visEdge
     }
 
@@ -142,8 +207,12 @@ class GraphController {
     }
 
     selectNode(id) {
-        this.network.selectNodes([id])
-        this.selectedNode = this.nodes.get(id)
+        if (id == null) {
+            this.selectedNode = null
+        } else {
+            this.selectedNode = this.nodes.get(id)
+        }
+        this.draw()
     }
 
     addUndoMarker() {
@@ -168,13 +237,17 @@ class GraphController {
                     this.edges.add(data)
                 }
 
-                
+
 
                 this.redoHistory.push(historyEntry)
 
             }
 
-            this.network.redraw()
+            if (this.selectedNode != null && this.nodes.get(this.selectedNode.id) == null) {
+                this.selectedNode = null
+            }
+
+            this.draw()
         }
     }
 
@@ -198,7 +271,11 @@ class GraphController {
                 this.undoHistory.push(historyEntry)
             }
 
-            this.network.redraw()
+            if (this.selectedNode != null && this.nodes.get(this.selectedNode.id) == null) {
+                this.selectedNode = null
+            }
+
+            this.draw()
         }
     }
 
@@ -221,10 +298,10 @@ class GraphController {
                 return item
 
             const extra = item.data.extra
-                for (const [key, value] of selection) {
-                    if (!(key in extra)) return item;
-                    if (extra[key] != value) return item;
-                }
+            for (const [key, value] of selection) {
+                if (!(key in extra)) return item;
+                if (extra[key] != value) return item;
+            }
             return ({ type: item.type, data: mergeToVisNode(item.data, updateObj) })
         }
 
@@ -232,11 +309,7 @@ class GraphController {
         this.redoHistory = this.redoHistory.map(updateUndoItem)
 
 
-        this.network.redraw()
-    }
-
-    stabilize() {
-        this.network.stabilize()
+        this.draw()
     }
 }
 
@@ -268,17 +341,17 @@ class NetworkController {
                     // 3. Check if needs to add edge to the existing node
                     if (selectedNode != null) {
                         graphController.addUndoMarker()
-                        graphController.addEdge({...createFromTo(selectedNode.id, existingDestNode.id, isNodeTarget), ...(msg.edge || {})})
+                        graphController.addEdge({ ...createFromTo(selectedNode.id, existingDestNode.id, isNodeTarget), ...(msg.edge || {}) })
                     }
-                     // 4. selected existing node
-                     graphController.selectNode(existingDestNode.id)
+                    // 4. selected existing node
+                    graphController.selectNode(existingDestNode.id)
                 } else {
                     graphController.addUndoMarker()
                     // 2. create a new node
                     const newNode = graphController.addNode(msg.node, msg.design)
                     // 3. add new edge
                     if (selectedNode != null) {
-                        graphController.addEdge({...createFromTo(selectedNode.id, newNode.id, isNodeTarget), ...(msg.edge || {})})
+                        graphController.addEdge({ ...createFromTo(selectedNode.id, newNode.id, isNodeTarget), ...(msg.edge || {}) })
                     }
                     // 4. selected added node
                     graphController.selectNode(newNode.id)
@@ -333,34 +406,22 @@ function event_redo() {
     graphController.redo()
 }
 
-function event_stabilize() {
-    graphController.stabilize()
-}
-
 function event_mermaid() {
-    let s = "flowchart TD\n"
-    const [_, nodes, edges] = graphController.export()
-    for (const node of nodes) {
-        s += `  N${node.id}[${JSON.stringify(node.label)}]\n`
-    }
-    s += "\n\n"
-    for (const edge of edges) {
-        if ('label' in edge) {
-            s += `N${edge.from}-->|${edge.label}|N${edge.to}\n`
-        } else {
-            s += `N${edge.from} --> N${edge.to}\n`
-        }
-    }
+    const s = graphController.toMermaid()
+
     try {
         navigator.clipboard.writeText(s).then(function () {
             console.log('Copied to clipboard');
         }, function (err) {
             console.log(s)
         });
-    } catch(err) {
+    } catch (err) {
         console.log(s)
     }
+}
 
+function event_center() {
+    graphController.resetScrolling()
 }
 
 
@@ -392,10 +453,10 @@ function mergeToVisNode(visNode, updateObj) {
 }
 
 function createFromTo(currentNode, newNode, isNodeTarget) {
-    if (isNodeTarget) 
-        return {from: currentNode, to: newNode}
+    if (isNodeTarget)
+        return { from: currentNode, to: newNode }
     else
-        return {from: newNode, to: currentNode}
+        return { from: newNode, to: currentNode }
 }
 
 function formatString(s, replacements) {
@@ -408,11 +469,14 @@ function formatString(s, replacements) {
     return str;
 }
 
+function escapeHtml(unsafe) {
+    return unsafe.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#039;');
+}
 
 function main() {
     const savedData = restore()
     const [id, nodes, edges] = savedData || [1, [], []]
-    const graphController = new GraphController(nodes, edges, document.getElementById("mynetwork"), id)
+    const graphController = new GraphController(nodes, edges, document.getElementById("graph"), id)
 
     // for debugging
     window.graphController = graphController
