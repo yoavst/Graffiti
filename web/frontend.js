@@ -323,7 +323,7 @@ class NetworkController {
             console.log("Connected to WS!");
             // for some reason this is required, idk lol
             ws.send("MAGIC")
-            document.getElementById("connectBtn").style.color = "green"
+            document.getElementById("connectBtn").style.backgroundColor = "green"
         }
 
         this.webSocket.onmessage = function (event) {
@@ -366,7 +366,7 @@ class NetworkController {
 
         this.webSocket.onclose = function (event) {
             console.log("WS closed!")
-            document.getElementById("connectBtn").style.color = "red"
+            document.getElementById("connectBtn").style.backgroundColor = "red"
         }
     }
 
