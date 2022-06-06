@@ -44,15 +44,8 @@ h1 {
 
 #content {
     overflow: hidden;
+    height: 100%;
 }
-
-#graph {
-    align-items: center;
-    display: flex;
-    justify-content: center;
-}
-
-
 
 body {
     overflow: hidden;

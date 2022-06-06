@@ -27,25 +27,19 @@ class GraphController {
 
         mermaid.initialize({
             securityLevel: 'loose',
-            theme: 'forest'
+            theme: 'forest',
+            useMaxWidth: true
         });
 
-
-        const zoom = d3.zoom().on("zoom", function (event) {
-            const t = event.transform
-            t.k = 1
-            _this.container.style.transform = `translate(${t.x}px, ${t.y}px)`
-        });
-        d3.select(this.container.parentElement).call(zoom).on("wheel.zoom", null).on("dblclick.zoom", null);
-        this.zoom = zoom 
-
-
+        this.zoom = panzoom(this.container, {
+            smoothScroll: false
+          })
         this.draw()
     }
 
     resetScrolling() {
-        d3.select(this.container.parentElement).call(this.zoom.transform, d3.zoomIdentity)
-        this.container.style.transform = ""
+        this.zoom.moveTo(0, 0)
+        this.zoom.zoomAbs(0, 0, 1)
     }
 
     toMermaid(gui = false) {
@@ -55,14 +49,16 @@ class GraphController {
             return ""
         }
 
-        let s = "flowchart TD\n"
+        // to support older clients, we switch from flowchart to graph for export
+        let s = gui ? "flowchart TD\n" : "graph TD\n"
+
         for (const node of nodes) {
-            s += `  N${node.id}["${escapeHtml(node.label)}"]\n`
+            s += `  N${node.id}["${escapeHtml(node.label, gui)}"]\n`
         }
         s += "\n\n"
         for (const edge of edges) {
             if ('label' in edge) {
-                s += `N${edge.from}-->|"${escapeHtml(edge.label)}"|N${edge.to}\n`
+                s += `N${edge.from}-->|"${escapeHtml(edge.label, gui)}"|N${edge.to}\n`
             } else {
                 s += `N${edge.from} --> N${edge.to}\n`
             }
@@ -93,16 +89,22 @@ class GraphController {
     }
 
     draw() {
+        const _this = this
+
         const data = this.toMermaid(true)
         if (data.length == 0) {
             this.container.textContent = "empty graph"
             return
         }
+
         this.container.textContent = data
         this.container.removeAttribute('data-processed');
-        mermaid.init(undefined, this.container);
 
-        const _this = this
+        const insertSvg = function (svgCode, bindFunctions) {
+            _this.container.innerHTML = svgCode;
+        };
+        mermaid.render('mermaid_stuff', data, insertSvg);
+        this.container.style.width = this.container.getElementsByTagName("svg")[0].style.maxWidth
 
         // hacks to add listeners
         setTimeout(function () {
@@ -469,8 +471,9 @@ function formatString(s, replacements) {
     return str;
 }
 
-function escapeHtml(unsafe) {
-    return unsafe.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#039;');
+function escapeHtml(unsafe, gui) {
+    const res = unsafe.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&apos;');
+    return gui ? res : res.replace('\n', '')
 }
 
 function main() {

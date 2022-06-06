@@ -18,7 +18,7 @@
             <button onclick="event_undo()">Undo</button>
             <button onclick="event_redo()">Redo</button>
             <button onclick="event_mermaid()">Export</button>
-            <button onclick="event_center()">Center</button>
+            <button onclick="event_center()">Layout</button>
             <input type="url" value="ws://localhost:8765" id="socketUrl"></input>
             <button onclick="event_connect()" id="connectBtn">Connect</button>
         </div>
@@ -27,9 +27,10 @@
     <div id="content">
         <div id="graph"></div>
     </div>
+    <div id="mermaid_stuff"></div>
     <br />
 
-    <script src='scripts/d3.v6.min.js'></script>
+    <script src='scripts/panzoom.min.js'></script>
     <script src="scripts/mermaid.min.js"></script>
     <script src="scripts/vis-network.min.js"></script>
     <script src="frontend.js"></script>
