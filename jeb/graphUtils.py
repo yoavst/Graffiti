@@ -45,7 +45,7 @@ def get_arrow_direction(ctx):
         return True
 
     data = project.getData("__YOAV_GRAPH_ARROW_DIRECTION")
-    if  data is None or not data:
+    if  data is None or data:
         return True
     
     return False

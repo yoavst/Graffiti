@@ -33,7 +33,7 @@ class GraphController {
 
         this.zoom = panzoom(this.container, {
             smoothScroll: false
-          })
+        })
         this.draw()
     }
 
@@ -113,17 +113,20 @@ class GraphController {
                 // fix pointer
                 node.classList.add("clickable")
                 // add click event
-                node.addEventListener('click', (event) => {
-                    _this.onClick(event.currentTarget, parseInt(event.currentTarget.id.split('-')[1].substring(1)))
-                    event.preventDefault()
-                    event.stopPropagation()
-                })
-                // add right click event
-                node.addEventListener('contextmenu', (event) => {
-                    _this.onRightClick(event.currentTarget, parseInt(event.currentTarget.id.split('-')[1].substring(1)))
-                    event.preventDefault()
-                    event.stopPropagation()
-                })
+                if (!node.hasAttribute("has_listeners")) {
+                    node.setAttribute("has_listeners", "true")
+                    node.addEventListener('click', (event) => {
+                        _this.onClick(event.currentTarget, parseInt(event.currentTarget.id.split('-')[1].substring(1)))
+                        event.preventDefault()
+                        event.stopPropagation()
+                    })
+                    // add right click event
+                    node.addEventListener('contextmenu', (event) => {
+                        _this.onRightClick(event.currentTarget, parseInt(event.currentTarget.id.split('-')[1].substring(1)))
+                        event.preventDefault()
+                        event.stopPropagation()
+                    })
+                }
             }
         }, 0)
     }
