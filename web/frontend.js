@@ -97,6 +97,8 @@ class GraphController {
     }
 
     draw() {
+        setTimeout(save, 0)
+        
         const _this = this
 
         const data = this.toMermaid(true)
@@ -406,9 +408,6 @@ function event_reset() {
     graphController.reset()
 }
 
-function event_save() {
-    save(graphController)
-}
 
 function event_undo() {
     graphController.undo()
@@ -474,7 +473,7 @@ function event_import() {
     document.body.removeChild(fileInput)
 }
 
-function save(graphController) {
+function save() {
     const data = JSON.stringify(graphController.export())
     localStorage.setItem("__SAVED_DATA", data)
 }
@@ -528,8 +527,13 @@ function main() {
     const [id, nodes, edges] = savedData || [1, [], []]
     const graphController = new GraphController(nodes, edges, document.getElementById("graph"), id)
 
-    // for debugging
     window.graphController = graphController
+
+    window.onbeforeunload = function() {
+        if (false) {
+            return "You haven't saved your changes.";
+        }
+    };
 }
 
 main()
