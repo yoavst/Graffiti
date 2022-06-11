@@ -10,6 +10,7 @@ Create customized callgraph directly from your favorite IDE.
 * Open the code of a node using right click
 * Export the graph to mermaid 
 * The graph support scrolling and zooming
+* Auto save to localstorage
 
 ## Setup
 1. Run the python server
