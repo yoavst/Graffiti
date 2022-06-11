@@ -13,11 +13,13 @@
         <span class="subtitle">An experiment by yoavst</span>
 
         <div class="buttons right">
+            <button onclick="event_import()">Import</button>
+            <button onclick="event_export()">Export</button>
+            <button onclick="event_mermaid()">Mermaid</button>
             <button onclick="event_reset()">Reset</button>
             <button onclick="event_save()">Save</button>
             <button onclick="event_undo()">Undo</button>
             <button onclick="event_redo()">Redo</button>
-            <button onclick="event_mermaid()">Export</button>
             <button onclick="event_center()">Layout</button>
             <input type="url" value="ws://localhost:8765" id="socketUrl"></input>
             <button onclick="event_connect()" id="connectBtn">Connect</button>

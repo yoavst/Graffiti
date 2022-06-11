@@ -42,6 +42,14 @@ class GraphController {
         this.zoom.zoomAbs(0, 0, 1)
     }
 
+    import(nodes, edges, currentId) {
+        this.reset()
+        this.nodes = new vis.DataSet(nodes)
+        this.edges = new vis.DataSet(edges)
+        this.idCounter = currentId
+        this.draw()
+    }
+
     toMermaid(gui = false) {
         const [_, nodes, edges] = this.export()
 
@@ -429,6 +437,42 @@ function event_center() {
     graphController.resetScrolling()
 }
 
+function event_export() {
+    const blob = new Blob([JSON.stringify(graphController.export())])
+    const url = window.URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.style.display = 'none'
+    a.href = url
+    a.download = 'graffiti_export.json'
+    document.body.appendChild(a)
+    a.click()
+    window.URL.revokeObjectURL(url)
+    document.body.removeChild(a)
+}
+
+function event_import() {
+    readFile = function(e) {
+		var file = e.target.files[0]
+		if (!file) {
+			return
+		}
+		const reader = new FileReader()
+		reader.onload = function(e) {
+			const contents = e.target.result
+            const [id, nodes, edges] = JSON.parse(contents)
+            graphController.import(nodes, edges, id)
+		}
+		reader.readAsText(file)
+	}
+
+    const fileInput = document.createElement("input")
+	fileInput.type='file'
+	fileInput.style.display='none'
+	fileInput.onchange=readFile
+	document.body.appendChild(fileInput)
+    fileInput.click()
+    document.body.removeChild(fileInput)
+}
 
 function save(graphController) {
     const data = JSON.stringify(graphController.export())
