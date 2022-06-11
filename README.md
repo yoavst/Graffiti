@@ -23,6 +23,7 @@ python3 server/main.py
 cd web
 python3 -m http.server 80
 ```
+4. From your web, enter http://localhost . Press connect to connect to the python server. The button will be green if successfully connected.
 
 ### JEB
 Run the script graphPull.py to connect JEB to the server. Then, you can use the following shortcuts:
