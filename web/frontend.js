@@ -294,6 +294,36 @@ class GraphController {
         }
     }
 
+    deleteCurrentNode() {
+        if (this.selectedNode) {
+            const removedNode = this.selectedNode
+            const removedNodeId = removedNode.id
+            // Start undo session
+            this.addUndoMarker()
+            // Remove the node
+            this.nodes.remove(removedNode.id)
+            // Update undo history for node
+            this.undoHistory.push({ type: REMOVE_NODE, data: { ...removedNode } })
+            // Get all edges containing the node
+            const removedEdges = this.edges.get({filter: (edge) => edge.from == removedNodeId || 
+                                                                   edge.to == removedNodeId })
+            console.log(removedEdges)
+            // Remove them, and update undo history
+            for (const removedEdge of removedEdges) {
+                this.edges.remove(removedEdge.id)
+                this.undoHistory.push({ type: REMOVE_EDGE, data: { ...removedEdge } })
+            }
+
+            // update history
+            this.redoHistory = []
+
+            // remember to clear selected node
+            this.selectedNode = null
+
+            this.draw()
+        }
+    }
+
     updateNodes(selection, updateObj) {
         const updates = this.nodes.get({
             filter: item => {
@@ -415,7 +445,10 @@ function event_undo() {
 
 function event_redo() {
     graphController.redo()
-    graphController.redo()
+}
+
+function event_delete() {
+    graphController.deleteCurrentNode()
 }
 
 function event_mermaid() {
