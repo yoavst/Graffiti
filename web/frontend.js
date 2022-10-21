@@ -145,7 +145,17 @@ class GraphController {
         return [this.idCounter, this.nodes.get(), this.edges.get()]
     }
 
-    reset() {
+    reset(shouldSupportUndo = false) {
+        if (shouldSupportUndo) {
+            // Add all node and edges to undo
+            this.addUndoMarker()
+            this.undoHistory.push(...this.nodes.map((node) => ({type: REMOVE_NODE, data: {...node}})))
+            this.undoHistory.push(...this.edges.map((edge) => ({type: REMOVE_EDGE, data: {...edge}})))
+        } else {
+            this.undoHistory = []
+        }
+
+        this.redoHistory = []
         this.edges.clear()
         this.nodes.clear()
 
@@ -435,7 +445,7 @@ function event_connect() {
 }
 
 function event_reset() {
-    graphController.reset()
+    graphController.reset(shouldSupportUndo=true)
 }
 
 
