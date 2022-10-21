@@ -45,6 +45,7 @@ h1 {
 #content {
     overflow: hidden;
     height: 100%;
+    min-width: 100%;
 }
 
 body {
