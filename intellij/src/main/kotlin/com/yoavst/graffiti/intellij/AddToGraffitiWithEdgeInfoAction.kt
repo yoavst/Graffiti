@@ -7,10 +7,17 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiMethod
 
 class AddToGraffitiWithEdgeInfoAction : AddToGraffitiAction() {
-    override fun createMethodUpdate(project: Project, psiFile: PsiFile, method: PsiMethod): MutableMap<String, Any> {
-        val obj = super.createMethodUpdate(project, psiFile, method)
-        val label = Messages.showInputDialog(project, "Enter label for edge",
-            "Input", Messages.getQuestionIcon())
+    override fun createMethodUpdate(
+        project: Project,
+        className: String,
+        methodName: String,
+        address: String
+    ): MutableMap<String, Any> {
+        val obj = super.createMethodUpdate(project, className, methodName, address)
+        val label = Messages.showInputDialog(
+            project, "Enter label for edge",
+            "Input", Messages.getQuestionIcon()
+        )
         if (!label.isNullOrBlank()) {
             obj["edge"] = mutableMapOf("label" to label)
         }
@@ -18,10 +25,17 @@ class AddToGraffitiWithEdgeInfoAction : AddToGraffitiAction() {
         return obj
     }
 
-    override fun createFieldUpdate(project: Project,psiFile: PsiFile, field: PsiField): MutableMap<String, Any> {
-        val obj = super.createFieldUpdate(project, psiFile, field)
-        val label = Messages.showInputDialog(project, "Enter label for edge",
-            "Input", Messages.getQuestionIcon())
+    override fun createFieldUpdate(
+        project: Project,
+        className: String,
+        fieldName: String,
+        address: String
+    ): MutableMap<String, Any> {
+        val obj = super.createFieldUpdate(project, className, fieldName, address)
+        val label = Messages.showInputDialog(
+            project, "Enter label for edge",
+            "Input", Messages.getQuestionIcon()
+        )
         if (!label.isNullOrBlank()) {
             obj["edge"] = mutableMapOf("label" to label)
         }

@@ -2,7 +2,7 @@
     <id>com.yoavst.graffiti.intellij</id>
     <name>Graffiti Support</name>
     <vendor email="yoav.sternberg@gmail.com" url="https://yoavst.com">Yoav Sternberg</vendor>
-
+    <idea-version since-build="211.*"/>
     <description><![CDATA[
     Connector for Graffiti platform, for Intellij.
     ]]></description>
@@ -11,6 +11,7 @@
          on how to target different products -->
     <depends>com.intellij.modules.platform</depends>
     <depends>com.intellij.java</depends>
+    <depends optional="true">org.jetbrains.kotlin</depends>
 
     <extensions defaultExtensionNs="com.intellij">
         <!-- Add your extensions here -->

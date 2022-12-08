@@ -7,8 +7,13 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiField
 import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.util.PsiTreeUtil
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import java.net.Socket
 
 
@@ -23,14 +28,26 @@ open class AddToGraffitiAction : AnAction() {
         val currentElement = psiFile.findElementAt(editor.caretModel.offset) ?: return
 
         var update: MutableMap<String, Any>? = null
-
-        val method = PsiTreeUtil.getParentOfType(currentElement, PsiMethod::class.java)
-        if (method != null) {
-            update = createMethodUpdate(event.project!!, psiFile, method)
-        } else {
-            val field = PsiTreeUtil.getParentOfType(currentElement, PsiField::class.java)
-            if (field != null) {
-                update = createFieldUpdate(event.project!!, psiFile, field)
+        if (psiFile is PsiJavaFile) {
+            val method = PsiTreeUtil.getParentOfType(currentElement, PsiMethod::class.java)
+            if (method != null) {
+                update = createJavaMethodUpdate(event.project!!, psiFile, method)
+            } else {
+                val field = PsiTreeUtil.getParentOfType(currentElement, PsiField::class.java)
+                if (field != null) {
+                    update = createJavaFieldUpdate(event.project!!, psiFile, field)
+                }
+            }
+        } else if (psiFile is KtFile) {
+            val method = PsiTreeUtil.getParentOfType(currentElement, KtNamedFunction::class.java)
+            if (method != null) {
+                update = createKotlinMethodUpdate(event.project!!, psiFile, method)
+            }
+            if (update == null) {
+                val field = PsiTreeUtil.getParentOfType(currentElement, KtProperty::class.java)
+                if (field != null) {
+                    update = createKotlinFieldUpdate(event.project!!, psiFile, field)
+                }
             }
         }
 
@@ -40,10 +57,40 @@ open class AddToGraffitiAction : AnAction() {
         }
     }
 
-    protected open fun createMethodUpdate(project: Project, psiFile: PsiFile, method: PsiMethod): MutableMap<String, Any> {
-        val className = method.containingClass!!.name
+    private fun createKotlinMethodUpdate(project: Project, psiFile: PsiFile, method: KtNamedFunction): MutableMap<String, Any> {
+        val className = method.containingClass()?.name ?: psiFile.name
+        val methodName = method.name ?: "<anonymous>"
+        val address = psiFile.originalFile.virtualFile.path + "@" + method.textOffset
+        return createMethodUpdate(project, className, methodName, address)
+    }
+
+    private fun createKotlinFieldUpdate(project: Project, psiFile: PsiFile, field: KtProperty): MutableMap<String, Any> {
+        val className = field.containingClass()?.name ?: psiFile.name
+        val fieldName = field.name!!
+        val address = psiFile.originalFile.virtualFile.path + "@" + field.textOffset
+        return createFieldUpdate(project, className, fieldName, address)
+    }
+
+    private fun createJavaMethodUpdate(project: Project, psiFile: PsiFile, method: PsiMethod): MutableMap<String, Any> {
+        val className = method.containingClass!!.name!!
         val methodName = method.name
         val address = psiFile.originalFile.virtualFile.path + "@" + method.textOffset
+        return createMethodUpdate(project, className, methodName, address)
+    }
+
+    private fun createJavaFieldUpdate(project: Project, psiFile: PsiFile, field: PsiField): MutableMap<String, Any> {
+        val className = field.containingClass!!.name!!
+        val fieldName = field.name
+        val address = psiFile.originalFile.virtualFile.path + "@" + field.textOffset
+        return createFieldUpdate(project, className, fieldName, address)
+    }
+
+    protected open fun createMethodUpdate(
+        project: Project,
+        className: String,
+        methodName: String,
+        address: String
+    ): MutableMap<String, Any> {
         return mutableMapOf(
             "type" to "addData", "node" to mapOf(
                 "class" to className,
@@ -60,10 +107,12 @@ open class AddToGraffitiAction : AnAction() {
         )
     }
 
-    protected open fun createFieldUpdate(project: Project, psiFile: PsiFile, field: PsiField): MutableMap<String, Any> {
-        val className = field.containingClass!!.name
-        val fieldName = field.name
-        val address = psiFile.originalFile.virtualFile.path + "@" + field.textOffset
+    protected open fun createFieldUpdate(
+        project: Project,
+        className: String,
+        fieldName: String,
+        address: String
+    ): MutableMap<String, Any> {
         return mutableMapOf(
             "type" to "addData", "node" to mapOf(
                 "class" to className,

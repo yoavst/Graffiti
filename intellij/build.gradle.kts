@@ -18,9 +18,9 @@ dependencies {
 
 // See https://github.com/JetBrains/gradle-intellij-plugin/
 intellij {
-    version.set("2021.2.4")
+    version.set("2022.1.1")
     type.set("IC")
-    plugins.set(listOf("com.intellij.java"))
+    plugins.set(listOf("com.intellij.java", "org.jetbrains.kotlin"))
 }
 tasks {
     patchPluginXml {
