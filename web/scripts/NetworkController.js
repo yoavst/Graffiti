@@ -9,13 +9,12 @@ class NetworkController {
             ws.send("MAGIC")
             document.getElementById("connectBtn").style.backgroundColor = "green"
         }
-        
+
         this.webSocket.onmessage = function (event) {
             const msg = JSON.parse(event.data);
 
-            tabsController.onCurrent((_, controller) => {
-
-                if (msg.type == MSG_ADD_NODE_AND_EDGE) {
+            if (msg.type == MSG_ADD_NODE_AND_EDGE) {
+                tabsController.onCurrent((_, controller) => {
                     const isNodeTarget = 'isNodeTarget' in msg ? msg.isNodeTarget : true
 
                     // 1. Find the selected node
@@ -41,12 +40,13 @@ class NetworkController {
                         // 4. selected added node
                         controller.selectNode(newNode.id)
                     }
-                } else if (msg.type == MSG_UPDATE_NODES) {
-                    controller.updateNodes(msg.selection, msg.update)
+                })
+            } else if (msg.type == MSG_UPDATE_NODES) {
+                // I assume all the opened tabs are from the same app, otherwise...
+                for (const { tabController } of tabsController.tabs) {
+                    tabController.updateNodes(msg.selection, msg.update)
                 }
-            })
-
-
+            }
             ws.send("MAGIC")
         }
 
