@@ -1,7 +1,7 @@
 # Graffiti
 Create customized callgraph directly from your favorite IDE.
 
-![Preview](https://i.imgur.com/pXgbwRO.png)
+![Preview](https://i.imgur.com/AADpaUF.png)
 
 
 ## Features
@@ -11,6 +11,7 @@ Create customized callgraph directly from your favorite IDE.
 * Export the graph to mermaid 
 * The graph support scrolling and zooming
 * Auto save to localstorage
+* Multiple tabs
 
 ## Setup
 1. Run the python server

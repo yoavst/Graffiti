@@ -42,7 +42,13 @@ h1 {
     float: right;
 }
 
-#content {
+.clearfix {
+    clear: both;
+    font-size: 1px;
+    display: block;
+}
+
+.content {
     overflow: hidden;
     height: 100%;
     min-width: 100%;
@@ -52,8 +58,68 @@ body {
     overflow: hidden;
 }
 
+#context-menu {
+    position: fixed;
+    z-index: 10000;
+    width: 150px;
+    background: #1b1a1a;
+    border-radius: 5px;
+    transform: scale(0);
+    transform-origin: top left;
+}
 
-button {
+#context-menu.visible {
+    transform: scale(1);
+    transition: transform 200ms ease-in-out;
+}
+
+#context-menu .item {
+    padding: 8px 10px;
+    font-size: 15px;
+    color: #eee;
+    cursor: pointer;
+    border-radius: inherit;
+}
+
+#context-menu .item:hover {
+    background: #343434;
+}
+
+#addTab {
+    float: right;
+}
+
+/* Style the tab */
+.tabs {
+    overflow: hidden;
+    background-color: #0078d7;
+  }
+  
+  /* Style the buttons inside the tab */
+  .tabs button {
+    background-color: inherit;
+    float: left;
+    border: none;
+    outline: none;
+    color: white;
+    cursor: pointer;
+    padding: 14px 16px;
+    transition: 0.3s;
+    font-size: 17px;
+  }
+  
+  /* Change background color of buttons on hover */
+  .tabs button:hover {
+    background-color: #005ca5;
+  }
+  
+  /* Create an active/current tablink class */
+  .tabs button.active {
+    background-color: #006abe;
+  }
+
+
+.buttons > button {
     display: inline-block;
     outline: 0;
     border: none;
@@ -92,4 +158,8 @@ input:focus {
     border-color: #0366d6;
     outline: none;
     box-shadow: rgba(3, 102, 214, 0.3) 0px 0px 0px 3px;
+}
+
+.hidden {
+    display: none;
 }

@@ -24,18 +24,26 @@
             <input type="url" value="ws://localhost:8765" id="socketUrl"></input>
             <button onclick="event_connect()" id="connectBtn">Connect</button>
         </div>
+        <div class="clearfix">&nbsp;</div>
     </header>
-
-    <div id="content">
-        <div id="graph"></div>
+    <div class="tabs">
+        <!-- <button class="tablinks active">Example</button> -->
+        <button id="addTab" onclick="event_addTab()">+</button>
     </div>
-    <div id="mermaid_stuff"></div>
-    <br />
+    <div id="context-menu">
+        <div class="item" id="renameTab">Rename</div>
+        <div class="item" id="removeTab">Remove</div>
+    </div>
 
-    <script src='scripts/panzoom.min.js'></script>
-    <script src="scripts/mermaid.min.js"></script>
-    <script src="scripts/vis-network.min.js"></script>
-    <script src="frontend.js"></script>
+    <div class="view"></div>
+
+    <script src='scripts/third_party/panzoom.min.js'></script>
+    <script src="scripts/third_party/mermaid.min.js"></script>
+    <script src="scripts/third_party/vis-network.min.js"></script>
+    <script src="scripts/TabsController.js"></script>
+    <script src="scripts/TabController.js"></script>
+    <script src="scripts/NetworkController.js"></script>
+    <script src="scripts/main.js"></script>
 </body>
 
 </html>

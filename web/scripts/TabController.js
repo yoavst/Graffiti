@@ -5,35 +5,62 @@ const REMOVE_EDGE = "removeEdge"
 const REMOVE_NODE = "removeNode"
 const MARKER = "marker"
 
-const MSG_ADD_NODE_AND_EDGE = "addData"
-const MSG_UPDATE_NODES = "updateNodes"
-
 const HISTORY_MARKER = { type: MARKER, data: {} }
 
-class GraphController {
-    constructor(nodes, edges, container, currentId = 1) {
-        this.nodes = new vis.DataSet(nodes)
-        this.edges = new vis.DataSet(edges)
+let globalCounter = 0
+
+class TabController {
+    constructor() {
+        this.view = null
+        this.nodes = new vis.DataSet([])
+        this.edges = new vis.DataSet([])
         this.undoHistory = []
         this.redoHistory = []
-        this.idCounter = currentId
+        this.idCounter = 1
         this.selectedNode = null
+        this.container = null
+        this.zoom = null
+        this.mermaidId = "mermaidStuff" + (globalCounter++)
+        
+    }
+    
+    initView(view) {
+        this.view = view
+
+        // add layout
+        const wrapperLayout = htmlToElement('<div class="content"><div class="graph"></div></div>')
+        this.view.appendChild(wrapperLayout)
+
+        // init layout
+        const container = wrapperLayout.querySelector(".graph")
         this.container = container
 
         const _this = this
         container.addEventListener('click', (element) => {
             _this.selectNode(null)
         })
-
-        mermaid.initialize({
-            securityLevel: 'loose',
-            theme: 'forest',
-            useMaxWidth: true
-        });
-
         this.zoom = panzoom(this.container, {
             smoothScroll: false
         })
+        this.draw()
+    }
+
+    deinitView(view) {
+        // do nothing
+    }
+
+    export() {
+        return JSON.stringify([this.idCounter, this.nodes.get(), this.edges.get()])
+    }
+
+    import(data) {
+        const [id, nodes, edges] = JSON.parse(data)
+
+        this.reset()
+        this.nodes = new vis.DataSet(nodes)
+        this.edges = new vis.DataSet(edges)
+        console.log(this.nodes)
+        this.idCounter = id
         this.draw()
     }
 
@@ -42,17 +69,9 @@ class GraphController {
         this.zoom.zoomAbs(0, 0, 1)
     }
 
-    import(nodes, edges, currentId) {
-        this.reset()
-        this.nodes = new vis.DataSet(nodes)
-        this.edges = new vis.DataSet(edges)
-        this.idCounter = currentId
-        this.draw()
-    }
-
     toMermaid(gui = false) {
-        const [_, nodes, edges] = this.export()
-
+        const [_, nodes, edges] = [this.idCounter, this.nodes.get(), this.edges.get()]
+        
         if (nodes.length == 0) {
             return ""
         }
@@ -88,16 +107,16 @@ class GraphController {
     onRightClick(target, elementId) {
         const node = this.nodes.get(elementId)
         if ('address' in node.extra && 'networkController' in window) {
-            try {
-                networkController.send(node.extra.address)
-            } catch (e) {
-                console.log(e)
-            }
+            window.networkController.send(node.extra.address)
         }
     }
 
     draw() {
-        setTimeout(save, 0)
+        setTimeout(() => {
+            if ('tabsController' in window) {
+                window.tabsController.save()
+            }
+        })
         
         const _this = this
 
@@ -113,7 +132,7 @@ class GraphController {
         const insertSvg = function (svgCode, bindFunctions) {
             _this.container.innerHTML = svgCode;
         };
-        mermaid.render('mermaid_stuff', data, insertSvg);
+        mermaid.render(this.mermaidId, data, insertSvg);
         this.container.style.width = this.container.getElementsByTagName("svg")[0].style.maxWidth
 
         // hacks to add listeners
@@ -139,10 +158,6 @@ class GraphController {
                 }
             }
         }, 0)
-    }
-
-    export() {
-        return [this.idCounter, this.nodes.get(), this.edges.get()]
     }
 
     reset(shouldSupportUndo = false) {
@@ -368,163 +383,6 @@ class GraphController {
     }
 }
 
-class NetworkController {
-    constructor(url, graphController) {
-        this.webSocket = new WebSocket(url)
-        this.graphController = graphController
-
-        const ws = this.webSocket
-        this.webSocket.onopen = function () {
-            console.log("Connected to WS!");
-            // for some reason this is required, idk lol
-            ws.send("MAGIC")
-            document.getElementById("connectBtn").style.backgroundColor = "green"
-        }
-
-        this.webSocket.onmessage = function (event) {
-            const msg = JSON.parse(event.data);
-            console.log("Received:", msg)
-
-            if (msg.type == MSG_ADD_NODE_AND_EDGE) {
-                const isNodeTarget = 'isNodeTarget' in msg ? msg.isNodeTarget : true
-
-                // 1. Find the selected node
-                const selectedNode = graphController.selectedNode
-                // 2. Check if dest node exists
-                const existingDestNode = 'address' in msg.node ? graphController.queryNode('address', msg.node.address) : null
-                if (existingDestNode != null) {
-                    // 3. Check if needs to add edge to the existing node
-                    if (selectedNode != null) {
-                        graphController.addUndoMarker()
-                        graphController.addEdge({ ...createFromTo(selectedNode.id, existingDestNode.id, isNodeTarget), ...(msg.edge || {}) })
-                    }
-                    // 4. selected existing node
-                    graphController.selectNode(existingDestNode.id)
-                } else {
-                    graphController.addUndoMarker()
-                    // 2. create a new node
-                    const newNode = graphController.addNode(msg.node, msg.design)
-                    // 3. add new edge
-                    if (selectedNode != null) {
-                        graphController.addEdge({ ...createFromTo(selectedNode.id, newNode.id, isNodeTarget), ...(msg.edge || {}) })
-                    }
-                    // 4. selected added node
-                    graphController.selectNode(newNode.id)
-                }
-            } else if (msg.type == MSG_UPDATE_NODES) {
-                graphController.updateNodes(msg.selection, msg.update)
-            }
-
-
-            ws.send("MAGIC")
-        }
-
-        this.webSocket.onclose = function (event) {
-            console.log("WS closed!")
-            document.getElementById("connectBtn").style.backgroundColor = "red"
-        }
-    }
-
-    send(data) {
-        this.webSocket.send(data)
-    }
-
-    close() {
-        this.webSocket.close()
-    }
-}
-
-function event_connect() {
-    const url = document.getElementById("socketUrl").value
-
-    // close global network controller
-    if (window.networkController)
-        window.networkController.close()
-
-    window.networkController = new NetworkController(url, graphController)
-}
-
-function event_reset() {
-    graphController.reset(shouldSupportUndo=true)
-}
-
-
-function event_undo() {
-    graphController.undo()
-}
-
-function event_redo() {
-    graphController.redo()
-}
-
-function event_delete() {
-    graphController.deleteCurrentNode()
-}
-
-function event_mermaid() {
-    const s = graphController.toMermaid()
-
-    try {
-        navigator.clipboard.writeText(s).then(function () {
-            console.log('Copied to clipboard');
-        }, function (err) {
-            console.log(s)
-        });
-    } catch (err) {
-        console.log(s)
-    }
-}
-
-function event_center() {
-    graphController.resetScrolling()
-}
-
-function event_export() {
-    const blob = new Blob([JSON.stringify(graphController.export())])
-    const url = window.URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.style.display = 'none'
-    a.href = url
-    a.download = 'graffiti_export.json'
-    document.body.appendChild(a)
-    a.click()
-    window.URL.revokeObjectURL(url)
-    document.body.removeChild(a)
-}
-
-function event_import() {
-    readFile = function(e) {
-		var file = e.target.files[0]
-		if (!file) {
-			return
-		}
-		const reader = new FileReader()
-		reader.onload = function(e) {
-			const contents = e.target.result
-            const [id, nodes, edges] = JSON.parse(contents)
-            graphController.import(nodes, edges, id)
-		}
-		reader.readAsText(file)
-	}
-
-    const fileInput = document.createElement("input")
-	fileInput.type='file'
-	fileInput.style.display='none'
-	fileInput.onchange=readFile
-	document.body.appendChild(fileInput)
-    fileInput.click()
-    document.body.removeChild(fileInput)
-}
-
-function save() {
-    const data = JSON.stringify(graphController.export())
-    localStorage.setItem("__SAVED_DATA", data)
-}
-
-function restore() {
-    return JSON.parse(localStorage.getItem("__SAVED_DATA"))
-}
-
 const NODE_COMPUTED_PROPERTIES = "computedProperties"
 
 /** Compute the computed properties, and update the given node */
@@ -565,18 +423,13 @@ function escapeHtml(unsafe, gui) {
     return gui ? res : res.replace('\n', '')
 }
 
-function main() {
-    const savedData = restore()
-    const [id, nodes, edges] = savedData || [1, [], []]
-    const graphController = new GraphController(nodes, edges, document.getElementById("graph"), id)
-
-    window.graphController = graphController
-
-    window.onbeforeunload = function() {
-        if (false) {
-            return "You haven't saved your changes.";
-        }
-    };
+/**
+ * @param {String} HTML representing a single element
+ * @return {Element}
+ */
+function htmlToElement(html) {
+    var template = document.createElement('template');
+    html = html.trim(); // Never return a text node of whitespace as the result
+    template.innerHTML = html;
+    return template.content.firstChild;
 }
-
-main()
