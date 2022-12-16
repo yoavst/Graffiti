@@ -59,7 +59,6 @@ class TabController {
         this.reset()
         this.nodes = new vis.DataSet(nodes)
         this.edges = new vis.DataSet(edges)
-        console.log(this.nodes)
         this.idCounter = id
         this.draw()
     }

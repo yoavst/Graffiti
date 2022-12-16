@@ -1,3 +1,5 @@
+const STORAGE_VERSION = 2
+
 class TabsController {
     constructor(tabsView, contentView, contextMenu) {
         this.tabs = []
@@ -14,7 +16,7 @@ class TabsController {
         return this.tabs.length
     }
 
-    addTab(name, shouldSave=true) {
+    addTab(name, shouldSave = true) {
         const realThis = this
         // Add tab to tabs view
         const tabElement = document.createElement("button")
@@ -103,14 +105,26 @@ class TabsController {
     save() {
         const data = JSON.stringify(this.tabs.map(({ name, tabController }) => [name, tabController.export()]))
         localStorage.setItem("__SAVED_DATA", data)
+        localStorage.setItem("__SAVED_DATA_VERSION", STORAGE_VERSION)
     }
 
     restore() {
         const data = JSON.parse(localStorage.getItem("__SAVED_DATA"))
         if (data != null) {
-            for (const [name, innerData] of data) {
+            // Support migrating from lower version
+            const version = parseInt(localStorage.getItem("__SAVED_DATA_VERSION")) || 1;
+            if (version == 1) {
+                // Try migrate to version 2
+                const innerData = JSON.stringify(data || [1, [], []])
+                const name = "untitled"
                 const tab = this.addTab(name, false)
                 tab.tabController.import(innerData)
+                setTimeout(() => this.save())
+            } else if (version == 2) {
+                for (const [name, innerData] of data) {
+                    const tab = this.addTab(name, false)
+                    tab.tabController.import(innerData)
+                }
             }
         }
         if (this.count() >= 1) {
