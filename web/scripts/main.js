@@ -95,10 +95,10 @@ function event_import() {
             const tabsController = window.tabsController
 
             // If we have only empty untitled tab, remove it
-            if (tabsController.count() == 1 && tabsController.tabs[0].name == "untitled" && 
+            if (tabsController.count() == 1 && tabsController.tabs[0].name == "untitled" &&
                 tabsController.tabs[0].tabController.nodes.length == 0) {
-                    tabsController.removeTab(0)
-                }
+                tabsController.removeTab(0)
+            }
 
 
             const addedTab = tabsController.addTab(name)
@@ -132,6 +132,7 @@ function event_addTab() {
 
 function main() {
     initiateDependencies();
+    initiateHotkeys();
 
     // Initiate tabs
     const tabsController = new TabsController(document.getElementsByClassName("tabs")[0], document.getElementsByClassName("view")[0], document.getElementById("context-menu"));
@@ -147,6 +148,30 @@ function initiateDependencies() {
         theme: 'forest',
         useMaxWidth: true
     });
+}
+
+function initiateHotkeys() {
+    hotkeys('ctrl+z,ctrl+shift+z,ctrl+y,ctrl+s,delete,home', function (event, handler) {
+        switch (handler.key) {
+            case 'ctrl+z':
+                event_undo();
+                return false;
+            case 'ctrl+shift+z':
+            case 'ctrl+y':
+                event_redo();
+                return false;
+            case 'ctrl+s':
+                event_export();
+                return false;
+            case 'delete':
+                event_delete();
+                return false;
+            case 'home':
+                event_center();
+                return false;
+        }
+    });
+
 }
 
 
