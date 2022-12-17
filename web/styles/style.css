@@ -93,10 +93,10 @@ body {
 .tabs {
     overflow: hidden;
     background-color: #0078d7;
-  }
-  
-  /* Style the buttons inside the tab */
-  .tabs button {
+}
+
+/* Style the buttons inside the tab */
+.tabs button {
     background-color: inherit;
     float: left;
     border: none;
@@ -106,27 +106,28 @@ body {
     padding: 14px 16px;
     transition: 0.3s;
     font-size: 17px;
-  }
-  
-  /* Change background color of buttons on hover */
-  .tabs button:hover {
+}
+
+/* Change background color of buttons on hover */
+.tabs button:hover {
     background-color: #005ca5;
-  }
-  
-  /* Create an active/current tablink class */
-  .tabs button.active {
+}
+
+/* Create an active/current tablink class */
+.tabs button.active {
     background-color: #006abe;
-  }
+}
 
 
-.buttons > button {
+.buttons>button {
     display: inline-block;
     outline: 0;
     border: none;
     cursor: pointer;
     height: 32px;
-    padding: 0px 16px;
-    border-radius: 50px;
+    width: 32px;
+    /* padding: 0px 16px; */
+    border-radius: 32px;
     background-color: white;
     color: #222;
     font-size: 12px;
@@ -150,7 +151,7 @@ input {
     border: 1px solid #e1e4e8;
     border-radius: 6px;
     outline: none;
-    
+
     box-shadow: rgba(225, 228, 232, 0.2) 0px 1px 0px 0px inset;
 }
 
@@ -162,4 +163,11 @@ input:focus {
 
 .hidden {
     display: none;
+}
+
+.action_icon {
+    width: 70%;
+    height: 70%;
+    margin: auto;
+    vertical-align: middle;
 }
