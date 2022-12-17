@@ -1,7 +1,7 @@
 # Graffiti
 Create customized callgraph directly from your favorite IDE.
 
-![Preview](https://i.imgur.com/AADpaUF.png)
+![Preview](screenshots/screenshot.png)
 
 
 ## Features
