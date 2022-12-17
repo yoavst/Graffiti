@@ -136,7 +136,7 @@ class TabController {
 
         // hacks to add listeners
         setTimeout(function () {
-            const nodesArray = [...document.querySelectorAll('.node')]
+            const nodesArray = [..._this.container.querySelectorAll('.node')]
             for (const node of nodesArray) {
                 // fix pointer
                 node.classList.add("clickable")
