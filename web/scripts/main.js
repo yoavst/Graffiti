@@ -79,36 +79,9 @@ function event_export() {
 
 function event_import() {
     readFile = function (e) {
-        var file = e.target.files[0]
-        if (!file) {
-            return
+        for (const file of e.target.files) {
+            event_import_onFile(file)
         }
-        const reader = new FileReader()
-        reader.onload = function (e) {
-            // Create new tab with the filename as name
-            const contents = e.target.result
-            let name = file.name
-            if (name.endsWith(".json")) {
-                name = name.substring(0, name.length - 5);
-            }
-
-            const tabsController = window.tabsController
-
-            // If we have only empty untitled tab, remove it
-            if (tabsController.count() == 1 && tabsController.tabs[0].name == "untitled" &&
-                tabsController.tabs[0].tabController.nodes.length == 0) {
-                tabsController.removeTab(0)
-            }
-
-
-            const addedTab = tabsController.addTab(name)
-            tabsController.selectTab(addedTab)
-            tabsController.onCurrent((_, controller) => {
-                controller.import(contents)
-            })
-
-        }
-        reader.readAsText(file)
     }
 
     const fileInput = document.createElement("input")
@@ -118,6 +91,38 @@ function event_import() {
     document.body.appendChild(fileInput)
     fileInput.click()
     document.body.removeChild(fileInput)
+}
+
+function event_import_onFile(file) {
+    if (!file) {
+        return
+    }
+    const reader = new FileReader()
+    reader.onload = function (e) {
+        // Create new tab with the filename as name
+        const contents = e.target.result
+        let name = file.name
+        if (name.endsWith(".json")) {
+            name = name.substring(0, name.length - 5);
+        }
+
+        const tabsController = window.tabsController
+
+        // If we have only empty untitled tab, remove it
+        if (tabsController.count() == 1 && tabsController.tabs[0].name == "untitled" &&
+            tabsController.tabs[0].tabController.nodes.length == 0) {
+            tabsController.removeTab(0)
+        }
+
+
+        const addedTab = tabsController.addTab(name)
+        tabsController.selectTab(addedTab)
+        tabsController.onCurrent((_, controller) => {
+            controller.import(contents)
+        })
+
+    }
+    reader.readAsText(file)
 }
 
 function event_addTab() {
@@ -133,6 +138,7 @@ function event_addTab() {
 function main() {
     initiateDependencies();
     initiateHotkeys();
+    initializeDragAndDrop();
 
     // Initiate tabs
     const tabsController = new TabsController(document.getElementsByClassName("tabs")[0], document.getElementsByClassName("view")[0], document.getElementById("context-menu"));
@@ -171,7 +177,21 @@ function initiateHotkeys() {
                 return false;
         }
     });
+}
 
+function initializeDragAndDrop() {
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        document.body.addEventListener(eventName, e => {
+            e.preventDefault()
+            e.stopPropagation()
+        }, false)
+    })
+
+    document.body.addEventListener('drop', function handleDrop(e) {
+        for (const file of e.dataTransfer.files) {
+            event_import_onFile(file)
+        }
+    }, false)
 }
 
 
