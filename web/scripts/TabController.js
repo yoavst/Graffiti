@@ -137,7 +137,7 @@ class TabController {
             el.innerHTML = svgCode
             const shadow = document.createElement("diagram-div")
             shadow.shadowRoot.appendChild(el)
-            _this.container.replaceChildren(shadow)
+            replaceChildren(_this.container, [shadow])
         };
         mermaid.render(this.mermaidId, data, insertSvg);
 
@@ -439,6 +439,14 @@ function htmlToElement(html) {
     template.innerHTML = html;
     return template.content.firstChild;
 }
+
+function replaceChildren(el, nodes) {
+    if (el.replaceChildren)
+      return el.replaceChildren(...nodes); // supported Chrome 86+
+  
+    el.innerHTML = "";
+    el.append( ...nodes);
+  }
 
 class MermaidDiv extends HTMLElement {
     constructor() {
