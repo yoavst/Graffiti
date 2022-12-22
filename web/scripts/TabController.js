@@ -27,6 +27,10 @@ class TabController {
     initView(view) {
         this.view = view
 
+        if (typeof customElements.get("diagram-div") === "undefined") {
+            customElements.define("diagram-div", MermaidDiv)
+        }
+
         // add layout
         const wrapperLayout = htmlToElement('<div class="content"><div class="graph"></div></div>')
         this.view.appendChild(wrapperLayout)
@@ -129,14 +133,17 @@ class TabController {
         this.container.removeAttribute('data-processed');
 
         const insertSvg = function (svgCode, bindFunctions) {
-            _this.container.innerHTML = svgCode;
+            const el = document.createElement("div")
+            el.innerHTML = svgCode
+            const shadow = document.createElement("diagram-div")
+            shadow.shadowRoot.appendChild(el)
+            _this.container.replaceChildren(shadow)
         };
         mermaid.render(this.mermaidId, data, insertSvg);
-        this.container.style.width = this.container.getElementsByTagName("svg")[0].style.maxWidth
 
         // hacks to add listeners
         setTimeout(function () {
-            const nodesArray = [..._this.container.querySelectorAll('.node')]
+            const nodesArray = [..._this.container.getElementsByTagName('diagram-div')[0].shadowRoot.querySelectorAll('.node')]
             for (const node of nodesArray) {
                 // fix pointer
                 node.classList.add("clickable")
@@ -431,4 +438,11 @@ function htmlToElement(html) {
     html = html.trim(); // Never return a text node of whitespace as the result
     template.innerHTML = html;
     return template.content.firstChild;
+}
+
+class MermaidDiv extends HTMLElement {
+    constructor() {
+        super()
+        this.attachShadow({ mode: "open" })
+    }
 }
