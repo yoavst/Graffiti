@@ -1,6 +1,7 @@
 class NetworkController {
     constructor(url, tabsController) {
         this.webSocket = new WebSocket(url)
+        const _this = this
 
         const ws = this.webSocket
         this.webSocket.onopen = function () {
@@ -12,35 +13,31 @@ class NetworkController {
 
         this.webSocket.onmessage = function (event) {
             const msg = JSON.parse(event.data);
+            
 
             if (msg.type == MSG_ADD_NODE_AND_EDGE) {
                 tabsController.onCurrent((_, controller) => {
                     const isNodeTarget = 'isNodeTarget' in msg ? msg.isNodeTarget : true
 
-                    // 1. Find the selected node
                     const selectedNode = controller.selectedNode
-                    // 2. Check if dest node exists
-                    const existingDestNode = 'address' in msg.node ? controller.queryNode('address', msg.node.address) : null
-                    if (existingDestNode != null) {
-                        // 3. Check if needs to add edge to the existing node
-                        if (selectedNode != null) {
-                            controller.addUndoMarker()
-                            controller.addEdge({ ...createFromTo(selectedNode.id, existingDestNode.id, isNodeTarget), ...(msg.edge || {}) })
-                        }
-                        // 4. selected existing node
-                        controller.selectNode(existingDestNode.id)
-                    } else {
-                        controller.addUndoMarker()
-                        // 2. create a new node
-                        const newNode = controller.addNode(msg.node, msg.design)
-                        // 3. add new edge
-                        if (selectedNode != null) {
-                            controller.addEdge({ ...createFromTo(selectedNode.id, newNode.id, isNodeTarget), ...(msg.edge || {}) })
-                        }
-                        // 4. selected added node
-                        controller.selectNode(newNode.id)
+
+                    const nodeId = _this.addNodeAndEdge(controller, selectedNode, msg.node, msg.design, msg.edge, isNodeTarget, true)
+                    controller.selectNode(nodeId)
+                })
+            } else if (msg.type == MSG_ADD_NODES_AND_EDGES) {
+                tabsController.onCurrent((_, controller) => {
+                    const isNodeTarget = 'isNodeTarget' in msg ? msg.isNodeTarget : true
+
+                    const selectedNode = controller.selectedNode
+
+                    controller.addUndoMarker()
+
+                    for (const node of msg.nodes) {
+                        _this.addNodeAndEdge(controller, selectedNode, node, msg.design, msg.edge, isNodeTarget, false)
                     }
                 })
+
+
             } else if (msg.type == MSG_UPDATE_NODES) {
                 // I assume all the opened tabs are from the same app, otherwise...
                 for (const { tabController } of tabsController.tabs) {
@@ -53,6 +50,30 @@ class NetworkController {
         this.webSocket.onclose = function (event) {
             console.log("WS closed!")
             document.getElementById("connectBtn").style.backgroundColor = "red"
+        }
+    }
+
+    addNodeAndEdge(controller, selectedNode, msgNode, msgDesign, msgEdge, isNodeTarget, shouldAddUndo) {
+        // 2. Check if dest node exists
+        const existingDestNode = 'address' in msgNode ? controller.queryNode('address', msgNode.address) : null
+        if (existingDestNode != null) {
+            // 3. Check if needs to add edge to the existing node
+            if (selectedNode != null) {
+                if (shouldAddUndo) controller.addUndoMarker()
+                controller.addEdge({ ...createFromTo(selectedNode.id, existingDestNode.id, isNodeTarget), ...(msgEdge || {}) })
+            }
+            // return new node
+            return existingDestNode.id
+        } else {
+            if (shouldAddUndo) controller.addUndoMarker()
+            // 2. create a new node
+            const newNode = controller.addNode(msgNode, msgDesign)
+            // 3. add new edge
+            if (selectedNode != null) {
+                controller.addEdge({ ...createFromTo(selectedNode.id, newNode.id, isNodeTarget), ...(msgEdge || {}) })
+            }
+            // 4. selected added node
+            return newNode.id
         }
     }
 

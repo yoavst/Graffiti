@@ -338,7 +338,6 @@ class TabController {
             // Get all edges containing the node
             const removedEdges = this.edges.get({filter: (edge) => edge.from == removedNodeId || 
                                                                    edge.to == removedNodeId })
-            console.log(removedEdges)
             // Remove them, and update undo history
             for (const removedEdge of removedEdges) {
                 this.edges.remove(removedEdge.id)

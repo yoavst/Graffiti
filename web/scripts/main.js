@@ -1,4 +1,5 @@
 const MSG_ADD_NODE_AND_EDGE = "addData"
+const MSG_ADD_NODES_AND_EDGES = "addDataBulk"
 const MSG_UPDATE_NODES = "updateNodes"
 
 

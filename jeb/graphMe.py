@@ -6,7 +6,6 @@ import traceback
 from graphUtils import *
 from com.pnfsoftware.jeb.client.api import IScript
 
-
 class graphMe(IScript):
     def run(self, ctx):
         try:
