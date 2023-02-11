@@ -152,15 +152,22 @@ class TabsController {
             realThis.contextMenu.classList.remove("visible");
 
             setTimeout(() => {
-                if (contextMenuOpenedForTab != -1) {
+                if (contextMenuOpenedForTab != null) {
                     const { name, tabElement } = contextMenuOpenedForTab
-                    const newTabName = prompt("What is the new graph name?", name)
-                    if (newTabName != null) {
-                        tabElement.textContent = newTabName
-                        contextMenuOpenedForTab.name = newTabName
-
-                        realThis.save()
-                    }
+                    Swal.fire({
+                        title: 'Rename tab',
+                        input: 'text',
+                        inputValue: name,
+                        showCancelButton: true
+                      }).then(({value=null}) => {
+                            if (value != null) {
+                                tabElement.textContent = value
+                                contextMenuOpenedForTab.name = value
+        
+                                realThis.save()
+                            }
+                      })
+                    
                 }
             });
         }
@@ -171,7 +178,7 @@ class TabsController {
             realThis.contextMenuOpenedForTab = null
             realThis.contextMenu.classList.remove("visible");
 
-            if (contextMenuOpenedForTab != -1) {
+            if (contextMenuOpenedForTab != null) {
                 realThis.removeTab(realThis.tabs.indexOf(contextMenuOpenedForTab))
                 if (realThis.count() == 0) {
                     realThis.#addEmptyTab()
@@ -179,6 +186,33 @@ class TabsController {
             }
         }
 
+        this.contextMenu.querySelector("#sources").onclick = function() {
+            // Hide context menu
+            const contextMenuOpenedForTab = realThis.contextMenuOpenedForTab
+            realThis.contextMenuOpenedForTab = null
+            realThis.contextMenu.classList.remove("visible");
+            
+            setTimeout(() => {
+                if (contextMenuOpenedForTab != null) {
+                    const { tabController } = contextMenuOpenedForTab
+                    const projects = [...tabController.getProjects()]
+                    if (projects.length == 0) {
+                        Swal.fire({
+                            title: 'No linked projects',
+                            text: 'This graffiti file was created with old utils. Consider upgrading to the latest version.',
+                            type: 'info',
+                            confirmButtonText: 'OK'
+                          })
+                    } else {
+                        Swal.fire({
+                            title: 'Linked projects',
+                            html: projects.join('<br>'),
+                            confirmButtonText: 'OK'
+                          })
+                    }
+                }
+            })
+        }
     }
 
     #addEmptyTab() {

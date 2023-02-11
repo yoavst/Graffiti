@@ -56,3 +56,6 @@ def set_arrow_direction(ctx, direction):
         return
     
     project.setData("__YOAV_GRAPH_ARROW_DIRECTION", direction, False)
+
+def rchop(s, sub):
+    return s[:-len(sub)] if s.endswith(sub) else s

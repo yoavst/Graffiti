@@ -93,6 +93,7 @@ open class AddToGraffitiAction : AnAction() {
     ): MutableMap<String, Any> {
         return mutableMapOf(
             "type" to "addData", "node" to mapOf(
+                "project" to ("Intellij: " + project.name),
                 "class" to className,
                 "method" to methodName,
                 "address" to address,
@@ -115,6 +116,7 @@ open class AddToGraffitiAction : AnAction() {
     ): MutableMap<String, Any> {
         return mutableMapOf(
             "type" to "addData", "node" to mapOf(
+                "project" to ("Intellij: " + project.name),
                 "class" to className,
                 "field" to fieldName,
                 "address" to address,

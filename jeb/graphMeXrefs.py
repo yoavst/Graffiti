@@ -48,6 +48,7 @@ class graphMeXrefs(IScript):
                 methods_addrs.add(addr)
 
                 methods.append({
+                    "project": "Jeb: " + rchop(rchop(ctx.mainProject.name, '.jdb2'), '.apk'),
                     "address": addr, 
                     "class": class_name, 
                     "classAddress": class_addr,

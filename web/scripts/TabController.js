@@ -21,7 +21,6 @@ class TabController {
         this.container = null
         this.zoom = null
         this.mermaidId = "mermaidStuff" + (globalCounter++)
-        
     }
     
     initView(view) {
@@ -385,6 +384,10 @@ class TabController {
 
 
         this.draw()
+    }
+
+    getProjects() {
+        return new Set(this.nodes.map(it => ('project' in it.extra) ? it.extra.project : null).filter(it => it != null));
     }
 }
 

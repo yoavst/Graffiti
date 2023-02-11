@@ -172,3 +172,11 @@ input:focus {
     margin: auto;
     vertical-align: middle;
 }
+
+.swal2-content * {
+    user-select: text;
+}
+
+.swal2-popup {
+    font-size: 1.6rem !important;
+  }

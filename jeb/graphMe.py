@@ -34,6 +34,7 @@ class graphMe(IScript):
 
         return {
                 "type": "addData", "node": {
+                    "project": "Jeb: " + rchop(rchop(ctx.mainProject.name, '.jdb2'), '.apk'),
                     "address": addr, 
                     "class": class_name, 
                     "classAddress": class_addr,
@@ -56,6 +57,7 @@ class graphMe(IScript):
 
         return {
                 "type": "addData", "node": {
+                    "project": "Jeb: " + rchop(rchop(ctx.mainProject.name, '.jdb2'), '.apk'),
                     "address": addr, 
                     "class": class_name, 
                     "classAddress": class_addr,
@@ -69,5 +71,4 @@ class graphMe(IScript):
                     ]
                 }
             }
-
 
