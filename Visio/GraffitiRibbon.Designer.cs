@@ -38,17 +38,20 @@
             this.group1 = this.Factory.CreateRibbonGroup();
             this.HostEditBox = this.Factory.CreateRibbonEditBox();
             this.PortEditBox = this.Factory.CreateRibbonEditBox();
-            this.ColorsGroup = this.Factory.CreateRibbonGroup();
             this.ConnectButton = this.Factory.CreateRibbonButton();
             this.GotoInEditor = this.Factory.CreateRibbonButton();
+            this.ColorsGroup = this.Factory.CreateRibbonGroup();
             this.FirstThemeColor = this.Factory.CreateRibbonButton();
             this.SecondThemeColor = this.Factory.CreateRibbonButton();
             this.ThirdThemeColor = this.Factory.CreateRibbonButton();
             this.ForthThemeColor = this.Factory.CreateRibbonButton();
             this.FifthThemeColor = this.Factory.CreateRibbonButton();
+            this.group2 = this.Factory.CreateRibbonGroup();
+            this.AutoRelayoutSetting = this.Factory.CreateRibbonCheckBox();
             this.tab1.SuspendLayout();
             this.group1.SuspendLayout();
             this.ColorsGroup.SuspendLayout();
+            this.group2.SuspendLayout();
             this.SuspendLayout();
             // 
             // tab1
@@ -56,6 +59,7 @@
             this.tab1.ControlId.ControlIdType = Microsoft.Office.Tools.Ribbon.RibbonControlIdType.Office;
             this.tab1.Groups.Add(this.group1);
             this.tab1.Groups.Add(this.ColorsGroup);
+            this.tab1.Groups.Add(this.group2);
             this.tab1.Label = "Graffiti";
             this.tab1.Name = "tab1";
             // 
@@ -80,16 +84,6 @@
             this.PortEditBox.Name = "PortEditBox";
             this.PortEditBox.Text = "8765";
             // 
-            // ColorsGroup
-            // 
-            this.ColorsGroup.Items.Add(this.FirstThemeColor);
-            this.ColorsGroup.Items.Add(this.SecondThemeColor);
-            this.ColorsGroup.Items.Add(this.ThirdThemeColor);
-            this.ColorsGroup.Items.Add(this.ForthThemeColor);
-            this.ColorsGroup.Items.Add(this.FifthThemeColor);
-            this.ColorsGroup.Label = "Theme";
-            this.ColorsGroup.Name = "ColorsGroup";
-            // 
             // ConnectButton
             // 
             this.ConnectButton.Label = "Connect";
@@ -106,6 +100,16 @@
             this.GotoInEditor.OfficeImageId = "FileCheckOut";
             this.GotoInEditor.ShowImage = true;
             this.GotoInEditor.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.GotoInEditor_Click);
+            // 
+            // ColorsGroup
+            // 
+            this.ColorsGroup.Items.Add(this.FirstThemeColor);
+            this.ColorsGroup.Items.Add(this.SecondThemeColor);
+            this.ColorsGroup.Items.Add(this.ThirdThemeColor);
+            this.ColorsGroup.Items.Add(this.ForthThemeColor);
+            this.ColorsGroup.Items.Add(this.FifthThemeColor);
+            this.ColorsGroup.Label = "Theme";
+            this.ColorsGroup.Name = "ColorsGroup";
             // 
             // FirstThemeColor
             // 
@@ -142,6 +146,18 @@
             this.FifthThemeColor.Name = "FifthThemeColor";
             this.FifthThemeColor.ShowImage = true;
             // 
+            // group2
+            // 
+            this.group2.Items.Add(this.AutoRelayoutSetting);
+            this.group2.Label = "Settings";
+            this.group2.Name = "group2";
+            // 
+            // AutoRelayoutSetting
+            // 
+            this.AutoRelayoutSetting.Label = "Auto re-layout after addition";
+            this.AutoRelayoutSetting.Name = "AutoRelayoutSetting";
+            this.AutoRelayoutSetting.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.AutoRelayoutSetting_Click);
+            // 
             // GraffitiRibbon
             // 
             this.Name = "GraffitiRibbon";
@@ -154,6 +170,8 @@
             this.group1.PerformLayout();
             this.ColorsGroup.ResumeLayout(false);
             this.ColorsGroup.PerformLayout();
+            this.group2.ResumeLayout(false);
+            this.group2.PerformLayout();
             this.ResumeLayout(false);
 
         }
@@ -172,6 +190,8 @@
         internal Microsoft.Office.Tools.Ribbon.RibbonButton ForthThemeColor;
         internal Microsoft.Office.Tools.Ribbon.RibbonButton FifthThemeColor;
         internal Microsoft.Office.Tools.Ribbon.RibbonButton GotoInEditor;
+        internal Microsoft.Office.Tools.Ribbon.RibbonGroup group2;
+        internal Microsoft.Office.Tools.Ribbon.RibbonCheckBox AutoRelayoutSetting;
     }
 
     partial class ThisRibbonCollection

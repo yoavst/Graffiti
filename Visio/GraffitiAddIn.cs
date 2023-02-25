@@ -1,14 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Xml.Linq;
-using Office = Microsoft.Office.Core;
 using System.Threading.Tasks;
-using System.Diagnostics;
 using Visio = Microsoft.Office.Interop.Visio;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using System.Windows.Forms;
 
 namespace GraffitiForVisio
 {
@@ -16,6 +11,7 @@ namespace GraffitiForVisio
     {
         internal NetworkController NetworkController;
         internal VisioHelper VisioHelper;
+        internal bool ShouldAutoLayout = true;
 
         void NetworkCallback.OnAddData(AddDataNetworkPush push)
         {
@@ -38,7 +34,8 @@ namespace GraffitiForVisio
 
             VisioHelper.Select(Application.ActiveWindow, currentShape);
 
-            VisioHelper.Relayout(currentPage);
+            if (ShouldAutoLayout)
+                VisioHelper.Relayout(currentPage);
         }
 
         void NetworkCallback.OnAddDataBulk(AddDataBulkNetworkPush addDataBulk)
@@ -134,7 +131,20 @@ namespace GraffitiForVisio
 
         private void ThisAddIn_Startup(object sender, System.EventArgs e)
         {
+            Application.KeyDown += Application_KeyDown;
+        }
 
+        private void Application_KeyDown(int KeyCode, int KeyButtonState, ref bool CancelDefault)
+        {
+            if (KeyCode == (short)0x24)
+            {
+                var selected = Globals.GraffitiAddIn.Application.ActiveWindow.Selection.PrimaryItem;
+                if (selected != null)
+                {
+                    GotoInEditor(selected);
+                    CancelDefault = true;
+                }
+            }
         }
 
         private void ThisAddIn_Shutdown(object sender, System.EventArgs e)

@@ -1,14 +1,6 @@
-﻿using Microsoft.Office.Core;
-using Visio = Microsoft.Office.Interop.Visio;
+﻿using Visio = Microsoft.Office.Interop.Visio;
 using Microsoft.Office.Tools.Ribbon;
-using System;
-using System.Collections.Generic;
 using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Forms;
-using System.Reflection;
 
 namespace GraffitiForVisio
 {
@@ -49,6 +41,8 @@ namespace GraffitiForVisio
                     }
                 };
             }
+
+            AutoRelayoutSetting.Checked = Globals.GraffitiAddIn.ShouldAutoLayout;
         }
 
         public void SetConnected()
@@ -78,6 +72,11 @@ namespace GraffitiForVisio
         private void GotoInEditor_Click(object sender, RibbonControlEventArgs e)
         {
             Globals.GraffitiAddIn.GotoInEditor(Globals.GraffitiAddIn.Application.ActiveWindow.Selection.PrimaryItem);
+        }
+
+        private void AutoRelayoutSetting_Click(object sender, RibbonControlEventArgs e)
+        {
+            Globals.GraffitiAddIn.ShouldAutoLayout = AutoRelayoutSetting.Checked;
         }
     }
 }

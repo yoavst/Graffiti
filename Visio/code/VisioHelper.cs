@@ -1,13 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
-using System.Runtime.InteropServices;
-using System.Runtime.Remoting.Messaging;
-using System.Security.Cryptography;
-using System.Text;
 using System.Drawing;
-using System.Threading.Tasks;
 using Visio = Microsoft.Office.Interop.Visio;
 
 namespace GraffitiForVisio
@@ -31,7 +25,7 @@ namespace GraffitiForVisio
             {
                 // TODO add connector info
                 shape = page.DropConnected(ShapeMaster, connectedTo,
-                    isNodeTarget ? Visio.VisAutoConnectDir.visAutoConnectDirDown : Visio.VisAutoConnectDir.visAutoConnectDirUp);
+                    !isNodeTarget ? Visio.VisAutoConnectDir.visAutoConnectDirDown : Visio.VisAutoConnectDir.visAutoConnectDirUp);
             }
             else
             {
