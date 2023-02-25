@@ -43,6 +43,7 @@ async def handle_web(websocket):
         while True:
             msg = await websocket.recv()
             if msg != 'MAGIC':
+                print ("[I] Got Web push")
                 for i in range(len(list_ide_pull) - 1, -1, -1):
                     ide_writer = list_ide_pull[i]
                     try:
