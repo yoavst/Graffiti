@@ -18,19 +18,14 @@ namespace GraffitiForVisio
             ShapeMaster = Stencil.Masters.get_ItemU(@"Package (collapsed)");
         }
 
-        public Visio.Shape CreateBasicShape(Visio.Page page, Visio.Shape connectedTo, bool isNodeTarget)
+        public Visio.Shape CreateBasicShape(Visio.Page page, double? xHint = null, double? yHint = null)
         {
             Visio.Shape shape;
-            if (connectedTo != null)
-            {
-                // TODO add connector info
-                shape = page.DropConnected(ShapeMaster, connectedTo,
-                    !isNodeTarget ? Visio.VisAutoConnectDir.visAutoConnectDirDown : Visio.VisAutoConnectDir.visAutoConnectDirUp);
-            }
-            else
-            {
-                shape = page.Drop(ShapeMaster, 5, 5);
-            }
+
+            double x = xHint ?? 5;
+            double y = yHint ?? 5;
+
+            shape = page.Drop(ShapeMaster, x, y);
 
             // Set shape border
             shape.CellsU["LineWeight"].FormulaU = "1.5 pt";
@@ -59,7 +54,7 @@ namespace GraffitiForVisio
 
         public void SetBackgroundColor(Visio.Shape shape, Color color)
         {
-            shape.CellsU["FillForegnd"].FormulaU = string.Format("RGB({0},{1},{2})",color.R, color.G, color.B);
+            shape.CellsU["FillForegnd"].FormulaU = string.Format("RGB({0},{1},{2})", color.R, color.G, color.B);
         }
 
         public void SetTextColor(Visio.Shape shape, Color color)
@@ -67,7 +62,7 @@ namespace GraffitiForVisio
             shape.CellsU["Char.Color"].FormulaU = string.Format("RGB({0},{1},{2})", color.R, color.G, color.B);
         }
 
-        public void Connect(Visio.Shape shape1, Visio.Shape shape2, bool isNodeTarget)
+        public void Connect(Visio.Page page, Visio.Shape shape1, Visio.Shape shape2, bool isTheSelectedNodeTarget)
         {
             if (shape1 == shape2)
             {
@@ -76,7 +71,7 @@ namespace GraffitiForVisio
 
             }
 
-            if (isNodeTarget)
+            if (isTheSelectedNodeTarget)
             {
                 var temp = shape1;
                 shape1 = shape2;
@@ -84,7 +79,13 @@ namespace GraffitiForVisio
             }
             if (shape1 != null && shape2 != null)
             {
-                shape1.AutoConnect(shape2, Visio.VisAutoConnectDir.visAutoConnectDirDown);
+                Visio.Shape connector = page.Drop(page.Application.ConnectorToolDataObject, 0.0, 0.0);
+
+                // Set the connector's endpoints
+                connector.CellsU["BeginX"].GlueTo(shape1.CellsU["PinX"]);
+                connector.CellsU["EndX"].GlueTo(shape2.CellsU["PinX"]);
+
+                //shape1.AutoConnect(shape2, Visio.VisAutoConnectDir.visAutoConnectDirDown);
             }
         }
 
@@ -97,13 +98,13 @@ namespace GraffitiForVisio
 
             //layoutCell = page.PageSheet.get_CellsSRC((short)VisSectionIndices.visSectionObject,(short)VisRowIndices.visRowPageLayout,(short)VisCellIndices.visPLORouteStyle);
             //layoutCell.set_Result(VisUnitCodes.visPageUnits, (short)VisCellVals.visLORouteFlowchartNS);
-            
+
             page.Layout();
         }
 
         public void Select(Visio.Window window, Visio.Shape shape)
         {
-            window.Select(shape, (short)Visio.VisSelectArgs.visSelect | (short) Visio.VisSelectArgs.visDeselectAll);
+            window.Select(shape, (short)Visio.VisSelectArgs.visSelect | (short)Visio.VisSelectArgs.visDeselectAll);
         }
 
         public Visio.Shape GetMatchingShape(Visio.Page page, Func<Visio.Shape, bool> condition)
@@ -114,6 +115,17 @@ namespace GraffitiForVisio
         public IEnumerable<Visio.Shape> GetMatchingShapes(Visio.Page page, Func<Visio.Shape, bool> condition)
         {
             return page.Shapes.Cast<Visio.Shape>().Where(condition);
+        }
+
+        public Tuple<double?, double?> getXYNearSelection(Visio.Shape selection, bool isTheSelectedNodeTarget)
+        {
+            if (selection != null)
+            {
+                var x = selection.Cells["PinX"].Result[Visio.VisUnitCodes.visNoCast];
+                var y = selection.Cells["PinY"].Result[Visio.VisUnitCodes.visNoCast] - (isTheSelectedNodeTarget ? -1 : 1);
+                return new Tuple<double?, double?>(x, y);
+            }
+            return new Tuple<double?, double?>(null, null);
         }
     }
 }

@@ -36,9 +36,6 @@ namespace GraffitiForVisio
             }
         }
 
-        [JsonProperty(PropertyName = "isNodeTarget")]
-        public bool IsNodeTarget { get; set; }
-
         public List<ComputedProperty> computedProperties { get; set; }
 
         [JsonExtensionData]

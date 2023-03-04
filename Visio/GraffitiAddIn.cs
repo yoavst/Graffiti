@@ -4,6 +4,7 @@ using Visio = Microsoft.Office.Interop.Visio;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Windows.Forms;
+using Microsoft.Office.Interop.Visio;
 
 namespace GraffitiForVisio
 {
@@ -23,14 +24,16 @@ namespace GraffitiForVisio
 
             if (currentShape == null)
             {
-                var newShape = VisioHelper.CreateBasicShape(currentPage, currentSelection, resolvedNode.IsNodeTarget);
+                var xy = VisioHelper.getXYNearSelection(currentSelection, push.IsTheSelectedNodeTarget);
+
+                var newShape = VisioHelper.CreateBasicShape(currentPage, xy.Item1, xy.Item2);
                 ApplyNodeToShape(push.Node, newShape);
 
                 currentShape = newShape;
-            } else
-            {
-                VisioHelper.Connect(currentSelection, currentShape, resolvedNode.IsNodeTarget);
             }
+
+            VisioHelper.Connect(currentPage, currentSelection, currentShape, push.IsTheSelectedNodeTarget);
+            
 
             VisioHelper.Select(Application.ActiveWindow, currentShape);
 
@@ -40,7 +43,32 @@ namespace GraffitiForVisio
 
         void NetworkCallback.OnAddDataBulk(AddDataBulkNetworkPush addDataBulk)
         {
-            throw new NotImplementedException();
+            var currentPage = Application.ActivePage;
+            var currentSelection = Application.ActiveWindow.Selection.PrimaryItem;
+            if (currentSelection == null) return;
+            var xy = VisioHelper.getXYNearSelection(currentSelection, isTheSelectedNodeTarget: true);
+
+            foreach (var node in addDataBulk.Nodes)
+            {
+                var resolvedNode = node.Resolve();
+                var currentShape = VisioHelper.GetMatchingShape(currentPage, (shape) => resolvedNode.Address == ShapeToNode(shape)?.Address);
+
+                if (currentShape == null)
+                {
+                    var newShape = VisioHelper.CreateBasicShape(currentPage, xy.Item1, xy.Item2);
+                    xy = new Tuple<double?, double?>(xy.Item1 + 1, xy.Item2);
+
+                    ApplyNodeToShape(node, newShape);
+                    currentShape = newShape;
+
+                    VisioHelper.Select(Application.ActiveWindow, currentSelection);
+                }
+
+                VisioHelper.Connect(currentPage, currentSelection, currentShape, isTheSelectedNodeTarget: true);
+            }
+
+            if (ShouldAutoLayout)
+                VisioHelper.Relayout(currentPage);
         }
 
 

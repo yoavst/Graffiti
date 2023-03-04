@@ -29,6 +29,9 @@ namespace GraffitiForVisio
     {
         [JsonProperty(PropertyName = "node")]
         public Node Node { get; set; }
+
+        [JsonProperty(PropertyName = "isNodeTarget")]
+        public bool IsTheSelectedNodeTarget { get; set; }
     }
 
     internal class AddDataBulkNetworkPush : BaseNetworkPush
