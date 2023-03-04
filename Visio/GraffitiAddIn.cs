@@ -4,16 +4,26 @@ using Visio = Microsoft.Office.Interop.Visio;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Windows.Forms;
-using Microsoft.Office.Interop.Visio;
 
 namespace GraffitiForVisio
 {
     public partial class GraffitiAddIn : NetworkCallback
     {
         internal NetworkController NetworkController;
-        internal VisioHelper VisioHelper;
+        private VisioHelper _visioHelper;
+        internal VisioHelper VisioHelper { 
+            get { 
+                if (_visioHelper == null)
+                {
+                    _visioHelper = new VisioHelper(this.Application);
+                }
+
+                return _visioHelper; 
+            } 
+        }
         internal bool ShouldAutoLayout = true;
 
+        
         void NetworkCallback.OnAddData(AddDataNetworkPush push)
         {
             var currentPage = Application.ActivePage;
@@ -93,8 +103,6 @@ namespace GraffitiForVisio
 
         public void OnConnectClicked(string host, int port)
         {
-            VisioHelper = new VisioHelper(this.Application);
-
             var oldNetworkController = NetworkController;
             NetworkController = new NetworkController(host, port);
             Task.Run(async () => {
