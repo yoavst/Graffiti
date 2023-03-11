@@ -5,13 +5,14 @@ Create customized callgraph directly from your favorite IDE.
 
 
 ## Features
-* Add a node to the callgraph directly from your IDE. Currently supports both JEB and Intellij. You can select the parent node using a click.
+* Add a node to the callgraph directly from your IDE. Currently supports both JEB, Intellij and VSCode. You can select the parent node using a click.
 * Switch the direction of the arrow directly from your IDE.
 * Open the code of a node using right click
 * Export the graph to mermaid 
 * The graph support scrolling and zooming
 * Auto save to localstorage
 * Multiple tabs
+* Alpha Visio support
 
 ## Setup
 1. Run the python server
@@ -37,3 +38,7 @@ Run the script graphPull.py to connect JEB to the server. Then, you can use the 
 ### Intellij - Alpha
 Install the Intellij Plugin. Then, in tools menu, enable graffiti sync.
 Now, you can right click inside a function, and choose to add the current method to graffiti.
+
+### VSCode - Alpha
+Install the vscode plugin. Then, run the graffiti server command.
+Now you can be inside a function, and run the graffiti add command.
