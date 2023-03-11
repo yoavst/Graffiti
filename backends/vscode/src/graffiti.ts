@@ -1,18 +1,20 @@
 import * as net from 'net';
 import * as vscode from 'vscode';
+import { Memento } from "vscode";
 import { SymbolKind } from 'vscode';
 import { join, basename } from 'path';
 import { SymbolNode, ScopeFinder } from './scope';
+import { LocalStorageService } from './storage';
 
 let currentServerConnection: net.Socket | null = null
 
 // TODO assuming single workspace
 
 // Graffiti jsons
-export function createUpdate(document: vscode.TextDocument, symbol: SymbolNode) {
+export function createUpdate(document: vscode.TextDocument, symbol: SymbolNode, edgeText: string = null) {
     const name = getName(basename(document.fileName), symbol)
     if (name == null) return null
-    return {
+    const base = {
         "type": "addData", "node": {
             "project": "VSCode: " + getProjectName(),
             "address": vscode.workspace.asRelativePath(document.uri) + ":" + symbol.range.start.line,
@@ -20,6 +22,13 @@ export function createUpdate(document: vscode.TextDocument, symbol: SymbolNode) 
             "computedProperties": []
         }
     }
+    if (edgeText) {
+        base['edge'] = { 'label': edgeText }
+    }
+
+    base['isNodeTarget'] = getIsNodeTarget()
+
+    return base
 }
 
 const SymbolKindsForScope = [
@@ -67,7 +76,7 @@ function getName(filename: string, symbol: SymbolNode): string {
 
             if (SymbolKindsForName.indexOf(node.symbolInfo?.kind) >= 0) {
                 name.push(node.symbolInfo.name)
-            } 
+            }
         }
     }
 
@@ -124,4 +133,15 @@ function jumpTo(path: string, line: number) {
     vscode.workspace.openTextDocument(uri).then((document) => {
         vscode.window.showTextDocument(document, { selection: new vscode.Range(line, 0, line, 0) });
     });
+}
+
+function getIsNodeTarget(): boolean {
+    const result = LocalStorageService.instance.getValue<boolean>('__yoav_is_node_target')
+    if (result === null) return true
+    return !!result
+}
+
+export function switchIsNodeTarget() {
+    const newValue = !getIsNodeTarget()
+    LocalStorageService.instance.setValue<boolean>('__yoav_is_node_target', newValue);
 }

@@ -42,7 +42,7 @@ namespace GraffitiForVisio
                 currentShape = newShape;
             }
 
-            VisioHelper.Connect(currentPage, currentSelection, currentShape, push.IsTheSelectedNodeTarget);
+            VisioHelper.Connect(currentPage, currentSelection, currentShape, push.IsTheSelectedNodeTarget, push.EdgeInfo?.Label);
             
 
             VisioHelper.Select(Application.ActiveWindow, currentShape);

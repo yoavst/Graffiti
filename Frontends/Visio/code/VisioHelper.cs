@@ -62,7 +62,7 @@ namespace GraffitiForVisio
             shape.CellsU["Char.Color"].FormulaU = string.Format("RGB({0},{1},{2})", color.R, color.G, color.B);
         }
 
-        public void Connect(Visio.Page page, Visio.Shape shape1, Visio.Shape shape2, bool isTheSelectedNodeTarget)
+        public void Connect(Visio.Page page, Visio.Shape shape1, Visio.Shape shape2, bool isTheSelectedNodeTarget, string label = null)
         {
             if (shape1 == shape2)
             {
@@ -80,6 +80,15 @@ namespace GraffitiForVisio
             if (shape1 != null && shape2 != null)
             {
                 Visio.Shape connector = page.Drop(page.Application.ConnectorToolDataObject, 0.0, 0.0);
+
+                // Set connector font, in case we want to add a label
+                connector.CellsU["Char.Font"].FormulaU = "\"Calibri\"";
+                connector.CellsU["Char.Size"].FormulaU = "6 pt";
+
+                if (label != null)
+                {
+                    connector.Characters.Text = label;
+                }
 
                 // Set the connector's endpoints
                 connector.CellsU["BeginX"].GlueTo(shape1.CellsU["PinX"]);

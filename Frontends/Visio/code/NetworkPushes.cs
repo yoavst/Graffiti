@@ -32,11 +32,14 @@ namespace GraffitiForVisio
 
         [JsonProperty(PropertyName = "isNodeTarget")]
         public bool IsTheSelectedNodeTarget { get; set; }
+
+        [JsonProperty(PropertyName = "edge")]
+        public EdgeInfo EdgeInfo { get; set; }
     }
 
     internal class AddDataBulkNetworkPush : BaseNetworkPush
     {
-        [JsonProperty(PropertyName = "nodes")]
+        [JsonProperty(PropertyName = "nodes", Required = Required.AllowNull)]
         public List<Node> Nodes { get; set; }
     }
 
@@ -47,5 +50,11 @@ namespace GraffitiForVisio
 
         [JsonProperty(PropertyName = "update")]
         public Dictionary<string, string> Update { get; set; }
+    }
+
+    internal class EdgeInfo
+    {
+        [JsonProperty(PropertyName = "label")]
+        public string Label { get; set; }
     }
 }
