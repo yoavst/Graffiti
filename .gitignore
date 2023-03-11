@@ -505,3 +505,7 @@ FodyWeavers.xsd
 
 # JetBrains Rider
 *.sln.iml
+
+out
+node_modules
+*.vsix
