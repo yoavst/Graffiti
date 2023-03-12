@@ -1,6 +1,5 @@
 import * as net from 'net';
 import * as vscode from 'vscode';
-import { Memento } from "vscode";
 import { SymbolKind } from 'vscode';
 import { join, basename } from 'path';
 import { SymbolNode, ScopeFinder } from './scope';
@@ -12,12 +11,14 @@ let currentServerConnection: net.Socket | null = null
 
 // Graffiti jsons
 export function createUpdate(document: vscode.TextDocument, symbol: SymbolNode, edgeText: string = null) {
-    const name = getName(basename(document.fileName), symbol)
-    if (name == null) return null
+    const nameAndSymbol = getNameAndLastSymbol(basename(document.fileName), symbol)
+    if (nameAndSymbol == null) return null
+
+    const [name, lastSymbol] = nameAndSymbol
     const base = {
         "type": "addData", "node": {
             "project": "VSCode: " + getProjectName(),
-            "address": vscode.workspace.asRelativePath(document.uri) + ":" + symbol.range.start.line,
+            "address": vscode.workspace.asRelativePath(document.uri) + ":" + lastSymbol.range.start.line,
             "label": name,
             "computedProperties": []
         }
@@ -45,7 +46,7 @@ const SymbolKindsForName = [
 ]
 
 
-function getName(filename: string, symbol: SymbolNode): string {
+function getNameAndLastSymbol(filename: string, symbol: SymbolNode): [string, SymbolNode] {
     if (symbol.isRoot) {
         return null
     }
@@ -62,6 +63,7 @@ function getName(filename: string, symbol: SymbolNode): string {
 
     let scope: string[] = []
     let name: string[] = []
+    let lastName: SymbolNode = null
     for (const node of nodes) {
         if (SymbolKindsForScope.indexOf(node.symbolInfo?.kind) >= 0) {
             scope.push(node.symbolInfo.name)
@@ -70,20 +72,21 @@ function getName(filename: string, symbol: SymbolNode): string {
                 // First non scope symbol, probably want to add a variable to graffiti
                 if (node.symbolInfo?.kind == SymbolKind.Field || node.symbolInfo?.kind == SymbolKind.Variable) {
                     name.push("_" + node.symbolInfo.name)
+                    lastName = node
                     break
                 }
             }
 
             if (SymbolKindsForName.indexOf(node.symbolInfo?.kind) >= 0) {
                 name.push(node.symbolInfo.name)
+                lastName = node
             }
         }
     }
 
     if (name.length == 0) return null;
 
-    return (scope.join('.') || filename) + "::\n" + name.join('.');
-
+    return [(scope.join('.') || filename) + "::\n" + name.join('.'), lastName]
 }
 
 
