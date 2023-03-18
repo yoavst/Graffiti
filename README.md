@@ -42,3 +42,6 @@ Now, you can right click inside a function, and choose to add the current method
 ### VSCode - Alpha
 Install the vscode plugin. Then, run the graffiti server command.
 Now you can be inside a function, and run the graffiti add command.
+
+# Credits
+The logo icons created by Freepik - Flaticon.
