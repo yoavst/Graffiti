@@ -2,41 +2,32 @@ chrome.runtime.onMessage.addListener(function (msg, sender, sendResponse) {
     const yLocationContextMenu = parseInt(document.body.getAttribute("contextMenuY") || '0')
     const yLocation = parseInt(document.body.getAttribute("regularY") || '0')
 
-    if (msg.action === 'getCurrentSymbolContextMenu') {
-        const currentSymbol = getCurrentSymbol(yLocationContextMenu)
-        if (currentSymbol != null) {
-            sendResponse(currentSymbol)
-            return
-        }
-    } else if (msg.action == 'getCurrentSymbolContextMenuAndEdgeInfo') {
-        const currentSymbol = getCurrentSymbol(yLocationContextMenu)
-        if (currentSymbol != null) {
-            let edgeInfo = prompt("Enter edge text", "");
-            if (edgeInfo != null) {
-                currentSymbol.edgeInfo = edgeInfo
+    let y = 'ContextMenu' in msg.action ? yLocationContextMenu : yLocation
+    switch (msg.action) {
+        case 'getCurrentSymbolContextMenu':
+        case 'getCurrentSymbol': {
+            const currentSymbol = getCurrentSymbol(y)
+            if (currentSymbol != null) {
                 sendResponse(currentSymbol)
                 return
             }
+            break
         }
-    } else if (msg.action === 'getCurrentSymbol') {
-        const currentSymbol = getCurrentSymbol(yLocation)
-        if (currentSymbol != null) {
-            sendResponse(currentSymbol)
-            return
-        }
-    } else if (msg.action == 'getCurrentSymbolAndEdgeInfo') {
-        const currentSymbol = getCurrentSymbol(yLocation)
-        if (currentSymbol != null) {
-            let edgeInfo = prompt("Enter edge text", "");
-            if (edgeInfo != null) {
-                currentSymbol.edgeInfo = edgeInfo
-                sendResponse(currentSymbol)
-                return
+        case 'getCurrentSymbolContextMenuAndEdgeInfo':
+        case 'getCurrentSymbolAndEdgeInfo': {
+            const currentSymbol = getCurrentSymbol(yLocation)
+            if (currentSymbol != null) {
+                let edgeInfo = prompt("Enter edge text", "");
+                if (edgeInfo != null) {
+                    currentSymbol.edgeInfo = edgeInfo
+                    sendResponse(currentSymbol)
+                    return
+                }
             }
+            break
         }
-    } else {
-        return
     }
+
     sendResponse(null)
 })
 
@@ -72,6 +63,7 @@ function getCurrentSymbol(yLocation) {
         return {
             sig: sig.textContent,
             fileName: fileName.textContent,
+            site: url.host,
             line: parseInt(line.getAttribute('name')),
             address: url.toString()
         }

@@ -16,10 +16,9 @@ function main() {
         chrome.storage.local.set({ 'src_dest': event.target.checked });
     });
 
-    chrome.runtime.sendMessage({ action: "getConnectPull" }, function (response) { })
 
     document.getElementById('connectBtn').onclick = function (event) {
-        chrome.runtime.sendMessage({ action: "connectPull", addr: document.getElementById('socketUrl').value }, function (response) { })
+        chrome.runtime.sendMessage({ action: "connectPull", addr: document.getElementById('socketUrl').value })
     }
 
     chrome.runtime.onMessage.addListener(function (msg, sender, sendResponse) {
@@ -32,6 +31,8 @@ function main() {
             sendResponse({})
         }
     })
+
+    chrome.runtime.sendMessage({ action: "getConnectPull" })
 }
 
 

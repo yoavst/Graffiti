@@ -2,6 +2,7 @@ let pullWebSocket = null
 let cachedSettings = {}
 
 function main() {
+    // Cache settings
     chrome.storage.local.get(["tab_behavior", "src_dest"], function (result) {
         cachedSettings = result
     })
@@ -12,7 +13,7 @@ function main() {
         }
     })
 
-
+    // Add context menu
     chrome.contextMenus.create({
         id: 'add_to_graffiti',
         title: 'Add to Graph',
@@ -25,19 +26,21 @@ function main() {
     })
     chrome.contextMenus.onClicked.addListener(contextClick)
 
+    // Handle connection commands
     chrome.runtime.onMessage.addListener(function (msg, sender, sendResponse) {
         if (msg.action == 'getConnectPull') {
             sendResponse({})
 
-            if (pullWebSocket == null) chrome.runtime.sendMessage({ action: "getConnectPullResult" }, function (response) { })
-            else if (pullWebSocket.readyState === WebSocket.CLOSED) chrome.runtime.sendMessage({ action: "getConnectPullResult", status: false }, function (response) { })
-            else chrome.runtime.sendMessage({ action: "getConnectPullResult", status: true }, function (response) { })
+            if (pullWebSocket == null) chrome.runtime.sendMessage({ action: "getConnectPullResult" })
+            else if (pullWebSocket.readyState === WebSocket.CLOSED) chrome.runtime.sendMessage({ action: "getConnectPullResult", status: false })
+            else chrome.runtime.sendMessage({ action: "getConnectPullResult", status: true })
         } else if (msg.action == 'connectPull') {
             sendResponse({})
             connectPullWebSocket(msg.addr)
         }
     })
 
+    // Handle keyboard commands
     chrome.commands.onCommand.addListener(function (command) {
         chrome.tabs.query({active: true}, function (tabs) {
             if (command === 'add_to_graffiti') {
@@ -134,7 +137,7 @@ function onSymbol(symbolInfo) {
     websocket.onopen = function () {
         const data = {
             "type": "addData", "node": {
-                "project": "OpenGrok: ", // FIXME
+                "project": "OpenGrok: " + symbolInfo.site, 
                 "address": symbolInfo.address,
                 "label": symbolInfo.fileName + "::\n" + symbolInfo.sig,
                 "computedProperties": []
