@@ -28,8 +28,9 @@ function main() {
             } else if (msg.status === false) {
                 document.getElementById("connectBtn").style.backgroundColor = "red"
             }
-            sendResponse({})
         }
+        sendResponse({})
+        return true;
     })
 
     chrome.runtime.sendMessage({ action: "getConnectPull" })

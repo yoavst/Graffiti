@@ -2,7 +2,7 @@ chrome.runtime.onMessage.addListener(function (msg, sender, sendResponse) {
     const yLocationContextMenu = parseInt(document.body.getAttribute("contextMenuY") || '0')
     const yLocation = parseInt(document.body.getAttribute("regularY") || '0')
 
-    let y = 'ContextMenu' in msg.action ? yLocationContextMenu : yLocation
+    let y = msg.action.includes('ContextMenu') ? yLocationContextMenu : yLocation
     switch (msg.action) {
         case 'getCurrentSymbolContextMenu':
         case 'getCurrentSymbol': {
@@ -29,6 +29,7 @@ chrome.runtime.onMessage.addListener(function (msg, sender, sendResponse) {
     }
 
     sendResponse(null)
+    return true;
 })
 
 function getCurrentSymbol(yLocation) {

@@ -38,6 +38,7 @@ function main() {
             sendResponse({})
             connectPullWebSocket(msg.addr)
         }
+        return true;
     })
 
     // Handle keyboard commands
