@@ -48,7 +48,7 @@
             },
             {
                 "command": "graffiti.ConnectToServer",
-                "title": "Graffiti: Connect to server for pull events"
+                "title": "Graffiti: Connect to server"
             }
         ],
         "keybindings": [
