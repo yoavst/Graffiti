@@ -82,7 +82,7 @@
             // 
             this.PortEditBox.Label = "Port";
             this.PortEditBox.Name = "PortEditBox";
-            this.PortEditBox.Text = "8765";
+            this.PortEditBox.Text = "8503";
             // 
             // ConnectButton
             // 

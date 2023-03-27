@@ -1,15 +1,21 @@
 import json
 from java.io import PrintWriter
-from java.net import Socket
 from com.pnfsoftware.jeb.core.units.code.android import IDexUnit
 from com.pnfsoftware.jeb.core.units.code.java import IJavaSourceUnit
 
-def send_update(data):
-    s = Socket("localhost", 8764)
-    out = PrintWriter(s.getOutputStream(), True)
-    out.print(json.dumps(data))
-    out.flush()
-    s.close()
+
+
+def send_update(ctx, data):
+    prj = ctx.getMainProject()
+    dex = prj.findUnit(IDexUnit)
+    for listener in dex.getListeners():
+        if hasattr(listener, 'IN_SCRIPT'):
+            out = PrintWriter(listener.sock.getOutputStream(), True)
+            out.print(json.dumps(data))
+            out.flush()
+            break
+    else:
+        print("Listener not found, cannot send update")
 
 def get_current_method(ctx):
     view = ctx.getFocusedView()

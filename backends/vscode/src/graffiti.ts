@@ -92,14 +92,11 @@ function getNameAndLastSymbol(filename: string, symbol: SymbolNode): [string, Sy
 
 // Sockets
 export function sendUpdate(data: any) {
-    const client = new net.Socket();
-
+    const socket = currentServerConnection
     // Connect to the server
-    client.connect(8764, 'localhost', () => {
-        console.log('Connected to server')
-        client.write(JSON.stringify(data))
-        client.end()
-    });
+    if (socket != null) {
+        socket.write(JSON.stringify(data))
+    }
 }
 
 export function connectServer(host: string, port: number) {
@@ -107,12 +104,17 @@ export function connectServer(host: string, port: number) {
 
     currentServerConnection = new net.Socket();
     currentServerConnection.connect(port, host, () => {
-        console.log('Connected to pull socket')
+        console.log('Connected to graffiti!')
     });
 
     currentServerConnection.on('data', (data) => {
         let [path, line] = data.toString().trim().split(":")
         jumpTo(path, parseInt(line))
+    })
+
+    currentServerConnection.on('close', (_) => {
+        console.log("Connection closed")
+        currentServerConnection = null
     })
 }
 

@@ -11,8 +11,6 @@ namespace GraffitiForVisio
 {
     internal class NetworkController
     {
-        private static string MAGIC = "MAGIC";
-
         private readonly string Host;
         private readonly int Port;
         private ClientWebSocket ws;
@@ -37,7 +35,6 @@ namespace GraffitiForVisio
                 await ws.ConnectAsync(uri, source.Token);
 
 
-                await SendAsync(MAGIC);
                 Globals.Ribbons.Ribbon1.SetConnected();
 
                 while (ws != null && ws.State == WebSocketState.Open)
@@ -61,7 +58,6 @@ namespace GraffitiForVisio
                             break;
                     }
 
-                    await SendAsync(MAGIC);
                 }
             }
             catch (WebSocketException ex)

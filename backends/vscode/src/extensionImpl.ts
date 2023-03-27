@@ -107,7 +107,7 @@ export class ScopeSymbolProvider {
         vscode.commands.registerCommand("graffiti.ConnectToServer", async () => {
             const address = await vscode.window.showInputBox({
                 prompt: 'Enter server address',
-                value: "localhost:8763"
+                value: "localhost:8501"
             })
 
             if (!address) return

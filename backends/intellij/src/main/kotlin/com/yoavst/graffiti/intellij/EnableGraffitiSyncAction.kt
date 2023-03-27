@@ -21,16 +21,22 @@ class EnableGraffitiSyncAction : AnAction() {
 
     override fun actionPerformed(e: AnActionEvent) {
         val (address, port) = getAddressAndPort(e.project!!)
+
+        val old = SocketHolder.socket
+        SocketHolder.socket = null
+        old?.close()
+        SocketHolder.socket = Socket(address, port)
+
         thread(start = true, isDaemon = true) {
-            threadCode(e.project!!, address, port)
+            threadCode(e.project!!)
         }
 
     }
 
-    private fun threadCode(project: Project, address: String, port: Int) {
+    private fun threadCode(project: Project) {
         logger.info("Background thread is running")
         try {
-            Socket(address, port).use { sock ->
+            SocketHolder.socket?.use { sock ->
                 val stream = sock.getInputStream().bufferedReader()
                 while (true) {
                     val line = stream.readLine()
@@ -54,8 +60,8 @@ class EnableGraffitiSyncAction : AnAction() {
     private fun getAddressAndPort(project: Project): Pair<String, Int> {
         val addressAndPort = Messages.showInputDialog(
             project, "Enter address and port for connection",
-            "Input", Messages.getQuestionIcon(), "localhost:8763", null
-        ) ?: "localhost:8763"
+            "Input", Messages.getQuestionIcon(), "localhost:8501", null
+        ) ?: "localhost:8501"
         return addressAndPort.split(":").let { (address, port) -> address to port.toInt() }
     }
 }

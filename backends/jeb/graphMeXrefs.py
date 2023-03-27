@@ -16,8 +16,8 @@ class graphMeXrefs(IScript):
             if method:
                 update = self.create_method_xrefs_update(ctx, method)
                 if update is not None:
-                    update["isNodeTarget"] =  False
-                    send_update(update)
+                    update["isNodeTarget"] = False
+                    send_update(ctx, update)
 
         except:
             traceback.print_exc(file=sys.stdout)
