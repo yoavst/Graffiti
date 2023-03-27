@@ -62,14 +62,19 @@ async def handle_ide_tcp(reader: asyncio.StreamReader, writer: asyncio.StreamWri
 
     while True:
         # TODO is it OK? shouldn't I pass length before?
-        push = (await reader.read(4096)).decode('utf8')
-        if not push:
+        try:
+            push = (await reader.read(4096)).decode('utf8')
+            if not push:
+                logging.warning(f"[TCP] IDE Connection from {peer} is closed")
+                ide_tcps.remove((reader, writer))
+                break
+
+            # Handle push
+            await send_frontend(push, peer)
+        except ConnectionResetError:
             logging.warning(f"[TCP] IDE Connection from {peer} is closed")
             ide_tcps.remove((reader, writer))
             break
-
-        # Handle push
-        await send_frontend(push, peer)
 
 async def handle_ide_websocket(websocket: WebSocketServerProtocol):
     # Print connection info
