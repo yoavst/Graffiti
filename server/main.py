@@ -1,108 +1,111 @@
 import asyncio
 import socket
-
+import logging
+from typing import List, Tuple
 import websockets
+from websockets.server import WebSocketServerProtocol
 
-list_websockets = []
-list_ide_pull = []
-list_web_pull = []
+IDE_TCP_PORT = 8501
+IDE_WEBSOCKET_PORT = 8502
+FRONTEND_WEBSOCKET_PORT = 8503
 
-WEBSOCKET_PULL_PORT = 8767
-WEBSOCKET_PUSH_PORT = 8766
-WEBSOCKET_PORT = 8765
-PUSH_PORT = 8764
-PULL_PORT = 8763
+frontend_wss: List[WebSocketServerProtocol] = []
+ide_wss: List[WebSocketServerProtocol] = []
+ide_tcps: List[Tuple[asyncio.StreamReader, asyncio.StreamWriter]] = []
 
 
-# Push
-async def handle_ide_push(reader, writer):
-    print("[I] Got IDE connection!")
+async def send_frontend(request: str, src):
+    logging.info(f"Received push from {src}")
+    logging.debug(f"Push: {request}")
 
-    request = (await reader.read(4096)).decode('utf8')
-    await writer.close()
-
-    for i in range(len(list_websockets) - 1, -1, -1):
-        websocket = list_websockets[i]
+    # We duplicate the list, to prevent modification of the list while we use it. 
+    # handle_frontend is reponsible for cleaning the list in case of a closed socket.
+    for websocket in frontend_wss[:]:
         try:
             await websocket.send(request)
+        except websockets.exceptions.ConnectionClosed:
+            logging.debug(f"[WS] Frontend Connection from {websocket.remote_address} is closed, and was yet to be cleaned from the list")
 
-        except websockets.exceptions.ConnectionClosedOK:
-            print("[I] removing WEB!")
-            del list_websockets[i]
+async def send_ide(request: str, src):
+    logging.info(f"Received pull from {src}")
+    logging.debug(f"pull: {request}")
 
-async def handle_web_push(push_websocket):
-    # Support for chrome extension, which does not support TCP Sockets
-    print("[I] Got WEB IDE connection!")
+    # We duplicate the lists, to prevent modification of the lists while we use it. 
+    # handle_ide_X are reponsible for cleaning the lists in case of a closed socket.
 
-    request = await push_websocket.recv()
-    push_websocket.close()
-
-    for i in range(len(list_websockets) - 1, -1, -1):
-        websocket = list_websockets[i]
+    for _, writer in ide_tcps:
         try:
-            await websocket.send(request)
+            # TODO is it OK? shouldn't I pass length before?
+            writer.write((request + "\n").encode('utf-8'))
+            await writer.drain()
 
-        except websockets.exceptions.ConnectionClosedOK:
-            print("[I] removing WEB!")
-            del list_websockets[i]
+        except socket.error:
+            logging.debug(f"[TCP] IDE Connection from {writer.get_extra_info('peername')} is closed, and was yet to be cleaned from the list")
+
+    for websocket in ide_wss[:]:
+        try:
+            await websocket.send((request + "\n"))
+        except websockets.exceptions.ConnectionClosed:
+            logging.debug(f"[WS] IDE Connection from {websocket.remote_address} is closed, and was yet to be cleaned from the list")
 
 
-# Pull
-async def handle_ide_pull(_, writer):
-    print("[I] got IDE pulling connection!")
-    list_ide_pull.append(writer)
+async def handle_ide_tcp(reader: asyncio.StreamReader, writer: asyncio.StreamWriter):
+    # Print connection info
+    peer = reader.get_extra_info('peername')
+    logging.info(f"[TCP] Handling IDE Connection from {peer}")
+
+    # Save the connection
+    ide_tcps.append((reader, writer))
+
     while True:
-        await asyncio.Future()
+        # TODO is it OK? shouldn't I pass length before?
+        push = (await reader.read(4096)).decode('utf8')
+        if not push:
+            logging.info(f"[TCP] IDE Connection from {peer} is closed")
+            ide_tcps.remove((reader, writer))
+            break
 
-async def handle_web_pull(pull_websocket):
-    print("[I] got WEB IDE pulling connection!")
-    list_web_pull.append(pull_websocket)
-    while True:
-        await asyncio.Future()
+        # Handle push
+        await send_frontend(push, peer)
 
-async def handle_frontend(websocket):
-    magic = await websocket.recv()
-    print("[I] got WEB connection!")
-    list_websockets.append(websocket)
+async def handle_ide_websocket(websocket: WebSocketServerProtocol):
+    # Print connection info
+    peer = websocket.remote_address
+    logging.info(f"[WS] Handling IDE Connection from {peer}")
+
+    # Save the connection
+    ide_wss.append(websocket)
+
+    try:
+        while True:
+            push = await websocket.recv()
+            # Handle push
+            await send_frontend(push, peer)
+    except websockets.exceptions.ConnectionClosed:
+        logging.info(f"[WS] IDE Connection from {peer} is closed")
+        ide_wss.remove(websocket)
+    
+async def handle_frontend(websocket: WebSocketServerProtocol):
+    peer = websocket.remote_address
+    logging.info(f"[WS] Handling Frontend Connection from {peer}")
+    frontend_wss.append(websocket)
+
     try:
         while True:
             msg = await websocket.recv()
-            if msg != 'MAGIC':
-                print ("[I] Got Web push")
-                for i in range(len(list_ide_pull) - 1, -1, -1):
-                    ide_writer = list_ide_pull[i]
-                    try:
-                        ide_writer.write((msg + "\n").encode('utf-8'))
-                        await ide_writer.drain()
+            await send_ide(msg, peer)
 
-                    except socket.error:
-                        print("[I] removing IDE PULL!")
-                        del list_ide_pull[i]
-
-                for i in range(len(list_web_pull) - 1, -1, -1):
-                    pull_websocket = list_web_pull[i]
-                    try:
-                        await pull_websocket.send((msg + "\n"))
-
-                    except (websockets.exceptions.ConnectionClosedOK, websockets.exceptions.ConnectionClosedError):
-                        print("[I] removing WEB PULL!")
-                        del list_web_pull[i]
-
-    except (websockets.exceptions.ConnectionClosedOK, websockets.exceptions.ConnectionClosedError):
-        print("[I] removing WEB!")
-        try:
-            list_websockets.remove(websocket)
-        except ValueError:
-            pass
+    except websockets.exceptions.ConnectionClosed:
+        logging.info(f"[WS] Frontend Connection from {peer} is closed")
+        frontend_wss.remove(websocket)
 
 
 async def main():
-    async with websockets.serve(handle_frontend, "0.0.0.0", WEBSOCKET_PORT):
-        async with await asyncio.start_server(handle_ide_push, '0.0.0.0', PUSH_PORT):
-            async with await asyncio.start_server(handle_ide_pull, '0.0.0.0', PULL_PORT):
-                async with websockets.serve(handle_web_push, "0.0.0.0", WEBSOCKET_PUSH_PORT):
-                    async with websockets.serve(handle_web_pull, "0.0.0.0", WEBSOCKET_PULL_PORT):
-                        await asyncio.Future()  # run forever
+    async with websockets.serve(handle_frontend, "0.0.0.0", FRONTEND_WEBSOCKET_PORT):
+        async with await asyncio.start_server(handle_ide_tcp, '0.0.0.0', IDE_TCP_PORT):
+            async with websockets.serve(handle_ide_websocket, "0.0.0.0", IDE_WEBSOCKET_PORT):
+                # run forever
+                await asyncio.Future()  
 
 
 asyncio.run(main())
