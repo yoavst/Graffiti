@@ -1,6 +1,8 @@
 package com.yoavst.graffiti.intellij
 
 import com.google.gson.Gson
+import com.intellij.notification.NotificationGroupManager
+import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -53,7 +55,7 @@ open class AddToGraffitiAction : AnAction() {
 
         if (update != null) {
             update["isNodeTarget"] = direction
-            sendUpdate(update)
+            sendUpdate(event.project!!, update)
         }
     }
 
@@ -131,8 +133,14 @@ open class AddToGraffitiAction : AnAction() {
         )
     }
 
-    private fun sendUpdate(data: Any) {
-        val socket = SocketHolder.socket ?: return
+    private fun sendUpdate(project: Project, data: Any) {
+        val socket = SocketHolder.socket ?: run {
+            NotificationGroupManager.getInstance()
+                .getNotificationGroup("Graffiti Notifications")
+                .createNotification("Graffiti: Not connected to server", NotificationType.ERROR)
+                .notify(project)
+            return
+        }
         socket.getOutputStream().bufferedWriter().let { writer ->
             writer.write(Gson().toJson(data))
             writer.flush()

@@ -83,7 +83,7 @@ export class ScopeSymbolProvider {
             if (node != null) {
                 const update = graffiti.createUpdate(this._scopeFinder.document, node, edgeText)
                 if (update != null)
-                    graffiti.sendUpdate(update)
+                    await graffiti.sendUpdate(update)
             }
         });
 
@@ -94,14 +94,14 @@ export class ScopeSymbolProvider {
             if (node != null) {
                 const update = graffiti.createUpdate(this._scopeFinder.document, node)
                 if (update != null)
-                    graffiti.sendUpdate(update)
+                    await graffiti.sendUpdate(update)
             }
         });
 
         vscode.commands.registerCommand("graffiti.ChangeEdgeDirection", async () => {
             console.log("Graffiti.ChangeEdgeDirection()")
             graffiti.switchIsNodeTarget()
-            await vscode.window.showInformationMessage("Graffit: Switched edge direction")
+            await vscode.window.showInformationMessage("Graffiti: Switched edge direction")
         });
 
         vscode.commands.registerCommand("graffiti.ConnectToServer", async () => {

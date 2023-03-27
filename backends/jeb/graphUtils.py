@@ -15,7 +15,7 @@ def send_update(ctx, data):
             out.flush()
             break
     else:
-        print("Listener not found, cannot send update")
+        print("Graffiti: Not connected (or multiple project/dex units)")
 
 def get_current_method(ctx):
     view = ctx.getFocusedView()

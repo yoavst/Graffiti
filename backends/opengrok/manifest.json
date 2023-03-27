@@ -46,6 +46,7 @@
         "activeTab",
         "tabs",
         "storage",
+        "notifications",
         "<all_urls>"
     ]
 }

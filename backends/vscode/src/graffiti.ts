@@ -92,11 +92,13 @@ function getNameAndLastSymbol(filename: string, symbol: SymbolNode): [string, Sy
 
 
 // Sockets
-export function sendUpdate(data: any) {
+export async function sendUpdate(data: any) {
     const socket = currentServerConnection
     // Connect to the server
     if (socket != null) {
         socket.write(JSON.stringify(data))
+    } else {
+        await vscode.window.showInformationMessage("Graffiti: Not connected")
     }
 }
 

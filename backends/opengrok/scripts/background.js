@@ -138,12 +138,34 @@ function contextClick(info, tab) {
 function onSymbol(symbolInfo) {
     console.log(symbolInfo)
 
-    if (symbolInfo == null) return;
+    if (symbolInfo == null) {
+        chrome.notifications.create(
+            "noSymbol",
+            {
+              type: "basic",
+              iconUrl: "images/icon.png",
+              title: 'Graffiti',
+              message: 'Could not find symbol in this line'
+            }
+          );
+        return
+    }
 
     const srcDest = cachedSettings.src_dest || false
 
     const websocket = graffitiWebSocket
-    if (websocket == null) return;
+    if (websocket == null) {
+        chrome.notifications.create(
+            "notConnected",
+            {
+              type: "basic",
+              iconUrl: "images/icon.png",
+              title: 'Graffiti',
+              message: 'Not connected to server'
+            }
+          )
+        return
+    }
 
     const data = {
         "type": "addData", "node": {
