@@ -1,18 +1,56 @@
-# Graffiti
-Create customized callgraph directly from your favorite IDE.
+Graffiti
+========
+Create customized callgraph directly from your favorite editor.
 
-![Preview](screenshots/screenshot.png)
-
+![Preview](docs/images/screenshots/screenshot.png)
 
 ## Features
-* Add a node to the callgraph directly from your IDE. Currently supports both JEB, Intellij and VSCode. You can select the parent node using a click.
-* Switch the direction of the arrow directly from your IDE.
-* Open the code of a node using right click
+* Add a node to the callgraph directly from your editor. 
+* You choose what to add and where.
+* Open the selected node in the editor using right click.
 * Export the graph to mermaid 
 * The graph support scrolling and zooming
-* Auto save to localstorage
+* Auto save to localstorage, can export to file.
 * Multiple tabs
-* Alpha Visio support
+* Rename in the editor? the change will propagate to the graph.
+
+## Architecture
+![Architecture](docs/images/architecture.svg)
+Graffiti was built with the following assumptions:
+- You might use more than a single editor for a project.
+- You might want to run everything locally.
+- It should be easy to use.
+
+Graffiti consists of 3 separate components
+- **Backend** - the editor used to browse code. The editor might be native, therefore supporting TCP sockets. However, some editors are inside a browser (for example: OpenGrok). Chrome doesn't support TCP Sockets, so Backend should be able to communicate with WebSocket also. Backend should implement the following functionality:
+    - Add to graph - Send the current focused symbol.
+    - Pull - Get a symbol's address from the socket and open it in the editor
+    - (Optional) Rename - detect rename in the editor and notify the socket.
+- **Frontend** - Shows the call graph and allow you to interact with it. Should support:
+    - Layout the nodes
+    - Navigating the graph
+    - Import and export graph
+    - Undo, Redo
+- **Server** - A middleware between the backend and the frontend. Support multiple of them in the same time, by multiplexing all the requests.
+Need to support:
+    - TCP editor connection
+    - WebSocket editor connection
+    - Websocket frontend connection
+
+As a user, you should run the server locally. It is a single python file which depends on `websockets` library.  
+The frontend is a website which you can server using `python -m http.server`.  
+As for the editors, you should install an extension or the equivalance for your editor.
+
+## Backends
+| Editor   | Languages                            | add to graph | open in editor | Rename support | Socket type |
+| -------- | ------------------------------------ | ------------ | -------------- | -------------- | ----------- |
+| JEB      | Java                                 | ✅            | ✅              | ✅              | TCP         |
+| Intellij | Java, Kotlin                         | ✅            | ✅              | ❌              | TCP         |
+| VSCode   | Depends on available language server | ✅            | ✅              | ❌              | TCP         |
+| OpenGrok | *                                    | ✅            | ✅              | ❌              | Websocket   |
+| IDA      | *                                    | ✅            | ✅              | ✅              | TCP         |
+
+TODO
 
 ## Setup
 1. Run the python server
