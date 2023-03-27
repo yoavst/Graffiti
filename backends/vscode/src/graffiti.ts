@@ -86,7 +86,8 @@ function getNameAndLastSymbol(filename: string, symbol: SymbolNode): [string, Sy
 
     if (name.length == 0) return null;
 
-    return [(scope.join('.') || filename) + "::\n" + name.join('.'), lastName]
+    // TODO: name[0] is not the best possible option, but we can't solve it for the general case
+    return [(scope.join('.') || filename) + "::\n" + name[0], lastName]
 }
 
 

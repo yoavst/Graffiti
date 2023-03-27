@@ -62,10 +62,15 @@ function getCurrentSymbol(yLocation) {
         const url = new URL(document.location.href)
         url.hash = '#' + line.getAttribute('name')
 
-        // TODO support xc, xn to get class or namespace
+        let sigMinimal = sig.textContent
+        if (sigMinimal.includes('(')) {
+            sigMinimal = sigMinimal.substring(0, sigMinimal.indexOf('(')).trim()
+        }
+
+        // TODO: support xc, xn to get class or namespace
 
         return {
-            sig: sig.textContent,
+            sig: sigMinimal,
             fileName: fileName.textContent,
             site: url.host,
             line: parseInt(line.getAttribute('name')),
