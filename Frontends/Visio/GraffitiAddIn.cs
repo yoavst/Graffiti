@@ -4,6 +4,7 @@ using Visio = Microsoft.Office.Interop.Visio;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Windows.Forms;
+using System.Collections.Generic;
 
 namespace GraffitiForVisio
 {
@@ -134,7 +135,12 @@ namespace GraffitiForVisio
 
             Task.Run(async () =>
             {
-                await NetworkController.SendAsync(node.Address);
+
+                await NetworkController.SendAsync(JsonConvert.SerializeObject(new Dictionary<string, object>(){
+                        {"version", 2},
+                        {"project", node.Project},
+                        {"address", node.Address}
+                    }));
             });
             
         }
