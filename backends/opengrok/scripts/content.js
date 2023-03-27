@@ -54,7 +54,10 @@ function getCurrentSymbol(yLocation) {
 
         const sig = head.firstChild
         const fileName = document.querySelector('#Masthead > a:last-of-type')
-        const line = head.querySelector('a.l')
+        let line = head.querySelector('a.l')
+        if (!line) {
+            line = head.querySelector('a.hl')
+        }
 
         const url = new URL(document.location.href)
         url.hash = '#' + line.getAttribute('name')

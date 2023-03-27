@@ -1,4 +1,4 @@
-let pullWebSocket = null
+let graffitiWebSocket = null
 let cachedSettings = {}
 
 function main() {
@@ -31,8 +31,8 @@ function main() {
         if (msg.action == 'getConnectPull') {
             sendResponse({})
 
-            if (pullWebSocket == null) chrome.runtime.sendMessage({ action: "getConnectPullResult" })
-            else if (pullWebSocket.readyState === WebSocket.CLOSED) chrome.runtime.sendMessage({ action: "getConnectPullResult", status: false })
+            if (graffitiWebSocket == null) chrome.runtime.sendMessage({ action: "getConnectPullResult" })
+            else if (graffitiWebSocket.readyState === WebSocket.CLOSED) chrome.runtime.sendMessage({ action: "getConnectPullResult", status: false })
             else chrome.runtime.sendMessage({ action: "getConnectPullResult", status: true })
         } else if (msg.action == 'connectPull') {
             sendResponse({})
@@ -56,25 +56,32 @@ function main() {
 
 
 function connectPullWebSocket(addr) {
-    if (pullWebSocket != null) {
-        if (pullWebSocket.readyState !== WebSocket.CLOSED)
-            pullWebSocket.close()
-        pullWebSocket = null
+    if (graffitiWebSocket != null) {
+        if (graffitiWebSocket.readyState !== WebSocket.CLOSED)
+            graffitiWebSocket.close()
+        graffitiWebSocket = null
     }
-    pullWebSocket = new WebSocket(addr);
+    const tmpSocket = new WebSocket(addr)
+    graffitiWebSocket = tmpSocket
 
-    pullWebSocket.onopen = function (event) {
+    graffitiWebSocket.onopen = function (event) {
         chrome.runtime.sendMessage({ action: "getConnectPullResult", status: true }, function (response) { })
     }
 
-    pullWebSocket.onerror = function (event) {
+    graffitiWebSocket.onerror = function (event) {
         chrome.runtime.sendMessage({ action: "getConnectPullResult", status: false }, function (response) { })
+        if (graffitiWebSocket == tmpSocket) {
+            graffitiWebSocket = null
+        }
     }
 
-    pullWebSocket.onclose = function (event) {
+    graffitiWebSocket.onclose = function (event) {
         chrome.runtime.sendMessage({ action: "getConnectPullResult", status: false }, function (response) { })
+        if (graffitiWebSocket == tmpSocket) {
+            graffitiWebSocket = null
+        }
     }
-    pullWebSocket.onmessage = function (event) {
+    graffitiWebSocket.onmessage = function (event) {
         const url = event.data
         const tabBehavior = cachedSettings.tab_behavior || 'alwaysNew'
         if (tabBehavior == 'alwaysNew') {
@@ -134,22 +141,22 @@ function onSymbol(symbolInfo) {
     if (symbolInfo == null) return;
 
     const srcDest = cachedSettings.src_dest || false
-    const websocket = new WebSocket('ws://localhost:8766');
-    websocket.onopen = function () {
-        const data = {
-            "type": "addData", "node": {
-                "project": "OpenGrok: " + symbolInfo.site, 
-                "address": symbolInfo.address,
-                "label": symbolInfo.fileName + "::\n" + symbolInfo.sig,
-                "computedProperties": []
-            }, "isNodeTarget": srcDest
-        }
-        if (symbolInfo.edgeInfo) {
-            data.edge = { label: symbolInfo.edgeInfo }
-        }
-        websocket.send(JSON.stringify(data));
-        websocket.close()
-    };
+
+    const websocket = graffitiWebSocket
+    if (websocket == null) return;
+
+    const data = {
+        "type": "addData", "node": {
+            "project": "OpenGrok: " + symbolInfo.site, 
+            "address": symbolInfo.address,
+            "label": symbolInfo.fileName + "::\n" + symbolInfo.sig,
+            "computedProperties": []
+        }, "isNodeTarget": srcDest
+    }
+    if (symbolInfo.edgeInfo) {
+        data.edge = { label: symbolInfo.edgeInfo }
+    }
+    websocket.send(JSON.stringify(data));
 }
 
 main()
