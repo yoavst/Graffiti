@@ -82,7 +82,14 @@ function connectPullWebSocket(addr) {
         }
     }
     graffitiWebSocket.onmessage = function (event) {
-        const url = event.data
+        const data = JSON.parse(event.data)
+        if ('project' in data) {
+            if (!data['project'].startsWith('OpenGrok:')) {
+                return
+            }
+        }
+        const url = data.address
+        
         const tabBehavior = cachedSettings.tab_behavior || 'alwaysNew'
         if (tabBehavior == 'alwaysNew') {
             createNewTab(url)

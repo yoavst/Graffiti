@@ -1,5 +1,6 @@
 package com.yoavst.graffiti.intellij
 
+import com.google.gson.JsonParser
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
@@ -43,7 +44,13 @@ class EnableGraffitiSyncAction : AnAction() {
                     logger.info("Received line from socket: $line")
                     if (line.isNullOrEmpty())
                         break
-                    ApplicationManager.getApplication().invokeLater { threadCodeForUi(project, line) }
+                    val data = JsonParser.parseString(line).asJsonObject
+                    if (data.has("project")) {
+                        if (!data["project"].asString.startsWith("Intellij:")) {
+                            continue
+                        }
+                    }
+                    ApplicationManager.getApplication().invokeLater { threadCodeForUi(project, data["address"].asString) }
                 }
             }
         } catch (e: Exception) {

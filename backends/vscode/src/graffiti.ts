@@ -110,8 +110,14 @@ export function connectServer(host: string, port: number) {
         console.log('Connected to graffiti!')
     });
 
-    currentServerConnection.on('data', (data) => {
-        let [path, line] = data.toString().trim().split(":")
+    currentServerConnection.on('data', (rawData) => {
+        const data = JSON.parse(rawData.toString())
+        if ('project' in data) {
+            if (!data['project'].startsWith('VSCode:')) {
+                return
+            }
+        }
+        let [path, line] = data['address'].trim().split(":")
         jumpTo(path, parseInt(line))
     })
 

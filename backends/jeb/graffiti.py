@@ -2,6 +2,7 @@
 
 import sys
 import traceback
+import json
 from com.pnfsoftware.jeb.client.api import IScript
 from com.pnfsoftware.jeb.core import RuntimeProjectUtil
 from com.pnfsoftware.jeb.core.units.code.android.dex import IDexMethod, IDexClass, IDexField
@@ -106,7 +107,14 @@ class GraffitiReadOnBackgroundRunnable(Runnable):
                 line = in_stream.readLine()
                 if not line:
                     break
-                Display.getDefault().asyncExec(GraffitiHandlePullOnUI(self.ctx, line))
+                data = json.loads(line)
+                if 'project' in data:
+                    # Support every JEB project for now, as I don't want complains from people who renamed the file
+                    if not data['project'].startswith('Jeb:'):
+                        continue
+
+                # Also Support old files without project
+                Display.getDefault().asyncExec(GraffitiHandlePullOnUI(self.ctx, data['address']))
             self.sock.close()
         except:
             traceback.print_exc(file=sys.stdout)

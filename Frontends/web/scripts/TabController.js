@@ -109,7 +109,11 @@ class TabController {
     onRightClick(target, elementId) {
         const node = this.nodes.get(elementId)
         if ('address' in node.extra && 'networkController' in window) {
-            window.networkController.send(node.extra.address)
+            window.networkController.send(JSON.stringify({
+                version: 2,
+                address: node.extra.address,
+                project: node.extra.project
+            }))
         }
     }
 
@@ -125,7 +129,10 @@ class TabController {
                 showCancelButton: true
             }).then(({ value = null }) => {
                 if (value != null) {
-                    edge.label = value
+                    if (value)
+                        edge.label = value
+                    else
+                        delete edge.label
                     _this.draw()
                 }
             })
