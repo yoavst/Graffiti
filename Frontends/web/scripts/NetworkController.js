@@ -6,8 +6,6 @@ class NetworkController {
         const ws = this.webSocket
         this.webSocket.onopen = function () {
             console.log("Connected to WS!");
-            // for some reason this is required, idk lol
-            ws.send("MAGIC")
             document.getElementById("connectBtn").style.backgroundColor = "green"
         }
 
@@ -44,7 +42,6 @@ class NetworkController {
                     tabController.updateNodes(msg.selection, msg.update)
                 }
             }
-            ws.send("MAGIC")
         }
 
         this.webSocket.onclose = function (event) {

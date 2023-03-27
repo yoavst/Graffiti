@@ -5,6 +5,9 @@ from typing import List, Tuple
 import websockets
 from websockets.server import WebSocketServerProtocol
 
+logging.basicConfig()
+logging.root.setLevel(logging.INFO)
+
 IDE_TCP_PORT = 8501
 IDE_WEBSOCKET_PORT = 8502
 FRONTEND_WEBSOCKET_PORT = 8503
@@ -15,8 +18,8 @@ ide_tcps: List[Tuple[asyncio.StreamReader, asyncio.StreamWriter]] = []
 
 
 async def send_frontend(request: str, src):
-    logging.info(f"Received push from {src}")
-    logging.debug(f"Push: {request}")
+    logging.warning(f"Received push from {src}")
+    logging.info(f"Push: {request}")
 
     # We duplicate the list, to prevent modification of the list while we use it. 
     # handle_frontend is reponsible for cleaning the list in case of a closed socket.
@@ -24,11 +27,11 @@ async def send_frontend(request: str, src):
         try:
             await websocket.send(request)
         except websockets.exceptions.ConnectionClosed:
-            logging.debug(f"[WS] Frontend Connection from {websocket.remote_address} is closed, and was yet to be cleaned from the list")
+            logging.info(f"[WS] Frontend Connection from {websocket.remote_address} is closed, and was yet to be cleaned from the list")
 
 async def send_ide(request: str, src):
-    logging.info(f"Received pull from {src}")
-    logging.debug(f"pull: {request}")
+    logging.warning(f"Received pull from {src}")
+    logging.info(f"pull: {request}")
 
     # We duplicate the lists, to prevent modification of the lists while we use it. 
     # handle_ide_X are reponsible for cleaning the lists in case of a closed socket.
@@ -40,19 +43,19 @@ async def send_ide(request: str, src):
             await writer.drain()
 
         except socket.error:
-            logging.debug(f"[TCP] IDE Connection from {writer.get_extra_info('peername')} is closed, and was yet to be cleaned from the list")
+            logging.info(f"[TCP] IDE Connection from {writer.get_extra_info('peername')} is closed, and was yet to be cleaned from the list")
 
     for websocket in ide_wss[:]:
         try:
             await websocket.send((request + "\n"))
         except websockets.exceptions.ConnectionClosed:
-            logging.debug(f"[WS] IDE Connection from {websocket.remote_address} is closed, and was yet to be cleaned from the list")
+            logging.info(f"[WS] IDE Connection from {websocket.remote_address} is closed, and was yet to be cleaned from the list")
 
 
 async def handle_ide_tcp(reader: asyncio.StreamReader, writer: asyncio.StreamWriter):
     # Print connection info
-    peer = reader.get_extra_info('peername')
-    logging.info(f"[TCP] Handling IDE Connection from {peer}")
+    peer = writer.get_extra_info('peername')
+    logging.warning(f"[TCP] Handling IDE Connection from {peer}")
 
     # Save the connection
     ide_tcps.append((reader, writer))
@@ -61,7 +64,7 @@ async def handle_ide_tcp(reader: asyncio.StreamReader, writer: asyncio.StreamWri
         # TODO is it OK? shouldn't I pass length before?
         push = (await reader.read(4096)).decode('utf8')
         if not push:
-            logging.info(f"[TCP] IDE Connection from {peer} is closed")
+            logging.warning(f"[TCP] IDE Connection from {peer} is closed")
             ide_tcps.remove((reader, writer))
             break
 
@@ -71,7 +74,7 @@ async def handle_ide_tcp(reader: asyncio.StreamReader, writer: asyncio.StreamWri
 async def handle_ide_websocket(websocket: WebSocketServerProtocol):
     # Print connection info
     peer = websocket.remote_address
-    logging.info(f"[WS] Handling IDE Connection from {peer}")
+    logging.warning(f"[WS] Handling IDE Connection from {peer}")
 
     # Save the connection
     ide_wss.append(websocket)
@@ -82,12 +85,12 @@ async def handle_ide_websocket(websocket: WebSocketServerProtocol):
             # Handle push
             await send_frontend(push, peer)
     except websockets.exceptions.ConnectionClosed:
-        logging.info(f"[WS] IDE Connection from {peer} is closed")
+        logging.warning(f"[WS] IDE Connection from {peer} is closed")
         ide_wss.remove(websocket)
     
 async def handle_frontend(websocket: WebSocketServerProtocol):
     peer = websocket.remote_address
-    logging.info(f"[WS] Handling Frontend Connection from {peer}")
+    logging.warning(f"[WS] Handling Frontend Connection from {peer}")
     frontend_wss.append(websocket)
 
     try:
@@ -96,7 +99,7 @@ async def handle_frontend(websocket: WebSocketServerProtocol):
             await send_ide(msg, peer)
 
     except websockets.exceptions.ConnectionClosed:
-        logging.info(f"[WS] Frontend Connection from {peer} is closed")
+        logging.warning(f"[WS] Frontend Connection from {peer} is closed")
         frontend_wss.remove(websocket)
 
 
