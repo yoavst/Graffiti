@@ -22,7 +22,7 @@ class TabController {
         this.zoom = null
         this.mermaidId = "mermaidStuff" + (globalCounter++)
     }
-    
+
     initView(view) {
         this.view = view
 
@@ -73,7 +73,7 @@ class TabController {
 
     toMermaid(gui = false) {
         const [_, nodes, edges] = [this.idCounter, this.nodes.get(), this.edges.get()]
-        
+
         if (nodes.length == 0) {
             return ""
         }
@@ -113,13 +113,32 @@ class TabController {
         }
     }
 
+    onEdgeDblClick(src, dst) {
+        const _this = this
+        const edge = this.edges.get({ filter: item => item.from == src && item.to == dst })[0]
+
+        setTimeout(function () {
+            Swal.fire({
+                title: 'Edge\'s text',
+                input: 'text',
+                inputValue: edge.label || "",
+                showCancelButton: true
+            }).then(({ value = null }) => {
+                if (value != null) {
+                    edge.label = value
+                    _this.draw()
+                }
+            })
+        })
+    }
+
     draw() {
         setTimeout(() => {
             if ('tabsController' in window) {
                 window.tabsController.save()
             }
         })
-        
+
         const _this = this
 
         const data = this.toMermaid(true)
@@ -162,6 +181,24 @@ class TabController {
                     })
                 }
             }
+
+            const edgesArray = [..._this.container.getElementsByTagName('diagram-div')[0].shadowRoot.querySelectorAll('.edge-thickness-normal')]
+            for (const edge of edgesArray) {
+                // fix pointer
+                edge.style.cursor = "pointer"
+                // add click event
+                if (!edge.hasAttribute("has_listeners")) {
+                    edge.setAttribute("has_listeners", "true")
+                    edge.addEventListener('dblclick', (event) => {
+                        const classes = [...edge.classList]
+                        const src = parseInt(classes.filter(it => it.startsWith('LS-N'))[0].substring(4))
+                        const dst = parseInt(classes.filter(it => it.startsWith('LE-N'))[0].substring(4))
+                        _this.onEdgeDblClick(src, dst)
+                        event.preventDefault()
+                        event.stopPropagation()
+                    })
+                }
+            }
         }, 0)
     }
 
@@ -169,8 +206,8 @@ class TabController {
         if (shouldSupportUndo) {
             // Add all node and edges to undo
             this.addUndoMarker()
-            this.undoHistory.push(...this.nodes.map((node) => ({type: REMOVE_NODE, data: {...node}})))
-            this.undoHistory.push(...this.edges.map((edge) => ({type: REMOVE_EDGE, data: {...edge}})))
+            this.undoHistory.push(...this.nodes.map((node) => ({ type: REMOVE_NODE, data: { ...node } })))
+            this.undoHistory.push(...this.edges.map((edge) => ({ type: REMOVE_EDGE, data: { ...edge } })))
         } else {
             this.undoHistory = []
         }
@@ -335,8 +372,10 @@ class TabController {
             // Update undo history for node
             this.undoHistory.push({ type: REMOVE_NODE, data: { ...removedNode } })
             // Get all edges containing the node
-            const removedEdges = this.edges.get({filter: (edge) => edge.from == removedNodeId || 
-                                                                   edge.to == removedNodeId })
+            const removedEdges = this.edges.get({
+                filter: (edge) => edge.from == removedNodeId ||
+                    edge.to == removedNodeId
+            })
             // Remove them, and update undo history
             for (const removedEdge of removedEdges) {
                 this.edges.remove(removedEdge.id)
@@ -444,11 +483,11 @@ function htmlToElement(html) {
 
 function replaceChildren(el, nodes) {
     if (el.replaceChildren)
-      return el.replaceChildren(...nodes); // supported Chrome 86+
-  
+        return el.replaceChildren(...nodes); // supported Chrome 86+
+
     el.innerHTML = "";
-    el.append( ...nodes);
-  }
+    el.append(...nodes);
+}
 
 class MermaidDiv extends HTMLElement {
     constructor() {
