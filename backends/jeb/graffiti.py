@@ -1,4 +1,4 @@
-# ?description=Enable graffiti support in project
+#?description=Enable graffiti support in project
 
 import sys
 import traceback
