@@ -32,7 +32,7 @@
         </action>
 
         <action id="com.yoavst.graffiti.intellij.EnableGraffitiSyncAction"
-                class="com.yoavst.graffiti.intellij.EnableGraffitiSyncAction" text="Enable graffiti sync">
+                class="com.yoavst.graffiti.intellij.EnableGraffitiSyncAction" text="Enable graffiti support in project">
             <add-to-group group-id="ToolsMenu" anchor="last"/>
         </action>
 

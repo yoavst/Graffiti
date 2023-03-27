@@ -132,12 +132,11 @@ open class AddToGraffitiAction : AnAction() {
     }
 
     private fun sendUpdate(data: Any) {
-        val s = Socket("localhost", 8764)
-        s.getOutputStream().bufferedWriter().let { writer ->
+        val socket = SocketHolder.socket ?: return
+        socket.getOutputStream().bufferedWriter().let { writer ->
             writer.write(Gson().toJson(data))
             writer.flush()
         }
-        s.close()
     }
 
     companion object {
