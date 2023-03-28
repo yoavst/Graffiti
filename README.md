@@ -52,19 +52,67 @@ As for the editors, you should install an extension or the equivalance for your 
 
 TODO
 
+### JEB
+#### Installation
+* Copy the scripts from `backend/jeb` into `$JEB_INSTALLATION/scripts/graffiti`
+* Restart JEB
+#### Usage
+TODO
+
+### Intellij
+#### Build
+* Run `gradle jar` inside `backends/intellij`.
+* The generated plugin will be in `build/libs/`
+#### Installation
+* In Intellij settings, go to plugins, then choose the setting icon and "Install plugin from Disk..."
+#### Usage
+TODO
+
+### Visual Studio Code
+#### Build
+* `npm install -g @vscode/vsce`
+* Run `vsce package` inside `backends/vscode`
+* A vsix file will be generated on the same folder
+#### Installation
+* In the extensions section in the side menu, click the menu icon, then "Install from VSIX..."
+* Install language servers for the languages you want to support
+    * Anycode is a language server based on treesitter, which supports: C#, CPP (C), Go, Java, Kotlin, PHP, Python, Rust, Typescript (Javascript)
+#### Usage
+TODO
+
+#### OpenGrok
+#### Build
+* Go to chrome://extensions
+* Enable developer mode
+* Select "Pack extension", and use `backends/opengrok` as the folder.
+* You will be informed where the crx is saved
+#### Installation
+* Go to chrome://extensions
+* Enable developer mode
+* Try drag and droping the Crx
+* If it doesn't work, choose load unpacked, and select `backends/opengrok` as the folder.
+#### Usage
+TODO
+
+#### IDA
+#### Installation
+Inside a project, run `file->execute script`, choose the `graffiti.py` script.
+#### Usage
+TODO
+
 ## Setup
 1. Run the python server
 ```python
 pip3 install -r server/requirements.txt
 python3 server/main.py
 ```
-2. copy the jeb scripts into JEB_INSTALLATION/scripts, and reload JEB.
-3. start a localhost server from web dir:
+2. start a localhost server from web dir:
 ```bash
 cd web
 python3 -m http.server 80
 ```
-4. From your web, enter http://localhost . Press connect to connect to the python server. The button will be green if successfully connected.
+3. From your web, enter http://localhost . Press connect to connect to the python server. The button will be green if successfully connected.
+4. Follow the usage instructions for the specific backend
 
 ### JEB
 Run the script graphPull.py to connect JEB to the server. Then, you can use the following shortcuts:
