@@ -12,6 +12,7 @@ namespace GraffitiForVisio
     {
         internal NetworkController NetworkController;
         private VisioHelper _visioHelper;
+        public bool isExistingToNew = true;
         internal VisioHelper VisioHelper { 
             get { 
                 if (_visioHelper == null)
@@ -35,7 +36,7 @@ namespace GraffitiForVisio
 
             if (currentShape == null)
             {
-                var xy = VisioHelper.getXYNearSelection(currentSelection, push.IsTheSelectedNodeTarget);
+                var xy = VisioHelper.getXYNearSelection(currentSelection, !isExistingToNew);
 
                 var newShape = VisioHelper.CreateBasicShape(currentPage, xy.Item1, xy.Item2);
                 ApplyNodeToShape(push.Node, newShape);
@@ -43,7 +44,7 @@ namespace GraffitiForVisio
                 currentShape = newShape;
             }
 
-            VisioHelper.Connect(currentPage, currentSelection, currentShape, push.IsTheSelectedNodeTarget, push.EdgeInfo?.Label);
+            VisioHelper.Connect(currentPage, currentSelection, currentShape, !isExistingToNew, push.EdgeInfo?.Label);
             
 
             VisioHelper.Select(Application.ActiveWindow, currentShape);

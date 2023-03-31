@@ -78,5 +78,10 @@ namespace GraffitiForVisio
         {
             Globals.GraffitiAddIn.ShouldAutoLayout = AutoRelayoutSetting.Checked;
         }
+
+        private void isExistingToNew_Click(object sender, RibbonControlEventArgs e)
+        {
+            Globals.GraffitiAddIn.isExistingToNew = isExistingToNew.Checked;
+        }
     }
 }
