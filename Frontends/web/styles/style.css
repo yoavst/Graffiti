@@ -262,7 +262,18 @@ footer {
 
 .arrowToggle .text {
     color: #222;
+    transition: font-weight 0.25s ease;
 }
+
+.arrowToggle .text::after {
+    display: block;
+    content: attr(content);
+    font-weight: bold;
+    height: 1px;
+    color: transparent;
+    overflow: hidden;
+    visibility: hidden;
+  }
 
 .arrowToggle label #isNewWillBeSelected:not(:checked)~* .notSelectedText {
     font-weight: bold;
