@@ -75,7 +75,6 @@ class AddToGraphWithEdgeInfoHandler(AddToGraphHandler):
 class EnableSyncHandler(idaapi.action_handler_t):
     def __init__(self):
         idaapi.action_handler_t.__init__(self)
-        self.thread = None
 
     # Say hello when invoked.
     def activate(self, ctx):
@@ -92,7 +91,9 @@ class EnableSyncHandler(idaapi.action_handler_t):
         sock = socket.socket()
         sock.connect((addr, int(port)))
 
-        threading.Thread(target=sync_read_thread).start()
+        thread = threading.Thread(target=sync_read_thread)
+        thread.daemon = True
+        thread.start()
 
         return True
     
@@ -183,6 +184,3 @@ class GrafitiIDBHooks(idaapi.IDB_Hooks):
 hooks = [GraffitiUIHooks(), GrafitiIDBHooks()]
 for hook in hooks:
     hook.hook()
-
-# TODO:
-# 1. Be able to close IDA
