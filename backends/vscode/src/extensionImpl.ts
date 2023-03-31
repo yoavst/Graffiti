@@ -98,12 +98,6 @@ export class ScopeSymbolProvider {
             }
         });
 
-        vscode.commands.registerCommand("graffiti.ChangeEdgeDirection", async () => {
-            console.log("Graffiti.ChangeEdgeDirection()")
-            graffiti.switchIsNodeTarget()
-            await vscode.window.showInformationMessage("Graffiti: Switched edge direction")
-        });
-
         vscode.commands.registerCommand("graffiti.ConnectToServer", async () => {
             const address = await vscode.window.showInputBox({
                 prompt: 'Enter server address',
