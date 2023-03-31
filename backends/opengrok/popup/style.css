@@ -30,73 +30,8 @@ h1 {
     margin-left: 10px;
     margin-right: 10px;
 }
-
-.switch-button {
-    background: rgba(255, 255, 255, 0.56);
-    border-radius: 30px;
-    overflow: hidden;
-    width: 240px;
-    text-align: center;
-    font-size: 18px;
-    letter-spacing: 1px;
-    color: #155FFF;
-    position: relative;
-    padding-right: 120px;
-    position: relative;
-  }
-  .switch-button:before {
-    content: "Dest";
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    right: 0;
-    width: 120px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 3;
-    pointer-events: none;
-  }
-  .switch-button-checkbox {
-    cursor: pointer;
-    position: absolute;
-    top: 0;
-    left: 0;
-    bottom: 0;
-    width: 100%;
-    height: 100%;
-    opacity: 0;
-    z-index: 2;
-  }
-  .switch-button-checkbox:checked + .switch-button-label:before {
-    transform: translateX(120px);
-    transition: transform 300ms linear;
-  }
-  .switch-button-checkbox + .switch-button-label {
-    position: relative;
-    padding: 15px 0;
-    display: block;
-    user-select: none;
-    pointer-events: none;
-  }
-  .switch-button-checkbox + .switch-button-label:before {
-    content: "";
-    background: #fff;
-    height: 100%;
-    width: 100%;
-    position: absolute;
-    left: 0;
-    top: 0;
-    border-radius: 30px;
-    transform: translateX(0);
-    transition: transform 300ms;
-  }
-  .switch-button-checkbox + .switch-button-label .switch-button-label-span {
-    position: relative;
-  }
-
   
-input[type=text] {
+input[type=url] {
   padding: 5px 12px;
   font-size: 14px;
   line-height: 20px;
@@ -112,7 +47,7 @@ input[type=text] {
   box-shadow: rgba(225, 228, 232, 0.2) 0px 1px 0px 0px inset;
 }
 
-input[type=text]:focus {
+input[type=url]:focus {
   border-color: #0366d6;
   outline: none;
   box-shadow: rgba(3, 102, 214, 0.3) 0px 0px 0px 3px;
@@ -134,12 +69,12 @@ input[type=text]:focus {
   width: 32px;
   /* padding: 0px 16px; */
   border-radius: 32px;
-  background-color: #90A4AE;
+  background-color: white;
   color: #222;
   font-size: 12px;
   font-weight: 500;
 }
 
 #connectBtn:hover {
-  background-color: #4b555a;
+  background-color: #90A4AE;
 }

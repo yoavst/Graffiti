@@ -3,7 +3,7 @@ let cachedSettings = {}
 
 function main() {
     // Cache settings
-    chrome.storage.local.get(["tab_behavior", "src_dest"], function (result) {
+    chrome.storage.local.get(["tab_behavior"], function (result) {
         cachedSettings = result
     })
 
@@ -158,8 +158,6 @@ function onSymbol(symbolInfo) {
         return
     }
 
-    const srcDest = cachedSettings.src_dest || false
-
     const websocket = graffitiWebSocket
     if (websocket == null) {
         chrome.notifications.create(
@@ -180,7 +178,7 @@ function onSymbol(symbolInfo) {
             "address": symbolInfo.address,
             "label": symbolInfo.fileName + "::\n" + symbolInfo.sig,
             "computedProperties": []
-        }, "isNodeTarget": srcDest
+        }
     }
     if (symbolInfo.edgeInfo) {
         data.edge = { label: symbolInfo.edgeInfo }

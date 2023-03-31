@@ -186,4 +186,3 @@ for hook in hooks:
 
 # TODO:
 # 1. Be able to close IDA
-# 2. Support edge direction
