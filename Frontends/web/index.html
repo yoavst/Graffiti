@@ -29,7 +29,7 @@
                     class="action_icon" alt="Delete" /></button>
             <button onclick="event_center()" title="Layout (Home)"><img src="images/icon_layout.svg" class="action_icon"
                     alt="Layout" /></button>
-            <div class="arrowToggle" title="Arrow direction (Ctrl+I)" oncontextmenu="return event_toggleFocusTarget()">
+            <div class="arrowToggle" title="Arrow direction (Ctrl+I)&#10;&#13;Focus (Ctrl+Alt+Shift+I)" oncontextmenu="return event_toggleFocusTarget()">
                 <label for="isExistingToNew">
                     <input class="input" type="checkbox" id="isExistingToNew" checked="true"></input>
                     <input class="input" type="checkbox" id="isNewWillBeSelected" checked="true"></input>
@@ -61,9 +61,10 @@
 
     <div class="view"></div>
 
-    <footer>
-        <span class="subtitle">An experiment by yoavst</span>
+    <footer style="display: none;">
+        <span class="subtitle">An experiment by yoavst (2023)</span>
         <div class="right">
+            <span>Press ? for help</span>
         </div>
         <div class="clearfix">&nbsp;</div>
     </footer>

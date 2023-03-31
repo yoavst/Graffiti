@@ -143,11 +143,57 @@ function event_toggleArrowTarget() {
     document.getElementById('isExistingToNew').click()
 }
 
+function event_toggleHelp() {
+    const currentHideHelpBar = (localStorage.getItem("__HIDE_HELP_BAR") || "false") === "true"
+    localStorage.setItem("__HIDE_HELP_BAR", !currentHideHelpBar)
+
+    setHelpBarAppearance()
+}
+
+function setHelpBarAppearance() {
+    const currentHideHelpBar = (localStorage.getItem("__HIDE_HELP_BAR") || "false") === "true"
+    if (currentHideHelpBar) {
+        document.getElementsByTagName("footer")[0].style.display = "none";
+    } else {
+        document.getElementsByTagName("footer")[0].style.display = "block";
+    }
+}
+
+function event_help() {
+    Swal.fire({
+        title: 'Graffiti',
+        html: `Create customized callgraph directly from your favorite editor.
+                <br /><br />
+                <strong>Server</strong> - To run graffiti, Run the python server. 
+                <br />
+                <strong>Editor</strong> - Install graffiti in your editor. Then, connect it to the server. 
+                <ul>
+                <li>&lt;Ctrl+Shift+A&gt; - Add a new node to the graph.</li>
+                <li>&lt;Ctrl+Shift+X&gt; - Add a new node to the graph with a custom text on the edge.</li>
+                </ul>
+                <strong>Web</strong> - click the top right button to connect to server.
+                <ul>
+                <li>A new node will be linked to the currently selected element.</li>
+                <li>The new node will be automatically selected, unless the setting changed</li>
+                <li>Right clicking a node will open it in the editor</li>
+                <li>To find the matching keyboard shortcut, hover over the buttons.</li>
+                <li>Double click an edge allows you to change its text</li>
+                <li>To rename or remove a graph, right click the tab's name.</li>
+                <li>A list of the linked projects is also available under the tab</li>
+                </ul>
+        `,
+        icon: 'question',
+        width: '48em',
+        footer: 'To toggle the help bar, press Ctrl+?'
+    })
+}
+
 
 function main() {
     initiateDependencies();
     initiateHotkeys();
     initializeDragAndDrop();
+    setHelpBarAppearance()
 
     // Initiate tabs
     const tabsController = new TabsController(document.getElementsByClassName("tabs")[0], document.getElementsByClassName("view")[0], document.getElementById("context-menu"));
@@ -166,7 +212,7 @@ function initiateDependencies() {
 }
 
 function initiateHotkeys() {
-    hotkeys('ctrl+z,ctrl+shift+z,ctrl+y,ctrl+s,ctrl+o,ctrl+i,delete,home', function (event, handler) {
+    hotkeys('ctrl+z,ctrl+shift+z,ctrl+y,ctrl+s,ctrl+o,ctrl+i,ctrl+alt+shift+i,delete,home,shift+/,ctrl+shift+/', function (event, handler) {
         switch (handler.key) {
             case 'ctrl+z':
                 event_undo();
@@ -184,12 +230,21 @@ function initiateHotkeys() {
             case 'ctrl+i':
                 event_toggleArrowTarget()
                 return false;
+            case 'ctrl+alt+shift+i':
+                event_toggleFocusTarget()
+                return false;
             case 'delete':
                 event_delete();
                 return false;
             case 'home':
                 event_center();
                 return false;
+            case 'shift+/':
+                event_help();
+                return false;
+            case 'ctrl+shift+/':
+                event_toggleHelp();
+                return false
         }
     });
 }

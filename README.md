@@ -41,6 +41,22 @@ As a user, you should run the server locally. It is a single python file which d
 The frontend is a website which you can server using `python -m http.server`.  
 As for the editors, you should install an extension or the equivalance for your editor.
 
+## Setup
+In order to run Graffiti using the web frontends, you should:
+
+1. Run the python server
+```python
+pip3 install -r server/requirements.txt
+python3 server/main.py
+```
+2. start a localhost server from web dir:
+```bash
+cd frontend/Web
+python3 -m http.server 80
+```
+3. From your web, enter http://localhost . Press connect to connect to the python server. The button will be green if successfully connected.
+4. Follow the usage instructions for the specific backend below.
+
 ## Backends
 | Editor   | Languages                            | add to graph | open in editor | Rename support | Socket type |
 | -------- | ------------------------------------ | ------------ | -------------- | -------------- | ----------- |
@@ -50,14 +66,21 @@ As for the editors, you should install an extension or the equivalance for your 
 | OpenGrok | *                                    | ✅            | ✅              | ❌              | Websocket   |
 | IDA      | *                                    | ✅            | ✅              | ✅              | TCP         |
 
-TODO
+The common shortcuts are:
+* Ctrl+Shift+A - Add a new node to the graph.
+* Ctrl+Shift+X - Add a new node to the graph with a custom text on the edge.
+
+Your cursor should be inside the function (or field in supported platforms) you want to add to the graph.
 
 ### JEB
 #### Installation
 * Copy the scripts from `backend/jeb` into `$JEB_INSTALLATION/scripts/graffiti`
 * Restart JEB
 #### Usage
-TODO
+Press F2 and then double click `graffiti` to connect the graffiti server. Now, you can use the shortcuts.
+* An additional short is: Ctrl+Shift+Q - Add all of the xrefs of a node to the graph.
+
+A Rename will be reflected in the opened graphs.
 
 ### Intellij
 #### Build
@@ -65,8 +88,9 @@ TODO
 * The generated plugin will be in `build/libs/`
 #### Installation
 * In Intellij settings, go to plugins, then choose the setting icon and "Install plugin from Disk..."
+* In Intellij settings, go to keymap. Press the find actions by shortcut (on the right) and search for Ctrl+Shift+A. Remove the non-Graffiti shortcut.
 #### Usage
-TODO
+Go to Menu->Tools->"Graffiti: Connect to server". Now, you can use the shortcuts.
 
 ### Visual Studio Code
 #### Build
@@ -78,9 +102,9 @@ TODO
 * Install language servers for the languages you want to support
     * Anycode is a language server based on treesitter, which supports: C#, CPP (C), Go, Java, Kotlin, PHP, Python, Rust, Typescript (Javascript)
 #### Usage
-TODO
+* Go to the command palate (Ctrl+Shift+P). Choose "Graffiti: Connect to server". Now, you can use the shortcuts.
 
-#### OpenGrok
+### OpenGrok
 #### Build
 * Go to chrome://extensions
 * Enable developer mode
@@ -91,43 +115,19 @@ TODO
 * Enable developer mode
 * Try drag and droping the Crx
 * If it doesn't work, choose load unpacked, and select `backends/opengrok` as the folder.
+* Pin the graffiti extension to the toolbar
+* Go to chrome://extensions/shortcuts and set "Ctrl+Shift+A" for "Add to graph", and "Ctrl+Shift+X" for "Add to graph with edge info"
 #### Usage
-TODO
+* Press The graffiti icon in the toolbar, and then connect the server. Now you can use the shortcuts.
+* In the previous popup window, you can change the settings of the plugin.
 
-#### IDA
+### IDA
 #### Installation
 Inside a project, run `file->execute script`, choose the `graffiti.py` script.
 #### Usage
-TODO
+Go to Options->"Graffiti: Connect to server". Now, you can use the shortcuts.
 
-## Setup
-1. Run the python server
-```python
-pip3 install -r server/requirements.txt
-python3 server/main.py
-```
-2. start a localhost server from web dir:
-```bash
-cd web
-python3 -m http.server 80
-```
-3. From your web, enter http://localhost . Press connect to connect to the python server. The button will be green if successfully connected.
-4. Follow the usage instructions for the specific backend
-
-### JEB
-Run the script graphPull.py to connect JEB to the server. Then, you can use the following shortcuts:
-
-* Ctrl+Shift+A - add a new node and an edge
-* Ctrl+Shift+X - add a new node and an edge with text on it
-* Ctrl+Shift+Z - Change the direction for the arrows
-
-### Intellij - Alpha
-Install the Intellij Plugin. Then, in tools menu, enable graffiti sync.
-Now, you can right click inside a function, and choose to add the current method to graffiti.
-
-### VSCode - Alpha
-Install the vscode plugin. Then, run the graffiti server command.
-Now you can be inside a function, and run the graffiti add command.
+A Rename will be reflected in the opened graphs.
 
 # Credits
 The logo icons created by Freepik - Flaticon.
