@@ -4,6 +4,13 @@ class NetworkController {
         const _this = this
 
         const ws = this.webSocket
+
+        const isExistingToNewSwitch = document.getElementById('isExistingToNew')
+        const isExistingToNew = () => isExistingToNewSwitch.checked
+
+        const isNewWillBeSelectedSwitch = document.getElementById('isNewWillBeSelected')
+        const isNewWillBeSelected = () => isNewWillBeSelectedSwitch.checked
+
         this.webSocket.onopen = function () {
             console.log("Connected to WS!");
             document.getElementById("connectBtn").style.backgroundColor = "green"
@@ -15,23 +22,20 @@ class NetworkController {
 
             if (msg.type == MSG_ADD_NODE_AND_EDGE) {
                 tabsController.onCurrent((_, controller) => {
-                    const isNodeTarget = 'isNodeTarget' in msg ? msg.isNodeTarget : true
-
                     const selectedNode = controller.selectedNode
 
-                    const nodeId = _this.addNodeAndEdge(controller, selectedNode, msg.node, msg.design, msg.edge, isNodeTarget, true)
-                    controller.selectNode(nodeId)
+                    const nodeId = _this.addNodeAndEdge(controller, selectedNode, msg.node, msg.design, msg.edge, isExistingToNew(), true)
+                    if (isNewWillBeSelected())
+                        controller.selectNode(nodeId)
                 })
             } else if (msg.type == MSG_ADD_NODES_AND_EDGES) {
                 tabsController.onCurrent((_, controller) => {
-                    const isNodeTarget = 'isNodeTarget' in msg ? msg.isNodeTarget : true
-
                     const selectedNode = controller.selectedNode
 
                     controller.addUndoMarker()
 
                     for (const node of msg.nodes) {
-                        _this.addNodeAndEdge(controller, selectedNode, node, msg.design, msg.edge, isNodeTarget, false)
+                        _this.addNodeAndEdge(controller, selectedNode, node, msg.design, msg.edge, isExistingToNew(), false)
                     }
                 })
 
@@ -50,14 +54,14 @@ class NetworkController {
         }
     }
 
-    addNodeAndEdge(controller, selectedNode, msgNode, msgDesign, msgEdge, isNodeTarget, shouldAddUndo) {
+    addNodeAndEdge(controller, selectedNode, msgNode, msgDesign, msgEdge, isExistingToNew, shouldAddUndo) {
         // 2. Check if dest node exists
         const existingDestNode = 'address' in msgNode ? controller.queryNode('address', msgNode.address) : null
         if (existingDestNode != null) {
             // 3. Check if needs to add edge to the existing node
             if (selectedNode != null) {
                 if (shouldAddUndo) controller.addUndoMarker()
-                controller.addEdge({ ...createFromTo(selectedNode.id, existingDestNode.id, isNodeTarget), ...(msgEdge || {}) })
+                controller.addEdge({ ...createFromTo(selectedNode.id, existingDestNode.id, isExistingToNew), ...(msgEdge || {}) })
             }
             // return new node
             return existingDestNode.id
@@ -67,7 +71,7 @@ class NetworkController {
             const newNode = controller.addNode(msgNode, msgDesign)
             // 3. add new edge
             if (selectedNode != null) {
-                controller.addEdge({ ...createFromTo(selectedNode.id, newNode.id, isNodeTarget), ...(msgEdge || {}) })
+                controller.addEdge({ ...createFromTo(selectedNode.id, newNode.id, isExistingToNew), ...(msgEdge || {}) })
             }
             // 4. selected added node
             return newNode.id
