@@ -27,8 +27,6 @@ export function createUpdate(document: vscode.TextDocument, symbol: SymbolNode, 
         base['edge'] = { 'label': edgeText }
     }
 
-    base['isNodeTarget'] = getIsNodeTarget()
-
     return base
 }
 
@@ -147,15 +145,4 @@ function jumpTo(path: string, line: number) {
     vscode.workspace.openTextDocument(uri).then((document) => {
         vscode.window.showTextDocument(document, { selection: new vscode.Range(line, 0, line, 0) });
     });
-}
-
-function getIsNodeTarget(): boolean {
-    const result = LocalStorageService.instance.getValue<boolean>('__yoav_is_node_target')
-    if (result === null) return true
-    return !!result
-}
-
-export function switchIsNodeTarget() {
-    const newValue = !getIsNodeTarget()
-    LocalStorageService.instance.setValue<boolean>('__yoav_is_node_target', newValue);
 }

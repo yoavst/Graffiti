@@ -134,6 +134,14 @@ function event_addTab() {
     }
 }
 
+function event_toggleFocusTarget() {
+    document.getElementById('isNewWillBeSelected').click()
+    return false
+}
+
+function event_toggleArrowTarget() {
+    document.getElementById('isExistingToNew').click()
+}
 
 
 function main() {
@@ -158,7 +166,7 @@ function initiateDependencies() {
 }
 
 function initiateHotkeys() {
-    hotkeys('ctrl+z,ctrl+shift+z,ctrl+y,ctrl+s,delete,home', function (event, handler) {
+    hotkeys('ctrl+z,ctrl+shift+z,ctrl+y,ctrl+s,ctrl+o,ctrl+i,delete,home', function (event, handler) {
         switch (handler.key) {
             case 'ctrl+z':
                 event_undo();
@@ -169,6 +177,12 @@ function initiateHotkeys() {
                 return false;
             case 'ctrl+s':
                 event_export();
+                return false;
+            case 'ctrl+o':
+                event_import();
+                return false;
+            case 'ctrl+i':
+                event_toggleArrowTarget()
                 return false;
             case 'delete':
                 event_delete();

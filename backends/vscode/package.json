@@ -43,10 +43,6 @@
                 "title": "Graffiti: Add to graph with edge comment"
             },
             {
-                "command": "graffiti.ChangeEdgeDirection",
-                "title": "Graffiti: Change the edge's direction"
-            },
-            {
                 "command": "graffiti.ConnectToServer",
                 "title": "Graffiti: Connect to server"
             }

@@ -44,24 +44,6 @@ def get_current_field(ctx):
         return field
 
     return None
-    
-def get_arrow_direction(ctx):
-    project = ctx.getMainProject()
-    if not project:
-        return True
-
-    data = project.getData("__YOAV_GRAPH_ARROW_DIRECTION")
-    if  data is None or data:
-        return True
-    
-    return False
-
-def set_arrow_direction(ctx, direction):
-    project = ctx.getMainProject()
-    if not project:
-        return
-    
-    project.setData("__YOAV_GRAPH_ARROW_DIRECTION", direction, False)
 
 def rchop(s, sub):
     return s[:-len(sub)] if s.endswith(sub) else s

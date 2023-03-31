@@ -38,16 +38,17 @@
             this.group1 = this.Factory.CreateRibbonGroup();
             this.HostEditBox = this.Factory.CreateRibbonEditBox();
             this.PortEditBox = this.Factory.CreateRibbonEditBox();
+            this.ColorsGroup = this.Factory.CreateRibbonGroup();
+            this.group2 = this.Factory.CreateRibbonGroup();
+            this.AutoRelayoutSetting = this.Factory.CreateRibbonCheckBox();
             this.ConnectButton = this.Factory.CreateRibbonButton();
             this.GotoInEditor = this.Factory.CreateRibbonButton();
-            this.ColorsGroup = this.Factory.CreateRibbonGroup();
             this.FirstThemeColor = this.Factory.CreateRibbonButton();
             this.SecondThemeColor = this.Factory.CreateRibbonButton();
             this.ThirdThemeColor = this.Factory.CreateRibbonButton();
             this.ForthThemeColor = this.Factory.CreateRibbonButton();
             this.FifthThemeColor = this.Factory.CreateRibbonButton();
-            this.group2 = this.Factory.CreateRibbonGroup();
-            this.AutoRelayoutSetting = this.Factory.CreateRibbonCheckBox();
+            this.isExistingToNew = this.Factory.CreateRibbonToggleButton();
             this.tab1.SuspendLayout();
             this.group1.SuspendLayout();
             this.ColorsGroup.SuspendLayout();
@@ -84,6 +85,29 @@
             this.PortEditBox.Name = "PortEditBox";
             this.PortEditBox.Text = "8503";
             // 
+            // ColorsGroup
+            // 
+            this.ColorsGroup.Items.Add(this.FirstThemeColor);
+            this.ColorsGroup.Items.Add(this.SecondThemeColor);
+            this.ColorsGroup.Items.Add(this.ThirdThemeColor);
+            this.ColorsGroup.Items.Add(this.ForthThemeColor);
+            this.ColorsGroup.Items.Add(this.FifthThemeColor);
+            this.ColorsGroup.Label = "Theme";
+            this.ColorsGroup.Name = "ColorsGroup";
+            // 
+            // group2
+            // 
+            this.group2.Items.Add(this.AutoRelayoutSetting);
+            this.group2.Items.Add(this.isExistingToNew);
+            this.group2.Label = "Settings";
+            this.group2.Name = "group2";
+            // 
+            // AutoRelayoutSetting
+            // 
+            this.AutoRelayoutSetting.Label = "Auto re-layout after addition";
+            this.AutoRelayoutSetting.Name = "AutoRelayoutSetting";
+            this.AutoRelayoutSetting.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.AutoRelayoutSetting_Click);
+            // 
             // ConnectButton
             // 
             this.ConnectButton.Label = "Connect";
@@ -100,16 +124,6 @@
             this.GotoInEditor.OfficeImageId = "FileCheckOut";
             this.GotoInEditor.ShowImage = true;
             this.GotoInEditor.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.GotoInEditor_Click);
-            // 
-            // ColorsGroup
-            // 
-            this.ColorsGroup.Items.Add(this.FirstThemeColor);
-            this.ColorsGroup.Items.Add(this.SecondThemeColor);
-            this.ColorsGroup.Items.Add(this.ThirdThemeColor);
-            this.ColorsGroup.Items.Add(this.ForthThemeColor);
-            this.ColorsGroup.Items.Add(this.FifthThemeColor);
-            this.ColorsGroup.Label = "Theme";
-            this.ColorsGroup.Name = "ColorsGroup";
             // 
             // FirstThemeColor
             // 
@@ -146,17 +160,12 @@
             this.FifthThemeColor.Name = "FifthThemeColor";
             this.FifthThemeColor.ShowImage = true;
             // 
-            // group2
+            // isExistingToNew
             // 
-            this.group2.Items.Add(this.AutoRelayoutSetting);
-            this.group2.Label = "Settings";
-            this.group2.Name = "group2";
-            // 
-            // AutoRelayoutSetting
-            // 
-            this.AutoRelayoutSetting.Label = "Auto re-layout after addition";
-            this.AutoRelayoutSetting.Name = "AutoRelayoutSetting";
-            this.AutoRelayoutSetting.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.AutoRelayoutSetting_Click);
+            this.isExistingToNew.Checked = true;
+            this.isExistingToNew.Label = "Is existing to new?";
+            this.isExistingToNew.Name = "isExistingToNew";
+            this.isExistingToNew.Click += new Microsoft.Office.Tools.Ribbon.RibbonControlEventHandler(this.isExistingToNew_Click);
             // 
             // GraffitiRibbon
             // 
@@ -192,6 +201,7 @@
         internal Microsoft.Office.Tools.Ribbon.RibbonButton GotoInEditor;
         internal Microsoft.Office.Tools.Ribbon.RibbonGroup group2;
         internal Microsoft.Office.Tools.Ribbon.RibbonCheckBox AutoRelayoutSetting;
+        internal Microsoft.Office.Tools.Ribbon.RibbonToggleButton isExistingToNew;
     }
 
     partial class ThisRibbonCollection

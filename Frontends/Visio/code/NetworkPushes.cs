@@ -30,9 +30,6 @@ namespace GraffitiForVisio
         [JsonProperty(PropertyName = "node")]
         public Node Node { get; set; }
 
-        [JsonProperty(PropertyName = "isNodeTarget")]
-        public bool IsTheSelectedNodeTarget { get; set; }
-
         [JsonProperty(PropertyName = "edge")]
         public EdgeInfo EdgeInfo { get; set; }
     }

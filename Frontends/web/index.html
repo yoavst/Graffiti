@@ -12,19 +12,40 @@
     <header>
         <img src="images/icon.png" class="icon" />
         <h1>Graffiti</h1>
-        <span class="subtitle">An experiment by yoavst</span>
-
         <div class="buttons right">
-            <button onclick="event_import()" title="Import"><img src="images/icon_import.svg" class="action_icon" alt="Import" /></button>
-            <button onclick="event_export()" title="Export (Ctrl+S)"><img src="images/icon_export.svg" class="action_icon" alt="Export" /></button>
-            <button onclick="event_mermaid()" title="Mermaid"><img src="images/icon_mermaid.svg" class="action_icon" alt="Mermaid" /></button>
-            <button onclick="event_reset()" title="Reset"><img src="images/icon_reset.svg" class="action_icon" alt="Reset" /></button>
-            <button onclick="event_undo()" title="Undo (Ctrl+Z)"><img src="images/icon_undo.svg" class="action_icon" alt="Undo" /></button>
-            <button onclick="event_redo()" title="Redo (Ctrl+Y)"><img src="images/icon_redo.svg" class="action_icon" alt="Redo" /></button>
-            <button onclick="event_delete()" title="Delete (Delete)"><img src="images/icon_delete.svg" class="action_icon" alt="Delete" /></button>
-            <button onclick="event_center()" title="Layout (Home)"><img src="images/icon_layout.svg" class="action_icon" alt="Layout" /></button>
+            <button onclick="event_import()" title="Import (Ctrl+O)"><img src="images/icon_import.svg" class="action_icon"
+                    alt="Import" /></button>
+            <button onclick="event_export()" title="Export (Ctrl+S)"><img src="images/icon_export.svg"
+                    class="action_icon" alt="Export" /></button>
+            <button onclick="event_mermaid()" title="Mermaid"><img src="images/icon_mermaid.svg" class="action_icon"
+                    alt="Mermaid" /></button>
+            <button onclick="event_reset()" title="Reset"><img src="images/icon_reset.svg" class="action_icon"
+                    alt="Reset" /></button>
+            <button onclick="event_undo()" title="Undo (Ctrl+Z)"><img src="images/icon_undo.svg" class="action_icon"
+                    alt="Undo" /></button>
+            <button onclick="event_redo()" title="Redo (Ctrl+Y)"><img src="images/icon_redo.svg" class="action_icon"
+                    alt="Redo" /></button>
+            <button onclick="event_delete()" title="Delete (Delete)"><img src="images/icon_delete.svg"
+                    class="action_icon" alt="Delete" /></button>
+            <button onclick="event_center()" title="Layout (Home)"><img src="images/icon_layout.svg" class="action_icon"
+                    alt="Layout" /></button>
+            <div class="arrowToggle" title="Arrow direction (Ctrl+I)" oncontextmenu="return event_toggleFocusTarget()">
+                <label for="isExistingToNew">
+                    <input class="input" type="checkbox" id="isExistingToNew" checked="true"></input>
+                    <input class="input" type="checkbox" id="isNewWillBeSelected" checked="true"></input>
+                    <div class="toggle-wrapper-wrapper">
+                        <span class="text notSelectedText" content="Existing">Existing</span>
+                        <div class="toggle-wrapper">
+                            <span class="line"></span>
+                            <span class="head"></span>
+                        </div>
+                        <span class="text selectedText" content="New">New</span>
+                    </div>
+                </label>
+            </div>
             <input type="url" value="ws://localhost:8503" id="socketUrl"></input>
-            <button onclick="event_connect()" id="connectBtn" title="Connect"><img src="images/icon_connect.svg" class="action_icon" alt="Connect" /></button>
+            <button onclick="event_connect()" id="connectBtn" title="Connect"><img src="images/icon_connect.svg"
+                    class="action_icon" alt="Connect" /></button>
         </div>
         <div class="clearfix">&nbsp;</div>
     </header>
@@ -39,6 +60,13 @@
     </div>
 
     <div class="view"></div>
+
+    <footer>
+        <span class="subtitle">An experiment by yoavst</span>
+        <div class="right">
+        </div>
+        <div class="clearfix">&nbsp;</div>
+    </footer>
 
     <!-- Dependencies -->
     <script src='scripts/third_party/panzoom.min.js'></script>

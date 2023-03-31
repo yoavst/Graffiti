@@ -7,21 +7,14 @@
 <body>
   <header>
     <h1>Graffiti</h1>
-    <div>
-      <div class="switch-button">
-        <input class="switch-button-checkbox" type="checkbox" id="srcDest"></input>
-        <label class="switch-button-label" for=""><span class="switch-button-label-span">Src</span></label>
+    <div style="display: flex; align-items: center; justify-content: center;">
+      <div>
+        <input type="url" value="ws://localhost:8502" id="socketUrl"></input>
+        <button id="connectBtn" title="Connect"><img src="/images/icon_connect.svg"
+            class="action_icon" alt="Connect" /></button>
       </div>
-    </div>
   </header>
-  <div style="display: flex; align-items: center; justify-content: center;">
-    <div>
-      <input type="url" value="ws://localhost:8502" id="socketUrl"></input>
-      <button id="connectBtn" title="Connect"><img src="/images/icon_connect.svg"
-          class="action_icon" alt="Connect" /></button>
-    </div>
   </div>
-
   <div class="push">
     <h2>Settings</h2>
     <div class="push">

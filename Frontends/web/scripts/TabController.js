@@ -455,8 +455,8 @@ function mergeToVisNode(visNode, updateObj) {
     return { ...visNode, id: visNode.id, label: newNodeExtra.label, extra: newNodeExtra }
 }
 
-function createFromTo(currentNode, newNode, isNodeTarget) {
-    if (isNodeTarget)
+function createFromTo(currentNode, newNode, isExistingToNew) {
+    if (isExistingToNew)
         return { from: currentNode, to: newNode }
     else
         return { from: newNode, to: currentNode }

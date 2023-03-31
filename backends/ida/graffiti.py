@@ -1,13 +1,25 @@
 import json
 import socket
 import os
+import sys
 
 import idaapi
 import ida_kernwin
 import ida_nalt
-import ida_idp
 import idc
 import threading
+
+def to_bytes(s):
+    if sys.version_info.major == 3:
+        return s.encode('utf-8')
+    else:
+        return s
+
+def from_bytes(b):
+    if sys.version_info.major == 3:
+        return b.decode('utf-8')
+    else:
+        return b
 
 sock = None
 
@@ -22,7 +34,7 @@ class AddToGraphHandler(idaapi.action_handler_t):
             my_sock = sock
             if my_sock is not None:
                 payload = self.create_payload(ctx)
-                sock.send(json.dumps(payload))
+                sock.send(to_bytes(json.dumps(payload)))
             else:
                 print("Graffiti: Not connected to server")
         else:
@@ -166,7 +178,7 @@ class GrafitiIDBHooks(idaapi.IDB_Hooks):
                     "label": new_name
                 }
             }
-            sock.send(json.dumps(payload))
+            sock.send(to_bytes(json.dumps(payload)))
 
 hooks = [GraffitiUIHooks(), GrafitiIDBHooks()]
 for hook in hooks:
@@ -174,4 +186,3 @@ for hook in hooks:
 
 # TODO:
 # 1. Be able to close IDA
-# 2. Support edge direction

@@ -20,7 +20,6 @@ class graphMe(IScript):
                     print("No Selected method or field")
                     return
 
-            update["isNodeTarget"] = get_arrow_direction(ctx)
             send_update(ctx, update)
 
         except:

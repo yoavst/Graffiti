@@ -1,7 +1,7 @@
 * {
     margin: 0;
     padding: 0;
-    user-select: none; 
+    user-select: none;
 }
 
 html {
@@ -14,7 +14,6 @@ header {
     background-color: #0078d7;
     color: #fff;
     padding: 1rem;
-    padding-left: 2rem;
     padding-right: 0px;
 }
 
@@ -24,7 +23,7 @@ header {
     margin-right: 10px;
 }
 
-header * {
+header > * {
     display: inline;
 }
 
@@ -40,8 +39,8 @@ h1 {
     margin-top: 1.5rem;
 }
 
-.buttons * {
-    margin-right: 10px;
+.buttons > * {
+    margin-right: 6px;
 }
 
 .right {
@@ -145,7 +144,7 @@ button:hover {
 }
 
 
-input {
+input[type="url"] {
     padding: 5px 12px;
     font-size: 14px;
     line-height: 20px;
@@ -161,7 +160,7 @@ input {
     box-shadow: rgba(225, 228, 232, 0.2) 0px 1px 0px 0px inset;
 }
 
-input:focus {
+input[type="url"]:focus {
     border-color: #0366d6;
     outline: none;
     box-shadow: rgba(3, 102, 214, 0.3) 0px 0px 0px 3px;
@@ -184,4 +183,100 @@ input:focus {
 
 .swal2-popup {
     font-size: 1.6rem !important;
+}
+
+footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-color: #0078d7;
+    color: #fff;
+    padding: 1rem;
+}
+
+.arrowToggle {
+    display: inline-block;
+}
+
+.arrowToggle label {
+    pointer-events: none;
+}
+
+.arrowToggle label .input {
+    display: none;
+}
+
+
+.arrowToggle label .toggle-wrapper-wrapper {
+    background-color: white;
+    border-radius: 999px;
+    position: relative;
+    padding-left: 10px;
+    padding-right: 10px;
+    cursor: pointer;
+    pointer-events: all;
+}
+
+.toggle-wrapper-wrapper > * {
+    display: inline-block;
+    vertical-align:middle;
+}
+
+.arrowToggle label .toggle-wrapper {
+    position: relative;
+    width: 50px;
+    height: 30px;
+    background-color: white;
+    border-radius: 999px;
+    margin: auto;
+}
+
+
+.arrowToggle label .toggle-wrapper .line {
+    width: 40px;
+    height: 3px;
+    position: absolute;
+    top: 50%;
+    left: 5px;
+    transform: translateY(-50%);
+    background-color: #222;
+}
+
+.arrowToggle label .toggle-wrapper .head {
+    padding: 3px;
+    border: solid #222;
+    border-width: 0 3px 3px 0;
+    position: absolute;
+    top: 50%;
+    left: 5px;
+    transform: translateY(-50%) rotate(135deg);
+    transition: left 0.25s ease, transform 0.25s ease;
+}
+
+.arrowToggle label #isExistingToNew:checked~* .toggle-wrapper>.head {
+    left: calc(100% - 13px);
+    transform: translateY(-50%) rotate(-45deg);
+}
+
+.arrowToggle .text {
+    color: #222;
+    transition: font-weight 0.25s ease;
+}
+
+.arrowToggle .text::after {
+    display: block;
+    content: attr(content);
+    font-weight: bold;
+    height: 1px;
+    color: transparent;
+    overflow: hidden;
+    visibility: hidden;
   }
+
+.arrowToggle label #isNewWillBeSelected:not(:checked)~* .notSelectedText {
+    font-weight: bold;
+ }
+.arrowToggle label #isNewWillBeSelected:checked~* .selectedText {
+   font-weight: bold;
+}
