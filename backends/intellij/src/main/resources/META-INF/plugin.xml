@@ -22,19 +22,26 @@
     <actions>
         <!-- Add your actions here -->
         <action id="com.yoavst.graffiti.intellij.AddToGraffitiWithEdgeInfoAction"
-                class="com.yoavst.graffiti.intellij.AddToGraffitiWithEdgeInfoAction" text="Add to graffiti with edge info"
+                class="com.yoavst.graffiti.intellij.AddToGraffitiWithEdgeInfoAction"
+                text="Add to Graffiti with Edge Info"
+                icon="MyIcons.Action"
                 description="Add the current function or method to graffiti graph with label on the edge">
-            <add-to-group group-id="EditorPopupMenu" anchor="first"/>
+            <add-to-group group-id="EditorPopupMenu" anchor="last"/>
+            <keyboard-shortcut keymap="$default" first-keystroke="shift ctrl X"/>
         </action>
         <action id="com.yoavst.graffiti.intellij.AddToGraffitiAction"
-                class="com.yoavst.graffiti.intellij.AddToGraffitiAction" text="Add to graffiti"
+                class="com.yoavst.graffiti.intellij.AddToGraffitiAction"
+                text="Add to Graffiti"
+                icon="MyIcons.Action"
                 description="Add the current function or method to graffiti graph">
-            <add-to-group group-id="EditorPopupMenu" anchor="first"/>
-<!--            <keyboard-shortcut keymap="$default" first-keystroke="shift ctrl A"/>-->
+            <add-to-group group-id="EditorPopupMenu" anchor="last"/>
+            <keyboard-shortcut keymap="$default" first-keystroke="shift ctrl A"/>
         </action>
 
         <action id="com.yoavst.graffiti.intellij.EnableGraffitiSyncAction"
-                class="com.yoavst.graffiti.intellij.EnableGraffitiSyncAction" text="Enable graffiti support in project">
+                class="com.yoavst.graffiti.intellij.EnableGraffitiSyncAction"
+                icon="MyIcons.Action"
+                text="Graffiti: Connect to server">
             <add-to-group group-id="ToolsMenu" anchor="last"/>
         </action>
     </actions>

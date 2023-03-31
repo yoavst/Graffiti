@@ -4,6 +4,7 @@
     "description": "Add nodes to call graph directly from VSCode",
     "version": "0.1.0",
     "publisher": "yoavst",
+    "icon": "icon.png",
     "author": {
         "name": "yoavst",
         "email": "yoav.sternberg@gmail.com"
@@ -49,8 +50,16 @@
         ],
         "keybindings": [
             {
-                "command": "scopebar.ShowScopeSymbols",
-                "key": "ctrl+alt+p"
+                "command": "graffiti.AddToGraph",
+                "key": "ctrl+shift+a"
+            },
+            {
+                "command": "graffiti.AddToGraphWithEdgeInfo",
+                "key": "ctrl+shift+x"
+            },
+            {
+                "command": "workbench.action.showCommands",
+                "key": ""
             }
         ],
         "configuration": [

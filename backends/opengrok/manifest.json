@@ -35,6 +35,9 @@
             "description": "Graffiti: add to graph"
         },
         "add_to_graffiti_with_custom_edge": {
+            "suggested_key": {
+                "default": "Ctrl+Shift+X"
+            },
             "description": "Graffiti: add to graph with edge info"
         }
     },
