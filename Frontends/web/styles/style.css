@@ -235,7 +235,7 @@ footer {
 
 .arrowToggle label .toggle-wrapper .line {
     width: 40px;
-    height: 3px;
+    height: 2px;
     position: absolute;
     top: 50%;
     left: 5px;
@@ -246,7 +246,7 @@ footer {
 .arrowToggle label .toggle-wrapper .head {
     padding: 3px;
     border: solid #222;
-    border-width: 0 3px 3px 0;
+    border-width: 0 2px 2px 0;
     position: absolute;
     top: 50%;
     left: 5px;
