@@ -54,7 +54,6 @@ open class AddToGraffitiAction : AnAction() {
         }
 
         if (update != null) {
-            update["isNodeTarget"] = direction
             sendUpdate(event.project!!, update)
         }
     }
@@ -145,10 +144,5 @@ open class AddToGraffitiAction : AnAction() {
             writer.write(Gson().toJson(data))
             writer.flush()
         }
-    }
-
-    companion object {
-        @JvmStatic
-        var direction: Boolean = true
     }
 }

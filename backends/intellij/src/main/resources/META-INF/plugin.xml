@@ -37,11 +37,5 @@
                 class="com.yoavst.graffiti.intellij.EnableGraffitiSyncAction" text="Enable graffiti support in project">
             <add-to-group group-id="ToolsMenu" anchor="last"/>
         </action>
-
-        <action id="com.yoavst.graffiti.intellij.ChangeDirectionAction"
-                class="com.yoavst.graffiti.intellij.ChangeDirectionAction" text="Change arrow direction in Grafitti"
-                description="Change arrow direction in Grafitti">
-            <add-to-group group-id="ToolsMenu" anchor="after" relative-to-action="com.yoavst.graffiti.intellij.EnableGraffitiSyncAction"/>
-        </action>
     </actions>
 </idea-plugin>
