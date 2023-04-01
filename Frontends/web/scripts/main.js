@@ -177,7 +177,7 @@ function event_help() {
                 <li>The new node will be automatically selected, unless the setting changed</li>
                 <li>Right clicking a node will open it in the editor</li>
                 <li>To find the matching keyboard shortcut, hover over the buttons.</li>
-                <li>Double click an edge allows you to change its text</li>
+                <li>Double click an edge allows you to change its text or delete the edge</li>
                 <li>To rename or remove a graph, right click the tab's name.</li>
                 <li>A list of the linked projects is also available under the tab</li>
                 </ul>

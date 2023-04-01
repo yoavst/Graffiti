@@ -3,6 +3,7 @@ const ADD_EDGE = "addEdge"
 const ADD_NODE = "addNode"
 const REMOVE_EDGE = "removeEdge"
 const REMOVE_NODE = "removeNode"
+const CHANGE_EDGE_LABEL = "changeEdgeLabel"
 const MARKER = "marker"
 
 const HISTORY_MARKER = { type: MARKER, data: {} }
@@ -117,22 +118,48 @@ class TabController {
         }
     }
 
+    #setLabelForEdge(edge, value) {
+        if (value) {
+            edge.label = value
+        } else {
+            delete edge.label
+        }
+    }
+
     onEdgeDblClick(src, dst) {
         const _this = this
         const edge = this.edges.get({ filter: item => item.from == src && item.to == dst })[0]
+        const edgeOldLabel = edge.label
 
         setTimeout(function () {
             Swal.fire({
                 title: 'Edge\'s text',
                 input: 'text',
                 inputValue: edge.label || "",
-                showCancelButton: true
-            }).then(({ value = null }) => {
-                if (value != null) {
-                    if (value)
-                        edge.label = value
-                    else
-                        delete edge.label
+                showCancelButton: true,
+                showDenyButton: true,
+                denyButtonText: `Delete the edge`,
+            }).then(result => {
+                if (result.isConfirmed) {
+                    const {value} = result
+                    if (value != null) {
+                        _this.#setLabelForEdge(edge, value)
+
+                        // update history
+                        _this.redoHistory = []
+                        _this.addUndoMarker()
+                        _this.undoHistory.push({ type: CHANGE_EDGE_LABEL, data: { id: edge.id, oldLabel: edgeOldLabel, newLabel: value } })
+
+                        _this.draw()
+                    }
+                } else if (result.isDenied) {
+                    _this.edges.remove(edge.id)
+
+                    // update history
+                    _this.redoHistory = []
+                    _this.addUndoMarker()
+                    _this.undoHistory.push({ type: REMOVE_EDGE, data: { ...edge } })
+
                     _this.draw()
                 }
             })
@@ -324,6 +351,10 @@ class TabController {
                     this.nodes.add(data)
                 } else if (type == REMOVE_EDGE) {
                     this.edges.add(data)
+                } else if (type == CHANGE_EDGE_LABEL) {
+                    const { id, oldLabel } = data
+                    const edge = this.edges.get(id)
+                    this.#setLabelForEdge(edge, oldLabel)
                 }
 
 
@@ -356,6 +387,10 @@ class TabController {
                     this.nodes.remove(data.id)
                 } else if (type == REMOVE_EDGE) {
                     this.edges.remove(data.id)
+                } else if (type == CHANGE_EDGE_LABEL) {
+                    const { id, newLabel } = data
+                    const edge = this.edges.get(id)
+                    this.#setLabelForEdge(edge, newLabel)
                 }
                 this.undoHistory.push(historyEntry)
             }
