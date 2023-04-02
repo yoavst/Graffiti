@@ -1,10 +1,10 @@
 <idea-plugin>
     <id>com.yoavst.graffiti.intellij</id>
-    <name>Graffiti Support</name>
+    <name>Graffiti</name>
     <vendor email="yoav.sternberg@gmail.com" url="https://yoavst.com">Yoav Sternberg</vendor>
-    <idea-version since-build="211.*"/>
+    <idea-version since-build="213"/>
     <description><![CDATA[
-    Connector for Graffiti platform, for Intellij.
+    Graffiti support for Intellij. Supports both Java and Kotlin.
     ]]></description>
 
     <!-- please see https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html
