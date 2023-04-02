@@ -36,7 +36,7 @@ async def send_ide(request: str, src):
     # We duplicate the lists, to prevent modification of the lists while we use it. 
     # handle_ide_X are reponsible for cleaning the lists in case of a closed socket.
 
-    for _, writer in ide_tcps:
+    for _, writer in ide_tcps[:]:
         try:
             # TODO is it OK? shouldn't I pass length before?
             writer.write((request + "\n").encode('utf-8'))
