@@ -184,17 +184,14 @@ class TabController {
         this.container.textContent = data
         this.container.removeAttribute('data-processed');
 
-        const insertSvg = function (svgCode, bindFunctions) {
+        mermaid.render(this.mermaidId, data).then(({ svg, bindFunctions }) => {
             const el = document.createElement("div")
-            el.innerHTML = svgCode
+            el.innerHTML = svg
             const shadow = document.createElement("diagram-div")
             shadow.shadowRoot.appendChild(el)
             replaceChildren(_this.container, [shadow])
-        };
-        mermaid.render(this.mermaidId, data, insertSvg);
-
+        }).then(() => {
         // hacks to add listeners
-        setTimeout(function () {
             const nodesArray = [..._this.container.getElementsByTagName('diagram-div')[0].shadowRoot.querySelectorAll('.node')]
             for (const node of nodesArray) {
                 // fix pointer
@@ -233,7 +230,7 @@ class TabController {
                     })
                 }
             }
-        }, 0)
+        })
     }
 
     reset(shouldSupportUndo = false) {
