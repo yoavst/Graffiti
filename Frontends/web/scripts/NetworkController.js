@@ -1,15 +1,14 @@
 class NetworkController {
     constructor(url, tabsController) {
         this.webSocket = new WebSocket(url)
+        this.tabsController = tabsController
         const _this = this
 
-        const ws = this.webSocket
-
         const isExistingToNewSwitch = document.getElementById('isExistingToNew')
-        const isExistingToNew = () => isExistingToNewSwitch.checked
+        this.isExistingToNew = () => isExistingToNewSwitch.checked
 
         const isNewWillBeSelectedSwitch = document.getElementById('isNewWillBeSelected')
-        const isNewWillBeSelected = () => isNewWillBeSelectedSwitch.checked
+        this.isNewWillBeSelected = () => isNewWillBeSelectedSwitch.checked
 
         this.webSocket.onopen = function () {
             console.log("Connected to WS!");
@@ -18,34 +17,7 @@ class NetworkController {
 
         this.webSocket.onmessage = function (event) {
             const msg = JSON.parse(event.data);
-            
-
-            if (msg.type == MSG_ADD_NODE_AND_EDGE) {
-                tabsController.onCurrent((_, controller) => {
-                    const selectedNode = controller.selectedNode
-
-                    const nodeId = _this.addNodeAndEdge(controller, selectedNode, msg.node, msg.design, msg.edge, isExistingToNew(), true)
-                    if (isNewWillBeSelected())
-                        controller.selectNode(nodeId)
-                })
-            } else if (msg.type == MSG_ADD_NODES_AND_EDGES) {
-                tabsController.onCurrent((_, controller) => {
-                    const selectedNode = controller.selectedNode
-
-                    controller.addUndoMarker()
-
-                    for (const node of msg.nodes) {
-                        _this.addNodeAndEdge(controller, selectedNode, node, msg.design, msg.edge, isExistingToNew(), false)
-                    }
-                })
-
-
-            } else if (msg.type == MSG_UPDATE_NODES) {
-                // I assume all the opened tabs are from the same app, otherwise...
-                for (const { tabController } of tabsController.tabs) {
-                    tabController.updateNodes(msg.selection, msg.update)
-                }
-            }
+            _this.handleMessage(msg)
         }
 
         this.webSocket.onclose = function (event) {
@@ -54,7 +26,36 @@ class NetworkController {
         }
     }
 
-    addNodeAndEdge(controller, selectedNode, msgNode, msgDesign, msgEdge, isExistingToNew, shouldAddUndo) {
+    handleMessage(msg) {
+        if (msg.type == MSG_ADD_NODE_AND_EDGE) {
+            this.tabsController.onCurrent((_, controller) => {
+                const selectedNode = controller.selectedNode
+
+                const nodeId = this.addNodeAndEdge(controller, selectedNode, msg.node, msg.edge, this.isExistingToNew(), true)
+                if (this.isNewWillBeSelected())
+                    controller.selectNode(nodeId)
+            })
+        } else if (msg.type == MSG_ADD_NODES_AND_EDGES) {
+            this.tabsController.onCurrent((_, controller) => {
+                const selectedNode = controller.selectedNode
+
+                controller.addUndoMarker()
+
+                for (const node of msg.nodes) {
+                    this.addNodeAndEdge(controller, selectedNode, node, msg.edge, this.isExistingToNew(), false)
+                }
+            })
+
+
+        } else if (msg.type == MSG_UPDATE_NODES) {
+            // I assume all the opened tabs are from the same app, otherwise...
+            for (const { tabController } of this.tabsController.tabs) {
+                tabController.updateNodes(msg.selection, msg.update)
+            }
+        }
+    }
+
+    addNodeAndEdge(controller, selectedNode, msgNode, msgEdge, isExistingToNew, shouldAddUndo) {
         // 2. Check if dest node exists
         const existingDestNode = 'address' in msgNode ? controller.queryNode('address', msgNode.address) : null
         if (existingDestNode != null) {
@@ -68,7 +69,7 @@ class NetworkController {
         } else {
             if (shouldAddUndo) controller.addUndoMarker()
             // 2. create a new node
-            const newNode = controller.addNode(msgNode, msgDesign)
+            const newNode = controller.addNode(msgNode)
             // 3. add new edge
             if (selectedNode != null) {
                 controller.addEdge({ ...createFromTo(selectedNode.id, newNode.id, isExistingToNew), ...(msgEdge || {}) })

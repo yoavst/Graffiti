@@ -4,7 +4,18 @@ const ADD_NODE = "addNode"
 const REMOVE_EDGE = "removeEdge"
 const REMOVE_NODE = "removeNode"
 const CHANGE_EDGE_LABEL = "changeEdgeLabel"
+const CHANGE_NODE_LABEL = "changeNodeLabel"
+const CHANGE_THEME = "changeTheme"
 const MARKER = "marker"
+
+const THEMES = [
+    ['#A9D18E', 'black', '#80bb58'],
+    ['#BDD0E9', 'black', '#84a7d6'],
+    ['#FFE699', 'black', '#ffd34d'],
+    ['#ED7D31', 'black', '#c15811'],
+    ['#D9D9D9', 'black', '#b3b3b3'],
+]
+const MARKDOWN_THEME = ['white', 'black', '#e5e5e5']
 
 const HISTORY_MARKER = { type: MARKER, data: {} }
 
@@ -74,6 +85,9 @@ class TabController {
 
     toMermaid(gui = false) {
         const [_, nodes, edges] = [this.idCounter, this.nodes.get(), this.edges.get()]
+        const themesForNodes = THEMES.map(() => [])
+        const markdownNodes = []
+
 
         if (nodes.length == 0) {
             return ""
@@ -82,9 +96,24 @@ class TabController {
         // to support older clients, we switch from flowchart to graph for export
         let s = gui ? "flowchart TD\n" : "graph TD\n"
 
+        // Add nodes
         for (const node of nodes) {
-            s += `  N${node.id}["${escapeHtml(node.label, gui)}"]\n`
+            const nodeName = `N${node.id}`
+            if (node.extra.isMarkdown) {
+                s += `  ${nodeName}(["\`${escapeHtml(node.label, gui)}\`"])\n`
+                if (!gui || this.selectedNode == null || this.selectedNode.id != node.id) {
+                    markdownNodes.push(nodeName)
+                }
+            }
+            else {
+                s += `  ${nodeName}["${escapeHtml(node.label, gui)}"]\n`
+                if (!gui || this.selectedNode == null || this.selectedNode.id != node.id) {
+                        themesForNodes[node.theme || 0].push(nodeName)
+                }
+            }
         }
+
+        // Add edges
         s += "\n\n"
         for (const edge of edges) {
             if ('label' in edge) {
@@ -94,10 +123,26 @@ class TabController {
             }
         }
 
+        // Add themes
+        s += "\n\n"
+        for (const [index, [backgroundColor, textColor]] of THEMES.entries()) {
+            if (themesForNodes[index].length != 0) {
+                s += `classDef theme${index} fill:${backgroundColor},color:${textColor},stroke:black,stroke-width:2px\n`
+                s += `class ${themesForNodes[index].join(',')} theme${index}\n`
+            }
+        }
+        // Add theme for markdown
+        if (markdownNodes.length != 0) {
+            s += `classDef markdown fill:${MARKDOWN_THEME[0]},color:${MARKDOWN_THEME[1]},stroke:black,stroke-width:2px\n`
+            s += `class ${markdownNodes.join(',')} markdown\n`
+        }
+
+        // Add selected node
         if (gui) {
             s += "\n\n"
             if (this.selectedNode != null) {
-                s += `style N${this.selectedNode.id} fill:#b9b9ff,stroke:#333,stroke-width:4px`
+                const theme = (this.selectedNode.extra.isMarkdown ? MARKDOWN_THEME : THEMES[this.selectedNode.theme || 0])
+                s += `style N${this.selectedNode.id} fill:${theme[2]},stroke:#333,stroke-width:4px`
             }
         }
         return s
@@ -115,6 +160,24 @@ class TabController {
                 address: node.extra.address,
                 project: node.extra.project
             }))
+        } else if (node.extra.isMarkdown) {
+            this.editMarkdownNode(node)
+        }
+    }
+
+    onSetTheme(themeIndex) {
+        if (this.selectedNode != null && !this.selectedNode.extra.isMarkdown) {
+            const currentTheme = this.selectedNode.theme || 0
+            if (currentTheme != themeIndex) {
+                this.selectedNode.theme = themeIndex
+                
+                // update history
+                this.redoHistory = []
+                this.addUndoMarker()
+                this.undoHistory.push({ type: CHANGE_THEME, data: { id: this.selectedNode.id, oldTheme: currentTheme, newTheme: themeIndex } })
+
+                this.draw()
+            }
         }
     }
 
@@ -164,6 +227,31 @@ class TabController {
                 }
             })
         })
+    }
+
+    editMarkdownNode(node) {
+        const _this = this
+        const oldLabel = node.label
+        if (node != null) {
+            Swal.fire({
+                title: 'Edit Markdown node',
+                input: 'textarea',
+                inputValue: node.label,
+                footer: 'You can use **text** for bold, and *text* for italic',
+                showCancelButton: true
+                }).then(({value=null}) => {
+                    if (value != null && value != '') {
+                        node.label = value
+
+                        // update history
+                        _this.redoHistory = []
+                        _this.addUndoMarker()
+                        _this.undoHistory.push({ type: CHANGE_NODE_LABEL, data: { id: node.id, oldLabel: oldLabel, newLabel: value } })  
+
+                        _this.draw()
+                    }
+                })
+        }
     }
 
     draw() {
@@ -252,17 +340,14 @@ class TabController {
         this.draw()
     }
 
-    addNode(node, design = null) {
+    addNode(node) {
         updateNodeProperties(node)
 
-        // TODO make design customizable
-        const _design = design || {}
         // create the vis node
         const visNode = {
             id: this.idCounter++,
             label: node.label,
             extra: node,
-            ..._design
         }
 
         // add to the network
@@ -320,12 +405,14 @@ class TabController {
     }
 
     selectNode(id) {
+        const oldSelectedNode = this.selectedNode
         if (id == null) {
             this.selectedNode = null
         } else {
             this.selectedNode = this.nodes.get(id)
         }
-        this.draw()
+        if (oldSelectedNode != this.selectedNode)
+            this.draw()
     }
 
     addUndoMarker() {
@@ -352,6 +439,14 @@ class TabController {
                     const { id, oldLabel } = data
                     const edge = this.edges.get(id)
                     this.#setLabelForEdge(edge, oldLabel)
+                } else if (type == CHANGE_NODE_LABEL) {
+                    const { id, oldLabel } = data
+                    const node = this.nodes.get(id)
+                    node.label = oldLabel
+                } else if (type == CHANGE_THEME) {
+                    const { id, oldTheme } = data
+                    const node = this.nodes.get(id)
+                    node.theme = oldTheme
                 }
 
 
@@ -388,6 +483,14 @@ class TabController {
                     const { id, newLabel } = data
                     const edge = this.edges.get(id)
                     this.#setLabelForEdge(edge, newLabel)
+                } else if (type == CHANGE_NODE_LABEL) {
+                    const { id, newLabel } = data
+                    const node = this.nodes.get(id)
+                    node.label = newLabel
+                } else if (type == CHANGE_THEME) {
+                    const { id, newTheme } = data
+                    const node = this.nodes.get(id)
+                    node.theme = newTheme
                 }
                 this.undoHistory.push(historyEntry)
             }

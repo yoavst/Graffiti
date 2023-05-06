@@ -127,11 +127,17 @@ function event_import_onFile(file) {
 }
 
 function event_addTab() {
-    const tabName = prompt("What is the new graph name?")
-    if (tabName) {
-        const tab = window.tabsController.addTab(tabName)
-        window.tabsController.selectTab(tab)
-    }
+    Swal.fire({
+        title: 'Add graph',
+        input: 'text',
+        inputValue: '',
+        showCancelButton: true
+      }).then(({value=null}) => {
+            if (value != null && value != '') {
+                const tab = window.tabsController.addTab(value)
+                window.tabsController.selectTab(tab)
+            }
+      })
 }
 
 function event_toggleFocusTarget() {
@@ -180,6 +186,7 @@ function event_help() {
                 <li>Double click an edge allows you to change its text or delete the edge</li>
                 <li>To rename or remove a graph, right click the tab's name.</li>
                 <li>A list of the linked projects is also available under the tab</li>
+                <li>When node is selected, use 1-5 to theme it.</li>
                 </ul>
         `,
         icon: 'question',
@@ -188,6 +195,42 @@ function event_help() {
     })
 }
 
+function event_setTheme(themeIndex) {
+    window.tabsController.onCurrent((_, controller) => {
+        controller.onSetTheme(themeIndex)
+    })
+}
+
+function event_addTextNode() {
+    // FIXME don't depend on network controller
+    if (!('networkController' in window)) {
+        Swal.fire({
+            title: 'Not connected',
+            position: 'bottom-end',
+            toast: true,
+            showConfirmButton: false,
+            timer: 3000
+        })
+        return
+    }
+
+    Swal.fire({
+        title: 'Add text node',
+        input: 'textarea',
+        inputValue: '',
+        footer: 'You can use **text** for bold, and *text* for italic',
+        showCancelButton: true
+        }).then(({value=null}) => {
+            if (value != null && value != '') {
+                // Bit of a hack, but why not
+               window.networkController.handleMessage({type: MSG_ADD_NODE_AND_EDGE, node: {
+                    label: value,
+                    isMarkdown: true
+               }})
+            }
+        })
+    
+}
 
 function main() {
     initiateDependencies();
@@ -212,7 +255,7 @@ function initiateDependencies() {
 }
 
 function initiateHotkeys() {
-    hotkeys('ctrl+z,ctrl+shift+z,ctrl+y,ctrl+s,ctrl+o,ctrl+i,ctrl+alt+shift+i,delete,home,shift+/,ctrl+shift+/', function (event, handler) {
+    hotkeys('ctrl+z,ctrl+shift+z,ctrl+y,ctrl+s,ctrl+o,ctrl+i,ctrl+alt+shift+i,delete,home,shift+/,ctrl+shift+/,1,2,3,4,5', function (event, handler) {
         switch (handler.key) {
             case 'ctrl+z':
                 event_undo();
@@ -245,6 +288,14 @@ function initiateHotkeys() {
             case 'ctrl+shift+/':
                 event_toggleHelp();
                 return false
+            case '1':
+            case '2':
+            case '3':
+            case '4':
+            case '5':
+                themeIndex = parseInt(event.key) -1
+                event_setTheme(themeIndex)
+                return
         }
     });
 }
