@@ -33,6 +33,7 @@ class TabController {
         this.container = null
         this.zoom = null
         this.mermaidId = "mermaidStuff" + (globalCounter++)
+        this.elkRenderer = false
     }
 
     initView(view) {
@@ -65,16 +66,19 @@ class TabController {
     }
 
     export() {
-        return JSON.stringify([this.idCounter, this.nodes.get(), this.edges.get()])
+        return JSON.stringify([this.idCounter, this.nodes.get(), this.edges.get(), {
+            'elkRenderer': this.elkRenderer
+        }])
     }
 
     import(data) {
-        const [id, nodes, edges] = JSON.parse(data)
+        const [id, nodes, edges, config = {}] = JSON.parse(data)
 
         this.reset()
         this.nodes = new vis.DataSet(nodes)
         this.edges = new vis.DataSet(edges)
         this.idCounter = id
+        this.elkRenderer = config['elkRenderer'] || false
         this.draw()
     }
 
@@ -83,7 +87,7 @@ class TabController {
         this.zoom.zoomAbs(0, 0, 1)
     }
 
-    toMermaid(gui = false) {
+    toMermaid(gui = false, elkRenderer = false) {
         const [_, nodes, edges] = [this.idCounter, this.nodes.get(), this.edges.get()]
         const themesForNodes = THEMES.map(() => [])
         const markdownNodes = []
@@ -96,11 +100,20 @@ class TabController {
         // to support older clients, we switch from flowchart to graph for export
         let s = gui ? "flowchart TD\n" : "graph TD\n"
 
+        if (gui && elkRenderer) {
+            s = '%%{init: {"flowchart": {"defaultRenderer": "elk"}} }%%\n' + s            
+        }
+
         // Add nodes
         for (const node of nodes) {
             const nodeName = `N${node.id}`
             if (node.extra.isMarkdown) {
-                s += `  ${nodeName}(["\`${escapeHtml(node.label, gui)}\`"])\n`
+                if (gui) {
+                    s += `  ${nodeName}(["\`${escapeHtml(node.label, gui)}\`"])\n`
+                } else {
+                    // We support older mermaid version, so no markdown support
+                    s += `${nodeName}("${escapeMarkdown(node.label)}")\n`
+                }
                 if (!gui || this.selectedNode == null || this.selectedNode.id != node.id) {
                     markdownNodes.push(nodeName)
                 }
@@ -163,6 +176,11 @@ class TabController {
         } else if (node.extra.isMarkdown) {
             this.editMarkdownNode(node)
         }
+    }
+
+    onToggleRenderer() {
+        this.elkRenderer = !this.elkRenderer
+        this.draw()
     }
 
     onSetTheme(themeIndex) {
@@ -263,7 +281,7 @@ class TabController {
 
         const _this = this
 
-        const data = this.toMermaid(true)
+        const data = this.toMermaid(true, this.elkRenderer)
         if (data.length == 0) {
             this.container.textContent = "empty graph"
             return
@@ -610,6 +628,11 @@ function formatString(s, replacements) {
 function escapeHtml(unsafe, gui) {
     const res = unsafe.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&apos;');
     return gui ? res : res.replace('\n', '')
+}
+
+function escapeMarkdown(unsafe) {
+    const htmlEscaped = escapeHtml(unsafe, true).replace('\n', '<br>')
+    return htmlEscaped.replaceAll(/\*\*(.*?)\*\*/g, '<b>$1</b>').replaceAll(/\*(.*?)\*/g, '<i>$1</i>')
 }
 
 /**

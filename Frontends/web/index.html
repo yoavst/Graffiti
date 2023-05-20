@@ -29,7 +29,7 @@
                     alt="Redo" /></button>
             <button onclick="event_delete()" title="Delete (Delete)"><img src="images/icon_delete.svg"
                     class="action_icon" alt="Delete" /></button>
-            <button onclick="event_center()" title="Layout (Home)"><img src="images/icon_layout.svg" class="action_icon"
+            <button onclick="event_center()" oncontextmenu="return event_toggleRenderer()" title="Center (Home)&#10;&#13;Right click to change renderer"><img src="images/icon_layout.svg" class="action_icon"
                     alt="Layout" /></button>
             <div class="arrowToggle" title="Arrow direction (Ctrl+I)&#10;&#13;Focus (Ctrl+Alt+Shift+I)" oncontextmenu="return event_toggleFocusTarget()">
                 <label for="isExistingToNew">

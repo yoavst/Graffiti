@@ -140,6 +140,13 @@ function event_addTab() {
       })
 }
 
+function event_toggleRenderer() {
+    window.tabsController.onCurrent((_, controller) => {
+        controller.onToggleRenderer()
+    })
+    return false
+}
+
 function event_toggleFocusTarget() {
     document.getElementById('isNewWillBeSelected').click()
     return false
@@ -187,6 +194,7 @@ function event_help() {
                 <li>To rename or remove a graph, right click the tab's name.</li>
                 <li>A list of the linked projects is also available under the tab</li>
                 <li>When node is selected, use 1-5 to theme it.</li>
+                <li>Right click the center button to toggle the renderer between default and elk</li>
                 </ul>
         `,
         icon: 'question',
