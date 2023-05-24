@@ -4,6 +4,7 @@ import logging
 from typing import List, Tuple
 import websockets
 from websockets.server import WebSocketServerProtocol
+import struct
 
 logging.basicConfig()
 logging.root.setLevel(logging.INFO)
@@ -38,8 +39,8 @@ async def send_ide(request: str, src):
 
     for _, writer in ide_tcps[:]:
         try:
-            # TODO is it OK? shouldn't I pass length before?
-            writer.write((request + "\n").encode('utf-8'))
+            writer.write(struct.pack('>i', len(request)))
+            writer.write(request.encode('utf-8'))
             await writer.drain()
 
         except socket.error:
@@ -61,9 +62,13 @@ async def handle_ide_tcp(reader: asyncio.StreamReader, writer: asyncio.StreamWri
     ide_tcps.append((reader, writer))
 
     while True:
-        # TODO is it OK? shouldn't I pass length before?
         try:
-            push = (await reader.read(4096)).decode('utf8')
+            length = struct.unpack('>i', (await reader.readexactly(4)))[0]
+            if length < 0 or length > 65536:
+                logging.error(f"Length is too big: {length}, aborting. It might be because of an older backend script...")
+                raise ConnectionResetError()
+
+            push = (await reader.readexactly(length)).decode('utf8')
             if not push:
                 logging.warning(f"[TCP] IDE Connection from {peer} is closed")
                 ide_tcps.remove((reader, writer))
@@ -71,7 +76,7 @@ async def handle_ide_tcp(reader: asyncio.StreamReader, writer: asyncio.StreamWri
 
             # Handle push
             await send_frontend(push, peer)
-        except ConnectionResetError:
+        except (ConnectionResetError, asyncio.IncompleteReadError):
             logging.warning(f"[TCP] IDE Connection from {peer} is closed")
             ide_tcps.remove((reader, writer))
             break

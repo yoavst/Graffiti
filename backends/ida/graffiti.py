@@ -2,12 +2,13 @@ import json
 import socket
 import os
 import sys
+import struct
+import threading
 
 import idaapi
 import ida_kernwin
 import ida_nalt
 import idc
-import threading
 
 def to_bytes(s):
     if sys.version_info.major == 3:
@@ -20,6 +21,17 @@ def from_bytes(b):
         return b.decode('utf-8')
     else:
         return b
+    
+def readexactly(sock, num_bytes):
+    buf = b''
+    while len(buf) < num_bytes:
+        buf += sock.recv(num_bytes - len(buf))
+
+    return buf
+
+def lengthy_send(sock, data):
+    sock.send(struct.pack('>i', len(data)))
+    sock.send(data)
 
 sock = None
 
@@ -34,7 +46,8 @@ class AddToGraphHandler(idaapi.action_handler_t):
             my_sock = sock
             if my_sock is not None:
                 payload = self.create_payload(ctx)
-                sock.send(to_bytes(json.dumps(payload)))
+                data = to_bytes(json.dumps(payload))
+                lengthy_send(my_sock, data)
             else:
                 print("Graffiti: Not connected to server")
         else:
@@ -104,12 +117,11 @@ class EnableSyncHandler(idaapi.action_handler_t):
 def sync_read_thread():
     global sock
     print("Background thread running")
-    f = sock.makefile()
     try:
-        for line in f:
-            if not line:
-                break
-            data = json.loads(line)
+        while True:
+            length = struct.unpack('>i', readexactly(sock, 4))[0]
+            data = json.loads(readexactly(sock, length))
+                   
             if 'project' in data:
                 if not data['project'].startswith('IDA:'):
                     continue
@@ -179,7 +191,7 @@ class GrafitiIDBHooks(idaapi.IDB_Hooks):
                     "label": new_name
                 }
             }
-            sock.send(to_bytes(json.dumps(payload)))
+            lengthy_send(sock, to_bytes(json.dumps(payload)))
 
 hooks = [GraffitiUIHooks(), GrafitiIDBHooks()]
 for hook in hooks:

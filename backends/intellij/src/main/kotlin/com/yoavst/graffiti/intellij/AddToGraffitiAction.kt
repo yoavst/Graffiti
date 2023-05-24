@@ -16,7 +16,8 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
-import java.net.Socket
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
 
 
 open class AddToGraffitiAction : AnAction() {
@@ -140,9 +141,13 @@ open class AddToGraffitiAction : AnAction() {
                 .notify(project)
             return
         }
-        socket.getOutputStream().bufferedWriter().let { writer ->
-            writer.write(Gson().toJson(data))
-            writer.flush()
+        socket.getOutputStream().buffered().let { stream ->
+            val json = Gson().toJson(data)
+            // write length
+            stream.write(ByteBuffer.allocate(4).order(ByteOrder.BIG_ENDIAN).putInt(json.length).array())
+            // write data
+            stream.write(json.toByteArray())
+            stream.flush()
         }
     }
 }

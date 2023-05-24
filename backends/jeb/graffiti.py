@@ -7,7 +7,7 @@ from com.pnfsoftware.jeb.client.api import IScript
 from com.pnfsoftware.jeb.core import RuntimeProjectUtil
 from com.pnfsoftware.jeb.core.units.code.android.dex import IDexMethod, IDexClass, IDexField
 
-from java.io import InputStreamReader, BufferedReader
+from java.io import DataInputStream
 from com.pnfsoftware.jeb.core.units.code.java import IJavaSourceUnit
 from java.lang import Runnable, Thread
 from java.net import Socket
@@ -16,6 +16,8 @@ from com.pnfsoftware.jeb.core.units import UnitChangeEventData
 from com.pnfsoftware.jeb.core.units.code.android import IDexUnit
 from com.pnfsoftware.jeb.util.events import IEventListener
 from com.pnfsoftware.jeb.core.events import JebEvent, J
+from org.python.core.util import StringUtil
+import jarray
 
 from graphUtils import send_update
 
@@ -102,9 +104,13 @@ class GraffitiReadOnBackgroundRunnable(Runnable):
     def run(self):
         try:
             print("Connected to server")
-            in_stream = BufferedReader(InputStreamReader(self.sock.getInputStream()))
+            in_stream = DataInputStream(self.sock.getInputStream())
             while True:
-                line = in_stream.readLine()
+                length = in_stream.readInt()
+                bytes = jarray.zeros(length, "b")
+                in_stream.readFully(bytes)
+                line = StringUtil.fromBytes(bytes)
+
                 if not line:
                     break
                 data = json.loads(line)

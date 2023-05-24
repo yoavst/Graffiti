@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vfs.LocalFileSystem
 import java.net.Socket
+import java.io.DataInputStream
 import kotlin.concurrent.thread
 import com.intellij.openapi.diagnostic.Logger;
 
@@ -38,13 +39,17 @@ class EnableGraffitiSyncAction : AnAction() {
         logger.info("Background thread is running")
         try {
             SocketHolder.socket?.use { sock ->
-                val stream = sock.getInputStream().bufferedReader()
-                while (true) {
-                    val line = stream.readLine()
-                    logger.info("Received line from socket: $line")
-                    if (line.isNullOrEmpty())
+                val dataInputStream = DataInputStream(sock.getInputStream())
+
+                while(true) {
+                    // readInt is bigEndian
+                    val length = dataInputStream.readInt()
+                    val rawData = String(ByteArray(length).also(dataInputStream::readFully))
+                    logger.info("Received data from socket: $rawData")
+
+                    if (rawData.isEmpty())
                         break
-                    val data = JsonParser.parseString(line).asJsonObject
+                    val data = JsonParser.parseString(rawData).asJsonObject
                     if (data.has("project")) {
                         if (!data["project"].asString.startsWith("Intellij:")) {
                             continue

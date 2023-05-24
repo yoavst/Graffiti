@@ -94,10 +94,49 @@ export async function sendUpdate(data: any) {
     const socket = currentServerConnection
     // Connect to the server
     if (socket != null) {
-        socket.write(JSON.stringify(data))
+        const jsonData = JSON.stringify(data)
+        // write length
+        const lengthBuffer = Buffer.alloc(4)
+        lengthBuffer.writeInt32BE(jsonData.length, 0)
+        socket.write(lengthBuffer)
+        // write data
+        socket.write(jsonData)
     } else {
         await vscode.window.showInformationMessage("Graffiti: Not connected")
     }
+}
+
+// taken from https://stackoverflow.com/questions/38039362/nodejs-socket-programming-send-data-length
+function receive(socket, data, onMsg){
+    //Create a chunk prop if it does not exist
+    if(!socket.chunk){
+        socket.chunck = {
+            messageSize : 0,
+            buffer: Buffer.from([]),
+            bufferStack: Buffer.from([]),
+        };
+    }
+    //store the incoming data
+    socket.chunck.bufferStack = Buffer.concat([socket.chunck.bufferStack, data]);
+    //this is to check if you have a second message incoming in the tail of the first
+    var reCheck = false;
+    do {
+        reCheck = false;
+        //if message size == 0 you got a new message so read the message size (first 4 bytes)
+        if (socket.chunck.messageSize == 0 && socket.chunck.bufferStack.length >= 4) {
+            socket.chunck.messageSize = socket.chunck.bufferStack.readInt32BE(0);
+        }
+
+        //After read the message size (!= 0) and the bufferstack is completed and/or the incoming data contains more data (the next message)
+        if (socket.chunck.messageSize != 0 && socket.chunck.bufferStack.length >= socket.chunck.messageSize + 4) {
+            var buffer = socket.chunck.bufferStack.slice(4, socket.chunck.messageSize + 4);
+            socket.chunck.messageSize = 0;
+            socket.chunck.bufferStack = socket.chunck.bufferStack.slice(buffer.length + 4);
+            onMsg(socket, buffer);
+            //if the stack contains more data after read the entire message, maybe you got a new message, so it will verify the next 4 bytes and so on...
+            reCheck = socket.chunck.bufferStack.length > 0;
+        }
+    } while (reCheck);
 }
 
 export function connectServer(host: string, port: number) {
@@ -109,14 +148,16 @@ export function connectServer(host: string, port: number) {
     });
 
     currentServerConnection.on('data', (rawData) => {
-        const data = JSON.parse(rawData.toString())
-        if ('project' in data) {
-            if (!data['project'].startsWith('VSCode:')) {
-                return
+        receive(currentServerConnection, rawData, (_, msg) => {
+            const data = JSON.parse(msg.toString())
+            if ('project' in data) {
+                if (!data['project'].startsWith('VSCode:')) {
+                    return
+                }
             }
-        }
-        let [path, line] = data['address'].trim().split(":")
-        jumpTo(path, parseInt(line))
+            let [path, line] = data['address'].trim().split(":")
+            jumpTo(path, parseInt(line))
+        })
     })
 
     currentServerConnection.on('close', (_) => {

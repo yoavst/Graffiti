@@ -1,8 +1,9 @@
 import json
-from java.io import PrintWriter
+import struct
+from java.io import BufferedOutputStream
 from com.pnfsoftware.jeb.core.units.code.android import IDexUnit
 from com.pnfsoftware.jeb.core.units.code.java import IJavaSourceUnit
-
+from org.python.core.util import StringUtil
 
 
 def send_update(ctx, data):
@@ -10,8 +11,10 @@ def send_update(ctx, data):
     dex = prj.findUnit(IDexUnit)
     for listener in dex.getListeners():
         if hasattr(listener, 'IN_SCRIPT'):
-            out = PrintWriter(listener.sock.getOutputStream(), True)
-            out.print(json.dumps(data))
+            raw_data = StringUtil.toBytes(json.dumps(data))
+            out = BufferedOutputStream(listener.sock.getOutputStream())
+            out.write(struct.pack('>i', len(raw_data)))
+            out.write(raw_data)
             out.flush()
             break
     else:
