@@ -287,7 +287,6 @@ class TabController {
             return
         }
 
-        this.container.textContent = data
         this.container.removeAttribute('data-processed');
 
         mermaid.render(this.mermaidId, data).then(({ svg, bindFunctions }) => {
