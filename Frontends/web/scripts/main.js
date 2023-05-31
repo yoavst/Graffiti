@@ -15,9 +15,17 @@ function event_connect() {
 }
 
 function event_reset() {
-    window.tabsController.onCurrent((_, controller) => {
-        controller.reset(shouldSupportUndo = true)
-    })
+    Swal.fire({
+        title: 'Reset',
+        text: 'Do you want to clear the current tab?',
+        showCancelButton: true
+        }).then(({value=null}) => {
+            if (value) {
+                window.tabsController.onCurrent((_, controller) => {
+                    controller.reset(shouldSupportUndo = true)
+                })
+            }
+        })
 }
 
 
