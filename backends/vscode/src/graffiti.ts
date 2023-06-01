@@ -110,31 +110,31 @@ export async function sendUpdate(data: any) {
 function receive(socket, data, onMsg){
     //Create a chunk prop if it does not exist
     if(!socket.chunk){
-        socket.chunck = {
+        socket.chunk = {
             messageSize : 0,
             buffer: Buffer.from([]),
             bufferStack: Buffer.from([]),
         };
     }
     //store the incoming data
-    socket.chunck.bufferStack = Buffer.concat([socket.chunck.bufferStack, data]);
+    socket.chunk.bufferStack = Buffer.concat([socket.chunk.bufferStack, data]);
     //this is to check if you have a second message incoming in the tail of the first
     var reCheck = false;
     do {
         reCheck = false;
         //if message size == 0 you got a new message so read the message size (first 4 bytes)
-        if (socket.chunck.messageSize == 0 && socket.chunck.bufferStack.length >= 4) {
-            socket.chunck.messageSize = socket.chunck.bufferStack.readInt32BE(0);
+        if (socket.chunk.messageSize == 0 && socket.chunk.bufferStack.length >= 4) {
+            socket.chunk.messageSize = socket.chunk.bufferStack.readInt32BE(0);
         }
 
         //After read the message size (!= 0) and the bufferstack is completed and/or the incoming data contains more data (the next message)
-        if (socket.chunck.messageSize != 0 && socket.chunck.bufferStack.length >= socket.chunck.messageSize + 4) {
-            var buffer = socket.chunck.bufferStack.slice(4, socket.chunck.messageSize + 4);
-            socket.chunck.messageSize = 0;
-            socket.chunck.bufferStack = socket.chunck.bufferStack.slice(buffer.length + 4);
+        if (socket.chunk.messageSize != 0 && socket.chunk.bufferStack.length >= socket.chunk.messageSize + 4) {
+            var buffer = socket.chunk.bufferStack.slice(4, socket.chunk.messageSize + 4);
+            socket.chunk.messageSize = 0;
+            socket.chunk.bufferStack = socket.chunk.bufferStack.slice(buffer.length + 4);
             onMsg(socket, buffer);
             //if the stack contains more data after read the entire message, maybe you got a new message, so it will verify the next 4 bytes and so on...
-            reCheck = socket.chunck.bufferStack.length > 0;
+            reCheck = socket.chunk.bufferStack.length > 0;
         }
     } while (reCheck);
 }
