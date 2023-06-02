@@ -40,6 +40,10 @@
                 "title": "Graffiti: Add to graph"
             },
             {
+                "command": "graffiti.AddLineToGraph",
+                "title": "Graffiti: Add the current line to graph"
+            },
+            {
                 "command": "graffiti.AddToGraphWithEdgeInfo",
                 "title": "Graffiti: Add to graph with edge comment"
             },
@@ -52,6 +56,10 @@
             {
                 "command": "graffiti.AddToGraph",
                 "key": "ctrl+shift+a"
+            },
+            {
+                "command": "graffiti.AddLineToGraph",
+                "key": "ctrl+shift+q"
             },
             {
                 "command": "graffiti.AddToGraphWithEdgeInfo",
@@ -75,6 +83,17 @@
                         ],
                         "default": "ScopeSymbol",
                         "description": "Behavior for click status bar or command for 'ShowScopeSymbols'."
+                    }
+                }
+            },
+            {
+                "title": "Graffiti",
+                "properties": {
+                    "graffiti.removeParentheses": {
+                        "scope": "resource",
+                        "type": "boolean",
+                        "default": true,
+                        "description": "Remove text between parentheses when querying the LSP for the current symbol"
                     }
                 }
             }

@@ -10,15 +10,18 @@ let currentServerConnection: net.Socket | null = null
 // TODO assuming single workspace
 
 // Graffiti jsons
-export function createUpdate(document: vscode.TextDocument, symbol: SymbolNode, edgeText: string = null) {
+export function createUpdate(document: vscode.TextDocument, symbol: SymbolNode, edgeText: string = null, lineNumber: number = null) {
     const nameAndSymbol = getNameAndLastSymbol(basename(document.fileName), symbol)
     if (nameAndSymbol == null) return null
 
-    const [name, lastSymbol] = nameAndSymbol
+    let [name, lastSymbol] = nameAndSymbol
+    if (lineNumber != null) {
+        name = `${name}:${lineNumber}`
+    }
     const base = {
         "type": "addData", "node": {
             "project": "VSCode: " + getProjectName(),
-            "address": vscode.workspace.asRelativePath(document.uri) + ":" + lastSymbol.range.start.line,
+            "address": vscode.workspace.asRelativePath(document.uri) + ":" + (lineNumber ?? lastSymbol.range.start.line),
             "label": name,
             "computedProperties": []
         }
@@ -62,6 +65,7 @@ function getNameAndLastSymbol(filename: string, symbol: SymbolNode): [string, Sy
     let scope: string[] = []
     let name: string[] = []
     let lastName: SymbolNode = null
+    let firstName: SymbolNode = null
     for (const node of nodes) {
         if (SymbolKindsForScope.indexOf(node.symbolInfo?.kind) >= 0) {
             scope.push(node.symbolInfo.name)
@@ -71,11 +75,15 @@ function getNameAndLastSymbol(filename: string, symbol: SymbolNode): [string, Sy
                 if (node.symbolInfo?.kind == SymbolKind.Field || node.symbolInfo?.kind == SymbolKind.Variable) {
                     name.push("_" + node.symbolInfo.name)
                     lastName = node
+                    firstName = node
                     break
                 }
             }
 
             if (SymbolKindsForName.indexOf(node.symbolInfo?.kind) >= 0) {
+                if (name.length == 0) {
+                    firstName = node
+                }
                 name.push(node.symbolInfo.name)
                 lastName = node
             }
@@ -85,9 +93,30 @@ function getNameAndLastSymbol(filename: string, symbol: SymbolNode): [string, Sy
     if (name.length == 0) return null;
 
     // TODO: name[0] is not the best possible option, but we can't solve it for the general case
-    return [(scope.join('.') || filename) + "::\n" + name[0], lastName]
+    let symbolName = (scope.join('.') || filename) + "::\n" + name[0]
+    if (vscode.workspace.getConfiguration('graffiti')['removeParentheses']) {
+        symbolName = removeParentheses(symbolName)
+    }
+    return [symbolName, firstName]
 }
 
+
+function removeParentheses(str: string) {
+    let output = '';
+    let depth = 0;
+  
+    for (let i = 0; i < str.length; i++) {
+      if (str[i] === '(') {
+        depth++;
+      } else if (str[i] === ')') {
+        depth--;
+      } else if (depth === 0) {
+        output += str[i];
+      }
+    }
+  
+    return output.trim().replace(/ {2,}/g, ' ');
+  }
 
 // Sockets
 export async function sendUpdate(data: any) {
@@ -144,6 +173,7 @@ export function connectServer(host: string, port: number) {
 
     currentServerConnection = new net.Socket();
     currentServerConnection.connect(port, host, () => {
+        vscode.window.showInformationMessage("Connected to graffiti!")
         console.log('Connected to graffiti!')
     });
 

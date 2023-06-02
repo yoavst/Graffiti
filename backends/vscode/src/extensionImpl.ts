@@ -98,6 +98,19 @@ export class ScopeSymbolProvider {
             }
         });
 
+        vscode.commands.registerCommand("graffiti.AddLineToGraph", async () => {
+            // FIXME
+            let selection = vscode.window.activeTextEditor.selection;
+            let node = await this._scopeFinder.getScopeNode(selection.start);
+            let currentLine = selection.start.line
+            console.log("Graffiti.AddToGraph()", node)
+            if (node != null) {
+                const update = graffiti.createUpdate(this._scopeFinder.document, node, null, currentLine)
+                if (update != null)
+                    await graffiti.sendUpdate(update)
+            }
+        });
+
         vscode.commands.registerCommand("graffiti.ConnectToServer", async () => {
             const address = await vscode.window.showInputBox({
                 prompt: 'Enter server address',
