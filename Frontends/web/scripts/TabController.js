@@ -16,6 +16,7 @@ const THEMES = [
     ['#D9D9D9', 'black', '#b3b3b3'],
 ]
 const MARKDOWN_THEME = ['white', 'black', '#e5e5e5']
+const COMMENT_THEME = ['#bfbfbf', 'black', '#858585']
 
 const HISTORY_MARKER = { type: MARKER, data: {} }
 
@@ -34,6 +35,7 @@ class TabController {
         this.zoom = null
         this.mermaidId = "mermaidStuff" + (globalCounter++)
         this.elkRenderer = false
+        this.cachedMermaid = null
     }
 
     initView(view) {
@@ -79,6 +81,7 @@ class TabController {
         this.edges = new vis.DataSet(edges)
         this.idCounter = id
         this.elkRenderer = config['elkRenderer'] || false
+        this.cachedMermaid = null
         this.draw()
     }
 
@@ -88,66 +91,92 @@ class TabController {
     }
 
     toMermaid(gui = false, elkRenderer = false) {
-        const [_, nodes, edges] = [this.idCounter, this.nodes.get(), this.edges.get()]
-        const themesForNodes = THEMES.map(() => [])
-        const markdownNodes = []
+        let s = ""
+
+        if (gui && this.cachedMermaid != null) {
+            s = this.cachedMermaid
+        } else {
+            const [_, nodes, edges] = [this.idCounter, this.nodes.get(), this.edges.get()]
+            const themesForNodes = THEMES.map(() => [])
+            const markdownNodes = []
+            const commentNodes = []
+            const commentNodesSet = new Set()
 
 
-        if (nodes.length == 0) {
-            return ""
-        }
+            if (nodes.length == 0) {
+                return ""
+            }
 
-        // to support older clients, we switch from flowchart to graph for export
-        let s = gui ? "flowchart TD\n" : "graph TD\n"
+            // to support older clients, we switch from flowchart to graph for export
+            s = gui ? (elkRenderer ?  "flowchart-elk TD\n": "flowchart TD\n") : "graph TD\n"
 
-        if (gui && elkRenderer) {
-            s = '%%{init: {"flowchart": {"defaultRenderer": "elk"}} }%%\n' + s            
-        }
+            // Add nodes
+            for (const node of nodes) {
+                const nodeName = `N${node.id}`
+                if (node.extra.isMarkdown) {
+                    if (gui) {
+                        s += `  ${nodeName}(["\`${escapeHtml(node.label, gui)}\`"])\n`
+                    } else {
+                        // We support older mermaid version, so no markdown support
+                        s += `${nodeName}("${escapeMarkdown(node.label)}")\n`
+                    }
 
-        // Add nodes
-        for (const node of nodes) {
-            const nodeName = `N${node.id}`
-            if (node.extra.isMarkdown) {
-                if (gui) {
-                    s += `  ${nodeName}(["\`${escapeHtml(node.label, gui)}\`"])\n`
+                    if (node.extra.isComment) {
+                        commentNodesSet.add(node.id)
+                    }
+                    
+                    if (!gui || this.selectedNode == null || this.selectedNode.id != node.id) {
+                        if (node.extra.isComment) {
+                            commentNodes.push(nodeName)
+                        } else {
+                            markdownNodes.push(nodeName)
+                        }
+                    }
+                }
+                else {
+                    s += `  ${nodeName}["${escapeHtml(node.label, gui)}"]\n`
+                    if (!gui || this.selectedNode == null || this.selectedNode.id != node.id) {
+                            themesForNodes[node.theme || 0].push(nodeName)
+                    }
+                }
+            }
+
+
+            // Add edges
+            s += "\n\n"
+            for (const edge of edges) {
+                if (commentNodesSet.has(edge.to)) {
+                    s += `N${edge.from} --- N${edge.to}\n`
+                } else if ('label' in edge) {
+                    s += `N${edge.from}-->|"${escapeHtml(edge.label, gui)}"|N${edge.to}\n`
                 } else {
-                    // We support older mermaid version, so no markdown support
-                    s += `${nodeName}("${escapeMarkdown(node.label)}")\n`
-                }
-                if (!gui || this.selectedNode == null || this.selectedNode.id != node.id) {
-                    markdownNodes.push(nodeName)
+                    s += `N${edge.from} --> N${edge.to}\n`
                 }
             }
-            else {
-                s += `  ${nodeName}["${escapeHtml(node.label, gui)}"]\n`
-                if (!gui || this.selectedNode == null || this.selectedNode.id != node.id) {
-                        themesForNodes[node.theme || 0].push(nodeName)
-                }
-            }
-        }
 
-        // Add edges
-        s += "\n\n"
-        for (const edge of edges) {
-            if ('label' in edge) {
-                s += `N${edge.from}-->|"${escapeHtml(edge.label, gui)}"|N${edge.to}\n`
-            } else {
-                s += `N${edge.from} --> N${edge.to}\n`
+            // Add themes
+            s += "\n\n"
+            for (const [index, [backgroundColor, textColor]] of THEMES.entries()) {
+                if (themesForNodes[index].length != 0) {
+                    s += `classDef theme${index} fill:${backgroundColor},color:${textColor},stroke:black,stroke-width:2px\n`
+                    s += `class ${themesForNodes[index].join(',')} theme${index}\n`
+                }
             }
-        }
+            // Add theme for markdown
+            if (markdownNodes.length != 0) {
+                s += `classDef markdown fill:${MARKDOWN_THEME[0]},color:${MARKDOWN_THEME[1]},stroke:black,stroke-width:2px\n`
+                s += `class ${markdownNodes.join(',')} markdown\n`
+            }
 
-        // Add themes
-        s += "\n\n"
-        for (const [index, [backgroundColor, textColor]] of THEMES.entries()) {
-            if (themesForNodes[index].length != 0) {
-                s += `classDef theme${index} fill:${backgroundColor},color:${textColor},stroke:black,stroke-width:2px\n`
-                s += `class ${themesForNodes[index].join(',')} theme${index}\n`
+            if (commentNodes.length != 0) {
+                s += `classDef comment fill:${COMMENT_THEME[0]},color:${COMMENT_THEME[1]},stroke:black,stroke-width:2px\n`
+                s += `class ${commentNodes.join(',')} comment\n`
             }
-        }
-        // Add theme for markdown
-        if (markdownNodes.length != 0) {
-            s += `classDef markdown fill:${MARKDOWN_THEME[0]},color:${MARKDOWN_THEME[1]},stroke:black,stroke-width:2px\n`
-            s += `class ${markdownNodes.join(',')} markdown\n`
+
+            // Cache the created mermaid
+            if (gui) {
+                this.cachedMermaid = s
+            }
         }
 
         // Add selected node
@@ -159,6 +188,21 @@ class TabController {
             }
         }
         return s
+    }
+
+    modifyElkGraph(graph) {
+        // Increase spacing for comments
+        graph.layoutOptions['org.eclipse.elk.spacing.commentNode'] = 30
+
+        // Annotate comments
+        const commentIds = new Set(this.queryNodes('isComment', true).map(n => `N${n.id}`))
+        if (commentIds.size > 0) {
+            graph.children.forEach(child => {
+                if (commentIds.has(child.id)) {
+                   child.layoutOptions['org.eclipse.elk.commentBox'] = true
+                }
+            })
+        }
     }
 
     onClick(target, elementId) {
@@ -180,6 +224,7 @@ class TabController {
 
     onToggleRenderer() {
         this.elkRenderer = !this.elkRenderer
+        this.cachedMermaid = null
         this.draw()
     }
 
@@ -193,6 +238,8 @@ class TabController {
                 this.redoHistory = []
                 this.addUndoMarker()
                 this.undoHistory.push({ type: CHANGE_THEME, data: { id: this.selectedNode.id, oldTheme: currentTheme, newTheme: themeIndex } })
+
+                this.cachedMermaid = null
 
                 this.draw()
             }
@@ -231,6 +278,8 @@ class TabController {
                         _this.addUndoMarker()
                         _this.undoHistory.push({ type: CHANGE_EDGE_LABEL, data: { id: edge.id, oldLabel: edgeOldLabel, newLabel: value } })
 
+                        _this.cachedMermaid = null
+
                         _this.draw()
                     }
                 } else if (result.isDenied) {
@@ -240,6 +289,8 @@ class TabController {
                     _this.redoHistory = []
                     _this.addUndoMarker()
                     _this.undoHistory.push({ type: REMOVE_EDGE, data: { ...edge } })
+
+                    _this.cachedMermaid = null
 
                     _this.draw()
                 }
@@ -252,21 +303,30 @@ class TabController {
         const oldLabel = node.label
         if (node != null) {
             Swal.fire({
-                title: 'Edit Markdown node',
+                title: node.extra.isComment ? 'Edit comment' : 'Edit Markdown node',
                 input: 'textarea',
                 inputValue: node.label,
                 footer: 'You can use **text** for bold, and *text* for italic',
-                showCancelButton: true
-                }).then(({value=null}) => {
-                    if (value != null && value != '') {
-                        node.label = value
+                showCancelButton: true,
+                showDenyButton: true,
+                denyButtonText: `Delete`,
+                }).then(result => {
+                    if (result.isConfirmed) {
+                        const {value=null} = result
+                        if (value != null && value != '') {
+                            node.label = value
 
-                        // update history
-                        _this.redoHistory = []
-                        _this.addUndoMarker()
-                        _this.undoHistory.push({ type: CHANGE_NODE_LABEL, data: { id: node.id, oldLabel: oldLabel, newLabel: value } })  
+                            // update history
+                            _this.redoHistory = []
+                            _this.addUndoMarker()
+                            _this.undoHistory.push({ type: CHANGE_NODE_LABEL, data: { id: node.id, oldLabel: oldLabel, newLabel: value } }) 
 
-                        _this.draw()
+                            _this.cachedMermaid = null
+
+                            _this.draw()
+                        }
+                    } else if (result.isDenied) {
+                        this.deleteNode(node)
                     }
                 })
         }
@@ -318,7 +378,7 @@ class TabController {
                 }
             }
 
-            const edgesArray = [..._this.container.getElementsByTagName('diagram-div')[0].shadowRoot.querySelectorAll('.edge-thickness-normal')]
+            const edgesArray = [..._this.container.getElementsByTagName('diagram-div')[0].shadowRoot.querySelectorAll('.flowchart-link')]
             for (const edge of edgesArray) {
                 // fix pointer
                 edge.style.cursor = "pointer"
@@ -353,6 +413,7 @@ class TabController {
         this.nodes.clear()
 
         this.selectedNode = null
+        this.cachedMermaid = null
 
         this.draw()
     }
@@ -373,6 +434,8 @@ class TabController {
         // update history
         this.redoHistory = []
         this.undoHistory.push({ type: ADD_NODE, data: { ...visNode } })
+
+        this.cachedMermaid = null
 
         this.draw()
 
@@ -404,21 +467,27 @@ class TabController {
         this.redoHistory = []
         this.undoHistory.push({ type: ADD_EDGE, data: { ...visEdge } })
 
+        this.cachedMermaid = null
+
         this.draw()
 
         return visEdge
     }
 
     queryNode(propertyName, propertyValue) {
-        const result = this.nodes.get({
-            filter: function (item) {
-                return item.extra[propertyName] == propertyValue;
-            }
-        });
+        const result = this.queryNodes(propertyName, propertyValue)
         if (result.length == 1) {
             return result[0]
         }
         return null;
+    }
+
+    queryNodes(propertyName, propertyValue) {
+        return this.nodes.get({
+            filter: function (item) {
+                return item.extra[propertyName] == propertyValue;
+            }
+        });
     }
 
     selectNode(id) {
@@ -427,9 +496,15 @@ class TabController {
             this.selectedNode = null
         } else {
             this.selectedNode = this.nodes.get(id)
+            if (this.selectedNode.extra.isUnclickable) {
+                // Clicking on comment is like clicking on the background
+                this.selectedNode = null
+            }
         }
-        if (oldSelectedNode != this.selectedNode)
+        if (oldSelectedNode != this.selectedNode) {
+            this.cachedMermaid = null
             this.draw()
+        }
     }
 
     addUndoMarker() {
@@ -437,6 +512,8 @@ class TabController {
     }
 
     undo() {
+        this.cachedMermaid = null
+
         if (this.undoHistory.length) {
             this.redoHistory.push(HISTORY_MARKER)
             while (this.undoHistory.length) {
@@ -481,6 +558,9 @@ class TabController {
     }
 
     redo() {
+        this.cachedMermaid = null
+
+
         if (this.redoHistory.length) {
             this.undoHistory.push(HISTORY_MARKER)
             while (this.redoHistory.length) {
@@ -522,36 +602,55 @@ class TabController {
 
     deleteCurrentNode() {
         if (this.selectedNode) {
-            const removedNode = this.selectedNode
-            const removedNodeId = removedNode.id
-            // Start undo session
-            this.addUndoMarker()
-            // Remove the node
-            this.nodes.remove(removedNode.id)
-            // Update undo history for node
-            this.undoHistory.push({ type: REMOVE_NODE, data: { ...removedNode } })
-            // Get all edges containing the node
-            const removedEdges = this.edges.get({
-                filter: (edge) => edge.from == removedNodeId ||
-                    edge.to == removedNodeId
-            })
-            // Remove them, and update undo history
-            for (const removedEdge of removedEdges) {
-                this.edges.remove(removedEdge.id)
-                this.undoHistory.push({ type: REMOVE_EDGE, data: { ...removedEdge } })
-            }
-
-            // update history
-            this.redoHistory = []
-
-            // remember to clear selected node
-            this.selectedNode = null
-
-            this.draw()
+            this.deleteNode(this.selectedNode)
         }
     }
 
+    deleteNode(removedNode) {
+        const removedNodeId = removedNode.id
+        // Start undo session
+        this.addUndoMarker()
+        // Remove the node
+        this.nodes.remove(removedNode.id)
+        // Update undo history for node
+        this.undoHistory.push({ type: REMOVE_NODE, data: { ...removedNode } })
+        // Get all edges containing the node
+        const removedEdges = this.edges.get({
+            filter: (edge) => edge.from == removedNodeId ||
+                edge.to == removedNodeId
+        })
+        // Remove them, and update undo history
+        for (const removedEdge of removedEdges) {
+            this.edges.remove(removedEdge.id)
+            this.undoHistory.push({ type: REMOVE_EDGE, data: { ...removedEdge } })
+
+            // Remove the connected node if it is a comment
+            const maybeComment = this.nodes.get(removedEdge.to)
+            if (maybeComment && maybeComment.extra.isComment) {
+                // We don't have to call deleteNode recursively since it is a simpler case
+                // It has only one edge, which we've already removed
+                this.nodes.remove(maybeComment.id)
+                this.undoHistory.push({ type: REMOVE_NODE, data: { ...maybeComment } })
+            }
+
+        }
+
+        // update history
+        this.redoHistory = []
+
+        // remember to clear selected node
+        if (this.selectedNode == removedNode) {
+            this.selectedNode = null
+        }
+
+        this.cachedMermaid = null
+
+        this.draw()
+    }
+
     updateNodes(selection, updateObj) {
+        this.cachedMermaid = null
+
         const updates = this.nodes.get({
             filter: item => {
                 const extra = item.extra

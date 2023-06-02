@@ -102,6 +102,14 @@ class TabsController {
         }
     }
 
+    onId(id, callback) {
+        this.tabs.forEach(({name, tabController}) => {
+            if (tabController.mermaidId == id) {
+                callback(name, tabController)
+            }
+        })
+    }
+
     save() {
         const data = JSON.stringify(this.tabs.map(({ name, tabController }) => [name, tabController.export()]))
         localStorage.setItem("__SAVED_DATA", data)

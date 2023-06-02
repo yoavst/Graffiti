@@ -218,7 +218,28 @@ function event_setTheme(themeIndex) {
 }
 
 function event_addTextNode() {
-    // FIXME don't depend on network controller
+    addTextualNode('Add text node', {isMarkdown: true})    
+}
+
+function event_addComment() {
+    window.tabsController.onCurrent((_, controller) => {
+        if (controller.selectedNode == null) {
+            Swal.fire({
+                title: 'No selected node to comment',
+                position: 'bottom-end',
+                toast: true,
+                showConfirmButton: false,
+                timer: 3000
+            })
+            return
+        }
+
+        addTextualNode('Add comment', {isMarkdown: true, isComment: true, isUnclickable: true})
+    })
+}
+
+function addTextualNode(title, extra_properties) {
+    // FIXME: don't depend on network controller
     if (!('networkController' in window)) {
         Swal.fire({
             title: 'Not connected',
@@ -231,7 +252,7 @@ function event_addTextNode() {
     }
 
     Swal.fire({
-        title: 'Add text node',
+        title: title,
         input: 'textarea',
         inputValue: '',
         footer: 'You can use **text** for bold, and *text* for italic',
@@ -239,13 +260,12 @@ function event_addTextNode() {
         }).then(({value=null}) => {
             if (value != null && value != '') {
                 // Bit of a hack, but why not
-               window.networkController.handleMessage({type: MSG_ADD_NODE_AND_EDGE, node: {
+                window.networkController.handleMessage({type: MSG_ADD_NODE_AND_EDGE, node: {
                     label: value,
-                    isMarkdown: true
-               }})
+                    ...extra_properties
+                }})
             }
         })
-    
 }
 
 function main() {
@@ -266,8 +286,14 @@ function initiateDependencies() {
     mermaid.initialize({
         securityLevel: 'loose',
         theme: 'forest',
-        useMaxWidth: true
+        useMaxWidth: true,
     });
+}
+
+function elk_beforeCallback(id, graph) {
+    tabsController.onId(id, (_, controller) => {
+        controller.modifyElkGraph(graph)
+    })
 }
 
 function initiateHotkeys() {
