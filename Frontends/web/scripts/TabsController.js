@@ -31,6 +31,10 @@ class TabsController {
 
         // initiate tab
         const tabController = new TabController()
+        if (shouldSave) {
+            // Default use elk, backward compatability for old files will keep them with the old layout engine
+            tabController.elkRenderer = true
+        }
         tabController.initView(contentElement)
         const tab = { name, tabController, tabElement, contentElement }
         this.tabs.push(tab)
