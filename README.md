@@ -8,6 +8,7 @@ Create customized callgraph directly from your favorite editor.
 * Add a node to the callgraph directly from your editor. 
 * You choose what to add and where.
 * Open the selected node in the editor using right click.
+* Add text nodes, and comments
 * Export the graph to mermaid 
 * The graph support scrolling and zooming
 * Auto save to localstorage, can export to file.
@@ -58,13 +59,13 @@ python3 -m http.server 80
 4. Follow the usage instructions for the specific backend below.
 
 ## Backends
-| Editor   | Languages                            | add to graph | open in editor | Rename support | Field support | Socket type |
-| -------- | ------------------------------------ | ------------ | -------------- | -------------- | ------------- | ----------- |
-| JEB      | Java                                 | ✅           | ✅            | ✅            | ✅            | TCP         |
-| Intellij | Java, Kotlin                         | ✅           | ✅            | ❌            | ✅            | TCP         |
-| VSCode   | Depends on available language server | ✅           | ✅            | ❌            | ❌            | TCP         |
-| OpenGrok | *                                    | ✅           | ✅            | ❌            | ❌            | Websocket   |
-| IDA      | *                                    | ✅           | ✅            | ✅            | ❌            | TCP         |
+| Editor   | Languages                            | add to graph | open in editor | Rename support | Field support | Add line to graph |Socket type |
+| -------- | ------------------------------------ | ------------ | -------------- | -------------- | ------------- | ----------------- | ---------- |
+| JEB      | Java                                 | ✅           | ✅            | ✅            | ✅            | ❌                |TCP         |
+| Intellij | Java, Kotlin                         | ✅           | ✅            | ❌            | ✅            | ❌                |TCP         |
+| VSCode   | Depends on available language server | ✅           | ✅            | ❌            | ❌            | ✅                |TCP         |
+| OpenGrok | *                                    | ✅           | ✅            | ❌            | ❌            | ❌                |Websocket   |
+| IDA      | *                                    | ✅           | ✅            | ✅            | ❌            | ❌                |TCP         |
 
 The common shortcuts are:
 * Ctrl+Shift+A - Add a new node to the graph.
@@ -103,6 +104,7 @@ Go to Menu->Tools->"Graffiti: Connect to server". Now, you can use the shortcuts
     * Anycode is a language server based on treesitter, which supports: C#, CPP (C), Go, Java, Kotlin, PHP, Python, Rust, Typescript (Javascript)
 #### Usage
 * Go to the command palate (Ctrl+Shift+P). Choose "Graffiti: Connect to server". Now, you can use the shortcuts.
+* Additional shortcut is (Ctrl+Shift+Q) for adding the current line as a node to the graph.
 
 ### OpenGrok
 #### Build
@@ -129,5 +131,22 @@ Go to Options->"Graffiti: Connect to server". Now, you can use the shortcuts.
 
 A Rename will be reflected in the opened graphs.
 
+
+## Mermaid patch
+The project uses a the following patch to support comments on the web frontend:
+```diff
+diff --git a/packages/mermaid/src/diagrams/flowchart/elk/flowRenderer-elk.js b/packages/mermaid/src/diagrams/flowchart/elk/flowRenderer-elk.js
+index 5ed06723..dc0fde0e 100644
+--- a/packages/mermaid/src/diagrams/flowchart/elk/flowRenderer-elk.js
++++ b/packages/mermaid/src/diagrams/flowchart/elk/flowRenderer-elk.js
+@@ -902,6 +902,7 @@ export const draw = async function (text, id, _version, diagObj) {
+   });
+
+   insertChildren(graph.children, parentLookupDb);
++  if (window.elk_beforeCallback) window.elk_beforeCallback(id, graph)
+   log.info('after layout', JSON.stringify(graph, null, 2));
+   const g = await elk.layout(graph);
+   drawNodes(0, 0, g.children, svg, subGraphsEl, diagObj, 0);
+```
 # Credits
 The logo icons created by Freepik - Flaticon.
