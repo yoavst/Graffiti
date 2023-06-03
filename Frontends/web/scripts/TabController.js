@@ -107,6 +107,11 @@ class TabController {
                 return ""
             }
 
+            // We sort them, to preserve the order of edges, even after undo
+            const comparator = (x,y) => x.id - y.id
+            nodes.sort(comparator)
+            edges.sort(comparator)
+
             // to support older clients, we switch from flowchart to graph for export
             s = gui ? (elkRenderer ?  "flowchart-elk TD\n": "flowchart TD\n") : "graph TD\n"
 
