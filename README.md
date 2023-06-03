@@ -43,7 +43,7 @@ The frontend is a website which you can server using `python -m http.server`.
 As for the editors, you should install an extension or the equivalance for your editor.
 
 ## Setup
-In order to run Graffiti using the web frontends, you should:
+In order to run Graffiti using the web frontend, you should:
 
 1. Run the python server
 ```python
@@ -72,6 +72,8 @@ The common shortcuts are:
 * Ctrl+Shift+X - Add a new node to the graph with a custom text on the edge.
 
 Your cursor should be inside the function (or field in supported platforms) you want to add to the graph.
+
+You can build all the backends using `make backends`.
 
 ### JEB
 #### Installation
