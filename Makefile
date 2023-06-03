@@ -1,6 +1,6 @@
 .PHONY: *
 
-all: init backends frontends
+all: init backends frontends server
 
 clean:
 	rm -rf out
@@ -53,13 +53,17 @@ opengrok: check-env
 	cd backends/opengrok && zip -r ../../out/graffiti_v$(VERSION)_for_opengrok.zip *
 
 web: check-env
-	@echo "Building graffiti for Web"
+	@echo "Building Graffiti for Web"
 	sed -i.bak "s/Version _VERSION_/Version $(VERSION)/" frontends/web/index.html
 	cd frontends/web; find . -type f ! -name '*.bak' -exec zip ../../out/graffiti_v$(VERSION)_frontend_web.zip {} +
 	mv frontends/web/index.html.bak frontends/web/index.html
 
 visio: check-env
 	@echo "Building visio via makefile is not yet supported"
+
+server: check-env
+	@echo "Building the graffiti Server"
+	cp server/main.py out/graffiti_v$(VERSION)_server.py
 
 check-env:
 ifndef VERSION
