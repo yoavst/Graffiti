@@ -13,7 +13,7 @@ class NetworkController {
         this.webSocket.onopen = function () {
             console.log("Connected to WS!");
             document.getElementById("connectBtn").style.backgroundColor = "green"
-            document.getElementById("connectBtn").alt = "Connect (Connected)"
+            document.getElementById("connectBtn").title = "Connect (Connected)"
         }
 
         this.webSocket.onmessage = function (event) {
@@ -24,7 +24,7 @@ class NetworkController {
         this.webSocket.onclose = function (event) {
             console.log("WS closed!")
             document.getElementById("connectBtn").style.backgroundColor = "red"
-            document.getElementById("connectBtn").alt = "Connect (Disconnected)"
+            document.getElementById("connectBtn").title = "Connect (Disconnected)"
         }
     }
 
