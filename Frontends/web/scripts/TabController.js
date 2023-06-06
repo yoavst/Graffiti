@@ -120,7 +120,11 @@ class TabController {
                 const nodeName = `N${node.id}`
                 if (node.extra.isMarkdown) {
                     if (gui) {
-                        s += `  ${nodeName}(["\`${escapeHtml(node.label, gui)}\`"])\n`
+                        if (node.extra.isComment) {
+                            s += `  ${nodeName}{{"\`${escapeHtml(node.label, gui)}\`"}}\n`
+                        } else {
+                            s += `  ${nodeName}(["\`${escapeHtml(node.label, gui)}\`"])\n`
+                        }
                     } else {
                         // We support older mermaid version, so no markdown support
                         s += `${nodeName}("${escapeMarkdown(node.label)}")\n`
@@ -260,7 +264,7 @@ class TabController {
         }
     }
 
-    onEdgeDblClick(src, dst) {
+    onEdgeRightClick(src, dst) {
         const _this = this
         const edge = this.edges.get({ filter: item => item.from == src && item.to == dst })[0]
         const edgeOldLabel = edge.label
@@ -391,11 +395,11 @@ class TabController {
                 // add click event
                 if (!edge.hasAttribute("has_listeners")) {
                     edge.setAttribute("has_listeners", "true")
-                    edge.addEventListener('dblclick', (event) => {
+                    edge.addEventListener('contextmenu', (event) => {
                         const classes = [...edge.classList]
                         const src = parseInt(classes.filter(it => it.startsWith('LS-N'))[0].substring(4))
                         const dst = parseInt(classes.filter(it => it.startsWith('LE-N'))[0].substring(4))
-                        _this.onEdgeDblClick(src, dst)
+                        _this.onEdgeRightClick(src, dst)
                         event.preventDefault()
                         event.stopPropagation()
                     })
