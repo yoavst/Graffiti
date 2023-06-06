@@ -198,6 +198,7 @@ class TabController {
     modifyElkGraph(graph) {
         // Increase spacing for comments
         graph.layoutOptions['org.eclipse.elk.spacing.commentNode'] = 30
+        graph.layoutOptions['org.eclipse.elk.layered.considerModelOrder.strategy'] = 'PREFER_EDGES'
 
         // Annotate comments
         const commentIds = new Set(this.queryNodes('isComment', true).map(n => `N${n.id}`))
