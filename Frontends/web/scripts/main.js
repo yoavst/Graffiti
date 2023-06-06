@@ -234,11 +234,11 @@ function event_addComment() {
             return
         }
 
-        addTextualNode('Add comment', {isMarkdown: true, isComment: true, isUnclickable: true})
+        addTextualNode('Add comment', {isMarkdown: true, isComment: true, isUnclickable: true}, {isExistingToNew: true})
     })
 }
 
-function addTextualNode(title, extra_properties) {
+function addTextualNode(title, extra_node_properties, extra_edge_properties={}) {
     // FIXME: don't depend on network controller
     if (!('networkController' in window)) {
         Swal.fire({
@@ -262,8 +262,8 @@ function addTextualNode(title, extra_properties) {
                 // Bit of a hack, but why not
                 window.networkController.handleMessage({type: MSG_ADD_NODE_AND_EDGE, node: {
                     label: value,
-                    ...extra_properties
-                }})
+                    ...extra_node_properties
+                }, edge: extra_edge_properties})
             }
         })
 }

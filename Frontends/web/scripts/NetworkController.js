@@ -58,6 +58,8 @@ class NetworkController {
     }
 
     addNodeAndEdge(controller, selectedNode, msgNode, msgEdge, isExistingToNew, shouldAddUndo) {
+        // 1. If msgEdge forces isExistingToNew, replace
+        isExistingToNew = (msgEdge != null && 'isExistingToNew' in msgEdge) ? msgEdge.isExistingToNew : isExistingToNew
         // 2. Check if dest node exists
         const existingDestNode = 'address' in msgNode ? controller.queryNode('address', msgNode.address) : null
         if (existingDestNode != null) {
