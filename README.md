@@ -66,6 +66,7 @@ python3 -m http.server 80
 | VSCode   | Depends on available language server | ✅           | ✅            | ❌            | ❌            | ✅                |TCP         |
 | OpenGrok | *                                    | ✅           | ✅            | ❌            | ❌            | ❌                |Websocket   |
 | IDA      | *                                    | ✅           | ✅            | ✅            | ❌            | ❌                |TCP         |
+| Jadx     | Java                                 | ✅           | ✅            | ✅            | ✅            | ❌                |TCP         |
 
 The common shortcuts are:
 * Ctrl+Shift+A - Add a new node to the graph.
@@ -132,6 +133,17 @@ Inside a project, run `file->execute script`, choose the `graffiti.py` script.
 Go to Options->"Graffiti: Connect to server". Now, you can use the shortcuts.
 
 A Rename will be reflected in the opened graphs.
+
+### Jadx
+**Note:** Currently requires building Jadx from source to run the script.
+
+#### Installation
+Inside a project, Right click `scripts` and choose `Add scripts`. Select `graffiti.py` script.
+#### Usage
+Go to Plguins->"Graffiti: Connect to server". Now, you can use the shortcut **A** (the only supported shortcut for now) to add to the graph.
+
+A Rename will be reflected in the opened graphs.  
+Current relevant issues: [#1905](https://github.com/skylot/jadx/issues/1905)
 
 
 ## Mermaid patch

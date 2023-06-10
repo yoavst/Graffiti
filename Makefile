@@ -8,12 +8,16 @@ clean:
 init:
 	mkdir -p out
 
-backends: jeb intellij ida vscode opengrok
+backends: jeb intellij ida vscode opengrok jadx
 frontends: web visio
 
 ida: check-env
 	@echo "Building Graffiti for IDA"
 	echo "# Graffiti for IDA, Version: $(VERSION)" | cat - backends/ida/graffiti.py > out/graffiti_v$(VERSION)_for_ida.py
+
+jadx: check-env
+	@echo "Building Graffiti for Jadx"
+	cp backends/jadx/graffiti.jadx.kts out/graffiti_v$(VERSION).jadx.kts
 
 jeb: check-env
 	@echo "Building Graffiti for JEB"
