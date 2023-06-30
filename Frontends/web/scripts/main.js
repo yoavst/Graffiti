@@ -1,6 +1,7 @@
 const MSG_ADD_NODE_AND_EDGE = "addData"
 const MSG_ADD_NODES_AND_EDGES = "addDataBulk"
 const MSG_UPDATE_NODES = "updateNodes"
+const LOCAL_STORAGE_DEFAULT = {isKeymapReversed: false}
 
 
 
@@ -269,10 +270,11 @@ function addTextualNode(title, extra_node_properties, extra_edge_properties={}) 
 }
 
 function main() {
+    initiateLocalStorage();
     initiateDependencies();
     initiateHotkeys();
     initializeDragAndDrop();
-    setHelpBarAppearance()
+    setHelpBarAppearance();
 
     // Initiate tabs
     const tabsController = new TabsController(document.getElementsByClassName("tabs")[0], document.getElementsByClassName("view")[0], document.getElementById("context-menu"));
@@ -360,6 +362,13 @@ function initializeDragAndDrop() {
     }, false)
 }
 
+function initiateLocalStorage() {
+    for (const key of Object.keys(LOCAL_STORAGE_DEFAULT)) {
+        if (localStorage.getItem(key) == null) {
+            localStorage.setItem(key, LOCAL_STORAGE_DEFAULT[key])
+        }
+    }
+}
 
 
 main()

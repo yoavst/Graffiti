@@ -36,6 +36,7 @@ class TabController {
         this.mermaidId = "mermaidStuff" + (globalCounter++)
         this.elkRenderer = false
         this.cachedMermaid = null
+        this.isKeymapReversed = strToBool(localStorage.getItem("isKeymapReversed"));
     }
 
     initView(view) {
@@ -373,15 +374,17 @@ class TabController {
                 node.classList.add("clickable")
                 // add click event
                 if (!node.hasAttribute("has_listeners")) {
+                    const onClick = (!_this.isKeymapReversed ? _this.onClick : _this.onRightClick).bind(_this)
+                    const onRightClick = (!_this.isKeymapReversed ? _this.onRightClick : _this.onClick).bind(_this)
                     node.setAttribute("has_listeners", "true")
                     node.addEventListener('click', (event) => {
-                        _this.onClick(event.currentTarget, parseInt(event.currentTarget.id.split('-')[1].substring(1)))
+                        onClick(event.currentTarget, parseInt(event.currentTarget.id.split('-')[1].substring(1)))
                         event.preventDefault()
                         event.stopPropagation()
                     })
                     // add right click event
                     node.addEventListener('contextmenu', (event) => {
-                        _this.onRightClick(event.currentTarget, parseInt(event.currentTarget.id.split('-')[1].substring(1)))
+                        onRightClick(event.currentTarget, parseInt(event.currentTarget.id.split('-')[1].substring(1)))
                         event.preventDefault()
                         event.stopPropagation()
                     })
@@ -767,4 +770,14 @@ class MermaidDiv extends HTMLElement {
         super()
         this.attachShadow({ mode: "open" })
     }
+}
+
+function strToBool(s)
+{
+    // will match one and only one of the string 'true','1', or 'on' rerardless
+    // of capitalization and regardless off surrounding white-space.
+
+    regex=/^\s*(true|1|on)\s*$/i
+
+    return regex.test(s);
 }
