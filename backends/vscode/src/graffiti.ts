@@ -44,6 +44,7 @@ const SymbolKindsForName = [
     SymbolKind.Method,
     SymbolKind.Function,
     SymbolKind.Constructor,
+    SymbolKind.Variable
 ]
 
 
