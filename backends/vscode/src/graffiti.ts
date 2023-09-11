@@ -37,7 +37,9 @@ const SymbolKindsForScope = [
     SymbolKind.Class,
     SymbolKind.Namespace,
     SymbolKind.Module,
-    SymbolKind.Package
+    SymbolKind.Package,
+    SymbolKind.Struct,
+    SymbolKind.Object
 ]
 
 const SymbolKindsForName = [

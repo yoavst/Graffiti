@@ -10,7 +10,9 @@ const ScopeSymbolKind = [
     SymbolKind.Module,
     SymbolKind.Constructor,
     SymbolKind.Package,
-    SymbolKind.Variable
+    SymbolKind.Variable,
+    SymbolKind.Struct,
+    SymbolKind.Object
 ];
 
 
