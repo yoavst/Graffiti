@@ -737,7 +737,8 @@ function formatString(s, replacements) {
 }
 
 function escapeHtml(unsafe, gui) {
-    const res = unsafe.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&apos;');
+    const res = unsafe.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&apos;').replaceAll('`', '#96;');
+    console.log(res)
     return gui ? res : res.replace('\n', '')
 }
 
