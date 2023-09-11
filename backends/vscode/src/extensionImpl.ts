@@ -81,7 +81,10 @@ export class ScopeSymbolProvider {
 
 
             if (node != null) {
-                const update = graffiti.createUpdate(this._scopeFinder.document, node, edgeText)
+                let hovers = await this._scopeFinder.getHover(selection.anchor);
+                let hover = ((hovers[0]?.contents) as vscode.MarkdownString[])?.map(it => it.value)
+
+                const update = graffiti.createUpdate(this._scopeFinder.document, node, { edgeText, hover })
                 if (update != null)
                     await graffiti.sendUpdate(update)
             }
@@ -92,7 +95,10 @@ export class ScopeSymbolProvider {
             let node = await this._scopeFinder.getScopeNode(selection.start);
             console.log("Graffiti.AddToGraph()", node)
             if (node != null) {
-                const update = graffiti.createUpdate(this._scopeFinder.document, node)
+                let hovers = await this._scopeFinder.getHover(selection.anchor);
+                let hover = ((hovers[0]?.contents) as vscode.MarkdownString[])?.map(it => it.value)
+
+                const update = graffiti.createUpdate(this._scopeFinder.document, node, { hover })
                 if (update != null)
                     await graffiti.sendUpdate(update)
             }
@@ -105,7 +111,7 @@ export class ScopeSymbolProvider {
             let currentLine = selection.start.line
             console.log("Graffiti.AddToGraph()", node)
             if (node != null) {
-                const update = graffiti.createUpdate(this._scopeFinder.document, node, null, currentLine)
+                const update = graffiti.createUpdate(this._scopeFinder.document, node, { lineNumber: currentLine })
                 if (update != null)
                     await graffiti.sendUpdate(update)
             }

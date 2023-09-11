@@ -290,6 +290,8 @@ function initiateDependencies() {
         theme: 'forest',
         useMaxWidth: true,
     });
+    // Fix tippy
+    tippy.setDefaultProps({ maxWidth: '' })
 }
 
 function elk_beforeCallback(id, graph) {

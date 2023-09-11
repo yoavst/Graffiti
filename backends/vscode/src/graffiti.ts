@@ -3,31 +3,48 @@ import * as vscode from 'vscode';
 import { SymbolKind } from 'vscode';
 import { join, basename } from 'path';
 import { SymbolNode, ScopeFinder } from './scope';
-import { LocalStorageService } from './storage';
 
 let currentServerConnection: net.Socket | null = null
 
 // TODO assuming single workspace
 
 // Graffiti jsons
-export function createUpdate(document: vscode.TextDocument, symbol: SymbolNode, edgeText: string = null, lineNumber: number = null) {
+
+class UpdateParams {
+    edgeText?: string;
+    lineNumber?: number;
+    /// full over information for the node
+    hover?: string[]
+}
+
+export function createUpdate(document: vscode.TextDocument, symbol: SymbolNode, updateParams: UpdateParams) {
     const nameAndSymbol = getNameAndLastSymbol(basename(document.fileName), symbol)
     if (nameAndSymbol == null) return null
 
     let [name, lastSymbol] = nameAndSymbol
-    if (lineNumber != null) {
-        name = `${name}:${lineNumber}`
+    if (updateParams.lineNumber !== undefined) {
+        name = `${name}:${updateParams.lineNumber}`
     }
     const base = {
         "type": "addData", "node": {
             "project": "VSCode: " + getProjectName(),
-            "address": vscode.workspace.asRelativePath(document.uri) + ":" + (lineNumber ?? lastSymbol.range.start.line),
+            "address": vscode.workspace.asRelativePath(document.uri) + ":" + (updateParams.lineNumber ?? lastSymbol.range.start.line),
             "label": name,
             "computedProperties": []
         }
     }
-    if (edgeText) {
-        base['edge'] = { 'label': edgeText }
+    if (updateParams.edgeText) {
+        base['node']['edge'] = { 'label': updateParams.edgeText }
+    }
+    if (updateParams.hover) {
+        const hover = updateParams.hover.filter(x => x.trim())
+        if (hover) {
+            base['node']['hover'] = hover
+        }
+    }
+    const detail = symbol.symbolInfo?.detail
+    if (detail) {
+        base['node']['detail'] = detail
     }
 
     return base
@@ -127,12 +144,13 @@ export async function sendUpdate(data: any) {
     // Connect to the server
     if (socket != null) {
         const jsonData = JSON.stringify(data)
+        var jsonDataBuff = Buffer.from(jsonData, 'utf8');
         // write length
         const lengthBuffer = Buffer.alloc(4)
-        lengthBuffer.writeInt32BE(jsonData.length, 0)
+        lengthBuffer.writeInt32BE(jsonDataBuff.length, 0)
         socket.write(lengthBuffer)
         // write data
-        socket.write(jsonData)
+        socket.write(jsonDataBuff)
     } else {
         await vscode.window.showInformationMessage("Graffiti: Not connected")
     }

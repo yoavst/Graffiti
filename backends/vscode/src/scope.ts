@@ -194,6 +194,11 @@ export class ScopeFinder {
         return vscode.commands.executeCommand('vscode.executeDocumentSymbolProvider', this._doc.uri);
     }
 
+    public getHover(pos: vscode.Position): Thenable<vscode.Hover[]> {
+        assert.equal(vscode.window.activeTextEditor.document, this._doc);
+        return vscode.commands.executeCommand('vscode.executeHoverProvider', this._doc.uri, pos);
+    }
+
     public async getScopeSymbols() {
         let symbols = await this.getSymbols();
         // Maybe the symbol provider just not ready

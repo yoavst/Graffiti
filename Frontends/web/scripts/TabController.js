@@ -367,7 +367,8 @@ class TabController {
             shadow.shadowRoot.appendChild(el)
             replaceChildren(_this.container, [shadow])
         }).then(() => {
-        // hacks to add listeners
+            // hacks to add listeners
+            const markdownConverter = new showdown.Converter()
             const nodesArray = [..._this.container.getElementsByTagName('diagram-div')[0].shadowRoot.querySelectorAll('.node')]
             for (const node of nodesArray) {
                 // fix pointer
@@ -378,16 +379,28 @@ class TabController {
                     const onRightClick = (!_this.isKeymapReversed ? _this.onRightClick : _this.onClick).bind(_this)
                     node.setAttribute("has_listeners", "true")
                     node.addEventListener('click', (event) => {
-                        onClick(event.currentTarget, parseInt(event.currentTarget.id.split('-')[1].substring(1)))
+                        onClick(event.currentTarget, getIdFromNode(event.currentTarget))
                         event.preventDefault()
                         event.stopPropagation()
                     })
                     // add right click event
                     node.addEventListener('contextmenu', (event) => {
-                        onRightClick(event.currentTarget, parseInt(event.currentTarget.id.split('-')[1].substring(1)))
+                        onRightClick(event.currentTarget, getIdFromNode(event.currentTarget))
                         event.preventDefault()
                         event.stopPropagation()
                     })
+
+                    const extra = _this.nodes.get(getIdFromNode(node)).extra
+                    const hover = extra.hover?.join('\n') ?? extra.detail
+                    if (hover) {
+                        tippy(node, {
+                            content: markdownConverter.makeHtml(hover),
+                            allowHTML: true,
+                            delay: [300, 0],
+                            placement: 'bottom',
+                            hideOnClick: true,
+                          });
+                    }
                 }
             }
 
@@ -738,7 +751,6 @@ function formatString(s, replacements) {
 
 function escapeHtml(unsafe, gui) {
     const res = unsafe.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&apos;').replaceAll('`', '#96;');
-    console.log(res)
     return gui ? res : res.replace('\n', '')
 }
 
@@ -773,12 +785,15 @@ class MermaidDiv extends HTMLElement {
     }
 }
 
-function strToBool(s)
-{
+function strToBool(s) {
     // will match one and only one of the string 'true','1', or 'on' rerardless
     // of capitalization and regardless off surrounding white-space.
 
     regex=/^\s*(true|1|on)\s*$/i
 
     return regex.test(s);
+}
+
+function getIdFromNode(node) {
+    return parseInt(node.id.split('-')[1].substring(1))
 }
