@@ -781,7 +781,11 @@ function replaceChildren(el, nodes) {
 class MermaidDiv extends HTMLElement {
     constructor() {
         super()
-        this.attachShadow({ mode: "open" })
+        const shadowRoot = this.attachShadow({ mode: "open" })
+
+        const sheet = new CSSStyleSheet();
+        sheet.replaceSync("* { outline: 0px solid transparent !important;");
+        shadowRoot.adoptedStyleSheets = [sheet];
     }
 }
 
