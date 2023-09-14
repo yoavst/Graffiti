@@ -394,7 +394,7 @@ class TabController {
                     const hover = extra.hover?.join('\n') ?? extra.detail
                     if (hover) {
                         tippy(node, {
-                            content: markdownConverter.makeHtml(hover),
+                            content: '<div class="hoverDoc">' + markdownConverter.makeHtml(hover) + '</div>',
                             allowHTML: true,
                             delay: [300, 0],
                             placement: 'bottom',

@@ -280,3 +280,7 @@ footer {
 .arrowToggle label #isNewWillBeSelected:checked~* .selectedText {
    font-weight: bold;
 }
+
+.hoverDoc * {
+    color: white !important;
+}
