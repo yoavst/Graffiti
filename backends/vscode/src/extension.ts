@@ -4,7 +4,6 @@
 import * as vscode from 'vscode';
 import * as extensionImpl from './extensionImpl';
 import { disconnectServer } from './graffiti';
-import { LocalStorageService } from './storage';
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
@@ -13,7 +12,6 @@ export function activate(context: vscode.ExtensionContext) {
     // This line of code will only be executed once when your extension is activated
     console.log('Congratulations, Graffiti for VSCode is activiated');
 
-    let storageManager = new LocalStorageService(context.globalState);
 
     // The command has been defined in the package.json file
     // Now provide the implementation of the command with  registerCommand
