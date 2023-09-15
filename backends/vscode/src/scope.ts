@@ -29,7 +29,6 @@ export class SymbolNode {
 
     public static createSymbolTree(symbols: vscode.DocumentSymbol[]): SymbolNode {
         let root = new SymbolNode(null);
-        let lastNode: SymbolNode = root;
 
         // Some language servers provide a symbol.location.range that covers only the symbol
         // _name_, not the _body_ of the corresponding class/function/etc. Such ranges are not
@@ -172,7 +171,6 @@ class CancelUpdateError implements Error {
 
 export class ScopeFinder {
     private _symbolRoot: SymbolNode;
-    private _symbols: vscode.DocumentSymbol[];
     private _updated;
     private _cancelToken: vscode.CancellationTokenSource;
     private static _dummyNode = new SymbolNode(null);
@@ -189,21 +187,27 @@ export class ScopeFinder {
         return this._doc;
     }
 
-    private getSymbols(): Thenable<vscode.DocumentSymbol[]> {
-        assert.equal(vscode.window.activeTextEditor.document, this._doc);
-        return vscode.commands.executeCommand('vscode.executeDocumentSymbolProvider', this._doc.uri);
-    }
-
     public getHover(pos: vscode.Position): Thenable<vscode.Hover[]> {
         assert.equal(vscode.window.activeTextEditor.document, this._doc);
         return vscode.commands.executeCommand('vscode.executeHoverProvider', this._doc.uri, pos);
     }
 
-    public async getScopeSymbols() {
-        let symbols = await this.getSymbols();
+    public getScopeSymbols(): Thenable<vscode.DocumentSymbol[]> {
+        assert.equal(vscode.window.activeTextEditor.document, this._doc);
+        return ScopeFinder.getScopeSymbolsFor(this._doc.uri);
+
+    }
+
+    public static getSymbolsFor(uri: vscode.Uri): Thenable<vscode.DocumentSymbol[]> {
+        return vscode.commands.executeCommand('vscode.executeDocumentSymbolProvider',uri)
+    }
+
+    public static async getScopeSymbolsFor(uri: vscode.Uri): Promise<vscode.DocumentSymbol[]> {
+        let symbols = await ScopeFinder.getSymbolsFor(uri)
+
         // Maybe the symbol provider just not ready
         if (!symbols) {
-            return null;
+            return [];
         }
         let scopeSymbols = symbols.filter(sym => ScopeSymbolKind.indexOf(sym.kind) != -1);
         return scopeSymbols;

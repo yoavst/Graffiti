@@ -13,7 +13,7 @@ let currentServerConnection: net.Socket | null = null
 class UpdateParams {
     edgeText?: string;
     lineNumber?: number;
-    /// full over information for the node
+    /// full hover information for the node
     hover?: string[]
 }
 
@@ -25,12 +25,17 @@ export function createUpdate(document: vscode.TextDocument, symbol: SymbolNode, 
     if (updateParams.lineNumber !== undefined) {
         name = `${name}:${updateParams.lineNumber}`
     }
+    const fullName = symbol.getFullName()
+    
+    let address = vscode.workspace.asRelativePath(document.uri) + ":" +
+                 (updateParams.lineNumber ?? lastSymbol.range.start.line) + ":" + fullName;
+
     const base = {
-        "type": "addData", "node": {
-            "project": "VSCode: " + getProjectName(),
-            "address": vscode.workspace.asRelativePath(document.uri) + ":" + (updateParams.lineNumber ?? lastSymbol.range.start.line),
-            "label": name,
-            "computedProperties": []
+        type: "addData", node: {
+            project: "VSCode: " + getProjectName(),
+            address: address,
+            label: name,
+            computedProperties: []
         }
     }
     if (updateParams.edgeText) {
@@ -84,7 +89,6 @@ function getNameAndLastSymbol(filename: string, symbol: SymbolNode): [string, Sy
 
     let scope: string[] = []
     let name: string[] = []
-    let lastName: SymbolNode = null
     let firstName: SymbolNode = null
     for (const node of nodes) {
         if (SymbolKindsForScope.indexOf(node.symbolInfo?.kind) >= 0) {
@@ -94,7 +98,6 @@ function getNameAndLastSymbol(filename: string, symbol: SymbolNode): [string, Sy
                 // First non scope symbol, probably want to add a variable to graffiti
                 if (node.symbolInfo?.kind == SymbolKind.Field || node.symbolInfo?.kind == SymbolKind.Variable) {
                     name.push("_" + node.symbolInfo.name)
-                    lastName = node
                     firstName = node
                     break
                 }
@@ -105,7 +108,6 @@ function getNameAndLastSymbol(filename: string, symbol: SymbolNode): [string, Sy
                     firstName = node
                 }
                 name.push(node.symbolInfo.name)
-                lastName = node
             }
         }
     }
@@ -124,19 +126,19 @@ function getNameAndLastSymbol(filename: string, symbol: SymbolNode): [string, Sy
 function removeParentheses(str: string) {
     let output = '';
     let depth = 0;
-  
+
     for (let i = 0; i < str.length; i++) {
-      if (str[i] === '(') {
-        depth++;
-      } else if (str[i] === ')') {
-        depth--;
-      } else if (depth === 0) {
-        output += str[i];
-      }
+        if (str[i] === '(') {
+            depth++;
+        } else if (str[i] === ')') {
+            depth--;
+        } else if (depth === 0) {
+            output += str[i];
+        }
     }
-  
+
     return output.trim().replace(/ {2,}/g, ' ');
-  }
+}
 
 // Sockets
 export async function sendUpdate(data: any) {
@@ -157,11 +159,11 @@ export async function sendUpdate(data: any) {
 }
 
 // taken from https://stackoverflow.com/questions/38039362/nodejs-socket-programming-send-data-length
-function receive(socket, data, onMsg){
+function receive(socket, data, onMsg) {
     //Create a chunk prop if it does not exist
-    if(!socket.chunk){
+    if (!socket.chunk) {
         socket.chunk = {
-            messageSize : 0,
+            messageSize: 0,
             buffer: Buffer.from([]),
             bufferStack: Buffer.from([]),
         };
@@ -206,8 +208,20 @@ export function connectServer(host: string, port: number) {
                     return
                 }
             }
-            let [path, line] = data['address'].trim().split(":")
-            jumpTo(path, parseInt(line))
+            let [path, line, ...rest] = data['address'].trim().split(":")
+            line = parseInt(line)
+
+            if (rest.length == 0) {
+                // Old version
+                jumpToPath(path, line)
+            } else {
+                let symbol = rest.join(":")
+                jumpToSymbol(path, symbol).then(success => {
+                    if (!success) {
+                        jumpToPath(path, line);
+                    }
+                })
+            }
         })
     })
 
@@ -231,10 +245,48 @@ function getProjectName(): string {
     return workspaceFolder.name
 }
 
-function jumpTo(path: string, line: number) {
-    const uri = vscode.Uri.file(join(vscode.workspace.workspaceFolders[0].uri.fsPath, path));
-
-    vscode.workspace.openTextDocument(uri).then((document) => {
+function jumpToPath(path: string, line: number) {
+    vscode.workspace.openTextDocument(pathToUri(path)).then((document) => {
         vscode.window.showTextDocument(document, { selection: new vscode.Range(line, 0, line, 0) });
     });
+}
+
+async function jumpToSymbol(path: string, symbol: string): Promise<boolean> {
+    const symbols = await ScopeFinder.getScopeSymbolsFor(pathToUri(path))
+    if (symbols) {
+        for (const rootSymbol of symbols) {
+            const target = iterSymbolsDFS(rootSymbol, symbol);
+            if (target) {
+                jumpToPath(path, target.range.start.line);
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+function iterSymbolsDFS(currentSymbol: vscode.DocumentSymbol | undefined, targetSymbol: string, baseIndex: number = 0): vscode.DocumentSymbol | undefined {
+    if (!currentSymbol) return undefined;
+
+    const name = currentSymbol.name
+    if (targetSymbol.startsWith(name, baseIndex)) {
+        if ((name.length + baseIndex) == targetSymbol.length) {
+            // we mwatch the whole text
+            return currentSymbol;
+        }
+
+        // +1 for the dot
+        const newBaseIndex = baseIndex + name.length + 1;
+        for (const child of currentSymbol.children) {
+            const res = iterSymbolsDFS(child, targetSymbol, newBaseIndex);
+            if (res) return res;
+        }
+
+    }
+    
+    return undefined;
+}
+
+function pathToUri(path: string): vscode.Uri {
+    return vscode.Uri.file(join(vscode.workspace.workspaceFolders[0].uri.fsPath, path));
 }
