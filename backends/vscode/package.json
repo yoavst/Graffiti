@@ -94,6 +94,12 @@
                         "type": "boolean",
                         "default": true,
                         "description": "Remove text between parentheses when querying the LSP for the current symbol"
+                    },
+                    "graffiti.searchForSymbol": {
+                        "scope": "resource",
+                        "type": "boolean",
+                        "default": true,
+                        "description": "Should graffiti search for the symbol, and not use the exact original line? Setting to false will improve performance, but will only work on a readonly project."
                     }
                 }
             }

@@ -211,7 +211,7 @@ export function connectServer(host: string, port: number) {
             let [path, line, ...rest] = data['address'].trim().split(":")
             line = parseInt(line)
 
-            if (rest.length == 0) {
+            if (rest.length == 0 || !vscode.workspace.getConfiguration('graffiti')['searchForSymbol']) {
                 // Old version
                 jumpToPath(path, line)
             } else {
