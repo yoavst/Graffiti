@@ -48,7 +48,7 @@ intellij: check-env
 	cd backends/intellij && ./gradlew jar
 
 	@echo "Copying the file"
-	cp backends/intellij//build/libs/intellij-$(VERSION).jar out/grafffiti_v$(VERSION)_for_intellij.jar
+	cp backends/intellij//build/libs/intellij-$(VERSION).jar out/graffiti_v$(VERSION)_for_intellij.jar
 
 opengrok: check-env
 	@echo "Building Graffiti for OpenGrok"
