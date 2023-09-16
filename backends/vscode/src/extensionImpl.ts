@@ -3,6 +3,7 @@ import * as vscode from 'vscode';
 import { SymbolKind } from 'vscode';
 import * as assert from 'assert';
 import * as graffiti from './graffiti';
+import { TextEncoder } from 'util';
 
 interface NavigationItem extends vscode.QuickPickItem {
     node: SymbolNode;
@@ -60,7 +61,10 @@ export class ScopeSymbolProvider {
             this._scopeFinder = new ScopeFinder(e.document);
         });
 
-        vscode.commands.registerCommand(this._status.command, async () => {
+        let command = this._status.command ?? ""
+        let strCommand = typeof command == "string" ? command : command.command;
+
+        vscode.commands.registerCommand(strCommand, async () => {
             let selection = vscode.window.activeTextEditor.selection;
             let node = await this._scopeFinder.getScopeNode(selection.start);
             this.showScopeSymbols(node);
@@ -131,6 +135,36 @@ export class ScopeSymbolProvider {
 
             graffiti.connectServer(hostname, parseInt(port))
         });
+
+        vscode.commands.registerCommand("graffiti.ConvertToSymbolBased", async () => {
+            const options: vscode.OpenDialogOptions = {
+                canSelectMany: false,
+                openLabel: 'Choose graffiti file',
+                filters: {
+                    'json files': ['json'],
+                    'All files': ['*']
+                }
+            };
+
+            const fileUri = await vscode.window.showOpenDialog(options)
+            if (fileUri && fileUri[0]) {
+                const doc = await vscode.workspace.openTextDocument(fileUri[0])
+                const text = doc.getText()
+                let graffitiObj = null
+                try {
+                    graffitiObj = JSON.parse(text)
+                } catch (e) {
+                    await vscode.window.showErrorMessage(`Graffiti: failed to read graffiti file: ${e.message}`)
+                    return
+                }
+
+                if (await graffiti.updateSymbolsForGraffiti(graffitiObj)) {
+                    await vscode.workspace.fs.writeFile(vscode.Uri.parse(fileUri[0].path + ".new"),
+                        new TextEncoder().encode(JSON.stringify(graffitiObj, null, 4)))
+                    await vscode.window.showInformationMessage(`Graffiti: Converted the file successfully`)
+                }
+            }
+        })
     }
 
     private refreshNavigateCommand() {

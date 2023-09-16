@@ -71,7 +71,7 @@ class TabController {
     export() {
         return JSON.stringify([this.idCounter, this.nodes.get(), this.edges.get(), {
             'elkRenderer': this.elkRenderer
-        }])
+        }], null, 4)
     }
 
     import(data) {

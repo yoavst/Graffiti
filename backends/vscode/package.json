@@ -50,6 +50,10 @@
             {
                 "command": "graffiti.ConnectToServer",
                 "title": "Graffiti: Connect to server"
+            },
+            {
+                "command": "graffiti.ConvertToSymbolBased",
+                "title": "Graffiti: Transform old graffiti files to new symbol based format"
             }
         ],
         "keybindings": [
@@ -107,14 +111,13 @@
     },
     "scripts": {
         "vscode:prepublish": "tsc -p ./",
-        "compile": "tsc -watch -p ./",
-        "postinstall": "node ./node_modules/vscode/bin/install"
+        "compile": "tsc -watch -p ./"
     },
     "devDependencies": {
         "@types/mocha": "^2.2.42",
         "@types/node": "^8.10.25",
         "mocha": "^2.3.3",
         "typescript": "^3.1.4",
-        "vscode": "^1.1.25"
+        "@types/vscode": "^1.76.0"
     }
 }

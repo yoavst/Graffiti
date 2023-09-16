@@ -47,6 +47,10 @@ export function createUpdate(document: vscode.TextDocument, symbol: SymbolNode, 
             base['node']['hover'] = hover
         }
     }
+    if (updateParams.lineNumber !== undefined) {
+        base['node']['line'] = updateParams.lineNumber
+    }
+
     const detail = symbol.symbolInfo?.detail
     if (detail) {
         base['node']['detail'] = detail
@@ -289,4 +293,71 @@ function iterSymbolsDFS(currentSymbol: vscode.DocumentSymbol | undefined, target
 
 function pathToUri(path: string): vscode.Uri {
     return vscode.Uri.file(join(vscode.workspace.workspaceFolders[0].uri.fsPath, path));
+}
+
+export async function updateSymbolsForGraffiti(graffitiObj): Promise<boolean> {
+    const treeCache = new Map<string, SymbolNode>();
+    try {
+        for (const node of graffitiObj[1]) {
+            if (!node.extra.project.startsWith('VSCode:')  || node.extra.hasOwnProperty('line')) {
+                // Not a vscode node or it is a line node, skip
+                continue
+            }
+
+            const oldAddress = node.extra.address
+            let [path, line, ...rest] = oldAddress.trim().split(":")
+            line = parseInt(line)
+
+            if (rest.length != 0) {
+                // We have a symbol attached to this node, skip
+                continue
+            }
+            
+            // Get tree from cache or calculate it
+            let tree: SymbolNode = null
+            if (treeCache.has(path)) {
+                tree = treeCache.get(path)
+            } else {
+                const symbols = await ScopeFinder.getScopeSymbolsFor(pathToUri(path))
+                if (symbols == null) {
+                    await vscode.window.showErrorMessage(`Graffiti: no symbols in path: ${path}, skipping`)
+                    continue
+                }
+                tree = SymbolNode.createSymbolTree(symbols)
+                treeCache.set(path, tree)
+            }
+           
+            // Check for matching symbol
+            const matchingNodes = getNodeStartsSameLine(line, tree)
+            if (matchingNodes.length == 0) {
+                await vscode.window.showErrorMessage(`Graffiti: No matching node for ${node.label}`)
+                continue
+            } else if (matchingNodes.length > 1) {
+                await vscode.window.showErrorMessage(`Graffiti:Multiple symbols for ${node.label}`)
+                // TODO: be able to choose
+                continue
+            }
+
+            const selectedNewNode = matchingNodes[0]
+            const newAddress = oldAddress + ":" + selectedNewNode.getFullName()
+            
+            node.extra.address = newAddress
+        }
+    } catch (e) {
+        await vscode.window.showErrorMessage(`Graffiti: failed to process graffiti file: ${e.message}`)
+        return false
+    }
+    return true
+}
+
+function getNodeStartsSameLine(line: number, root: SymbolNode): SymbolNode[] {
+    const nodes = []
+    // JS doesn't have filter on iterable, because this language...
+    for (const node of root.iterNodes()) {
+        if (node.range.start.line == line) {
+            nodes.push(node)
+        }
+    }
+
+    return nodes
 }
