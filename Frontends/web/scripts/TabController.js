@@ -37,6 +37,7 @@ class TabController {
         this.elkRenderer = false
         this.cachedMermaid = null
         this.isKeymapReversed = strToBool(localStorage.getItem("isKeymapReversed"));
+        this.enableHoverDoc = strToBool(localStorage.getItem("hoverDoc"))
     }
 
     initView(view) {
@@ -399,6 +400,7 @@ class TabController {
                             delay: [300, 0],
                             placement: 'bottom',
                             hideOnClick: true,
+                            onShow: () => _this.enableHoverDoc
                           });
                     }
                 }
