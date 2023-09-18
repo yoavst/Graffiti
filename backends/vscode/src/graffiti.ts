@@ -299,7 +299,7 @@ export async function updateSymbolsForGraffiti(graffitiObj): Promise<boolean> {
     const treeCache = new Map<string, SymbolNode>();
     try {
         for (const node of graffitiObj[1]) {
-            if (!node.extra.project.startsWith('VSCode:')  || node.extra.hasOwnProperty('line')) {
+            if (!node.extra.hasOwnProperty('project') || !node.extra.project.startsWith('VSCode:')  || node.extra.hasOwnProperty('line')) {
                 // Not a vscode node or it is a line node, skip
                 continue
             }
@@ -318,7 +318,14 @@ export async function updateSymbolsForGraffiti(graffitiObj): Promise<boolean> {
             if (treeCache.has(path)) {
                 tree = treeCache.get(path)
             } else {
-                const symbols = await ScopeFinder.getScopeSymbolsFor(pathToUri(path))
+                let symbols = null
+                try {
+                    symbols = await ScopeFinder.getScopeSymbolsFor(pathToUri(path))
+                } catch(e) {
+                    console.log(e)
+                    await vscode.window.showErrorMessage(`Graffiti: Error handling: ${path}, ${e.message}`)
+                    continue
+                }
                 if (symbols == null) {
                     await vscode.window.showErrorMessage(`Graffiti: no symbols in path: ${path}, skipping`)
                     continue
@@ -331,6 +338,12 @@ export async function updateSymbolsForGraffiti(graffitiObj): Promise<boolean> {
             const matchingNodes = getNodeStartsSameLine(line, tree)
             if (matchingNodes.length == 0) {
                 await vscode.window.showErrorMessage(`Graffiti: No matching node for ${node.label}`)
+                // print nodes in console log for debugging
+                console.log(`file: ${path} , line: ${line}`)
+                for (const node of tree.iterNodes()) {
+                    console.log(`\t${node.range.start} -> ${node.getFullName()}`)
+                }
+                console.log()
                 continue
             } else if (matchingNodes.length > 1) {
                 await vscode.window.showErrorMessage(`Graffiti:Multiple symbols for ${node.label}`)
