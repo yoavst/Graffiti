@@ -3,6 +3,7 @@ import * as vscode from 'vscode';
 import { SymbolKind } from 'vscode';
 import { join, basename } from 'path';
 import { SymbolNode, ScopeFinder } from './scope';
+import { debugChannel } from './extension';
 
 let currentServerConnection: net.Socket | null = null
 
@@ -26,9 +27,9 @@ export function createUpdate(document: vscode.TextDocument, symbol: SymbolNode, 
         name = `${name}:${updateParams.lineNumber}`
     }
     const fullName = symbol.getFullName()
-    
+
     let address = vscode.workspace.asRelativePath(document.uri) + ":" +
-                 (updateParams.lineNumber ?? lastSymbol.range.start.line) + ":" + fullName;
+        (updateParams.lineNumber ?? lastSymbol.range.start.line) + ":" + fullName;
 
     const base = {
         type: "addData", node: {
@@ -201,7 +202,7 @@ export function connectServer(host: string, port: number) {
     currentServerConnection = new net.Socket();
     currentServerConnection.connect(port, host, () => {
         vscode.window.showInformationMessage("Connected to graffiti!")
-        console.log('Connected to graffiti!')
+        debugChannel.appendLine(`Connected to graffiti at ${host}:${port}`)
     });
 
     currentServerConnection.on('data', (rawData) => {
@@ -230,7 +231,7 @@ export function connectServer(host: string, port: number) {
     })
 
     currentServerConnection.on('close', (_) => {
-        console.log("Connection closed")
+        debugChannel.appendLine("Connection closed")
         currentServerConnection = null
     })
 }
@@ -287,7 +288,7 @@ function iterSymbolsDFS(currentSymbol: vscode.DocumentSymbol | undefined, target
         }
 
     }
-    
+
     return undefined;
 }
 
@@ -296,14 +297,18 @@ function pathToUri(path: string): vscode.Uri {
 }
 
 export async function updateSymbolsForGraffiti(graffitiObj): Promise<boolean> {
+    debugChannel.appendLine("updateSymbolsForGraffiti()")
+
     const treeCache = new Map<string, SymbolNode>();
+    const missingSymbolsFiles = new Map<String, SymbolNode>();
     try {
         for (const node of graffitiObj[1]) {
-            if (!node.extra.hasOwnProperty('project') || !node.extra.project.startsWith('VSCode:')  || node.extra.hasOwnProperty('line')) {
+            if (!node.extra.hasOwnProperty('project') || !node.extra.project.startsWith('VSCode:') || node.extra.hasOwnProperty('line')) {
                 // Not a vscode node or it is a line node, skip
                 continue
             }
 
+            const label = (node.label ?? "<unknown>").replace("\n", "")
             const oldAddress = node.extra.address
             let [path, line, ...rest] = oldAddress.trim().split(":")
             line = parseInt(line)
@@ -312,7 +317,8 @@ export async function updateSymbolsForGraffiti(graffitiObj): Promise<boolean> {
                 // We have a symbol attached to this node, skip
                 continue
             }
-            
+            debugChannel.appendLine(`handling file: ${path} line: ${line} symbol: ${label}`)
+
             // Get tree from cache or calculate it
             let tree: SymbolNode = null
             if (treeCache.has(path)) {
@@ -321,45 +327,56 @@ export async function updateSymbolsForGraffiti(graffitiObj): Promise<boolean> {
                 let symbols = null
                 try {
                     symbols = await ScopeFinder.getScopeSymbolsFor(pathToUri(path))
-                } catch(e) {
-                    console.log(e)
-                    await vscode.window.showErrorMessage(`Graffiti: Error handling: ${path}, ${e.message}`)
+                } catch (e) {
+                    debugChannel.appendLine(`\tError handling: ${e.message}`)
+                    debugChannel.appendLine(e.stack)
                     continue
                 }
                 if (symbols == null) {
-                    await vscode.window.showErrorMessage(`Graffiti: no symbols in path: ${path}, skipping`)
+                    debugChannel.appendLine(`\tno symbols in path, skipping`)
                     continue
                 }
                 tree = SymbolNode.createSymbolTree(symbols)
                 treeCache.set(path, tree)
             }
-           
+
             // Check for matching symbol
             const matchingNodes = getNodeStartsSameLine(line, tree)
             if (matchingNodes.length == 0) {
-                await vscode.window.showErrorMessage(`Graffiti: No matching node for ${node.label}`)
-                // print nodes in console log for debugging
-                console.log(`file: ${path} , line: ${line}`)
-                for (const node of tree.iterNodes()) {
-                    console.log(`\t${node.range.start} -> ${node.getFullName()}`)
+                debugChannel.appendLine(`\tNo matching node!`)
+                if (!missingSymbolsFiles.has(path)) {
+                    missingSymbolsFiles.set(path, tree)
                 }
-                console.log()
                 continue
             } else if (matchingNodes.length > 1) {
-                await vscode.window.showErrorMessage(`Graffiti:Multiple symbols for ${node.label}`)
+                debugChannel.appendLine(`\tMultiple symbols for ${label}`)
+                for (const matchingNode of matchingNodes) {
+                    debugChannel.appendLine(`\t\t${matchingNode.getFullName()}`)
+                }
                 // TODO: be able to choose
                 continue
             }
 
             const selectedNewNode = matchingNodes[0]
             const newAddress = oldAddress + ":" + selectedNewNode.getFullName()
-            
+
             node.extra.address = newAddress
         }
     } catch (e) {
-        await vscode.window.showErrorMessage(`Graffiti: failed to process graffiti file: ${e.message}`)
+        await vscode.window.showErrorMessage(`failed to process graffiti file: ${e.message}`)
+        debugChannel.appendLine(e.stack)
         return false
     }
+    // Print files with missing nodes to help debug
+    for (const [path, tree] of missingSymbolsFiles.entries()) {
+        debugChannel.appendLine(`Debugging file: ${path}`)
+        for (const node of tree.iterNodes()) {
+            debugChannel.appendLine(`\t${JSON.stringify(node.range.start)} -> ${node.getFullName()}`)
+        }
+        debugChannel.appendLine("")
+    }
+
+    debugChannel.appendLine("Completed updateSymbolsForGraffiti()")
     return true
 }
 
