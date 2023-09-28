@@ -82,8 +82,7 @@ export class ScopeSymbolProvider {
 
             if (!edgeText) return
 
-            debugChannel.appendLine("Graffiti.AddToGraphWithEdgeInfo():")
-            debugChannel.appendLine(JSON.stringify(node))
+            debugChannel.appendLine(`Graffiti.AddToGraphWithEdgeInfo(): ${node}`)
             debugChannel.appendLine(`edge text: \'${edgeText}\'`)
 
 
@@ -100,8 +99,8 @@ export class ScopeSymbolProvider {
         vscode.commands.registerCommand("graffiti.AddToGraph", async () => {
             let selection = vscode.window.activeTextEditor.selection;
             let node = await this._scopeFinder.getScopeNode(selection.start);
-            debugChannel.appendLine("Graffiti.AddToGraph():")
-            debugChannel.appendLine(JSON.stringify(node))
+            debugChannel.appendLine(`Graffiti.AddToGraph(): ${node}`)
+            debugChannel.appendLine(this._scopeFinder.document.languageId);
             if (node != null) {
                 let hovers = await this._scopeFinder.getHover(selection.anchor);
                 let hover = ((hovers[0]?.contents) as vscode.MarkdownString[])?.map(it => it.value)
@@ -117,8 +116,7 @@ export class ScopeSymbolProvider {
             let selection = vscode.window.activeTextEditor.selection;
             let node = await this._scopeFinder.getScopeNode(selection.start);
             let currentLine = selection.start.line
-            debugChannel.appendLine("Graffiti.AddLineToGraph():")
-            debugChannel.appendLine(JSON.stringify(node))
+            debugChannel.appendLine(`Graffiti.AddLineToGraph(): ${node}`)
             if (node != null) {
                 const update = graffiti.createUpdate(this._scopeFinder.document, node, { lineNumber: currentLine })
                 if (update != null)

@@ -72,8 +72,7 @@ const SymbolKindsForScope = [
 const SymbolKindsForName = [
     SymbolKind.Method,
     SymbolKind.Function,
-    SymbolKind.Constructor,
-    SymbolKind.Variable
+    SymbolKind.Constructor
 ]
 
 

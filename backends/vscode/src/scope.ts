@@ -10,7 +10,6 @@ const ScopeSymbolKind = [
     SymbolKind.Module,
     SymbolKind.Constructor,
     SymbolKind.Package,
-    SymbolKind.Variable,
     SymbolKind.Struct,
     SymbolKind.Object
 ];
@@ -159,6 +158,10 @@ export class SymbolNode {
         }
         yield this;
     }
+
+    public toString() {
+        return `[${this.getFullName()} | kind: ${this.kind} | start line: ${this.symbolInfo?.range?.start?.line}]`
+    }
 }
 
 
@@ -187,6 +190,10 @@ export class ScopeFinder {
         return this._doc;
     }
 
+    public get language() {
+        return this.document.languageId;
+    }
+
     public getHover(pos: vscode.Position): Thenable<vscode.Hover[]> {
         assert.equal(vscode.window.activeTextEditor.document, this._doc);
         return vscode.commands.executeCommand('vscode.executeHoverProvider', this._doc.uri, pos);
@@ -209,8 +216,15 @@ export class ScopeFinder {
         if (!symbols) {
             return [];
         }
-        let scopeSymbols = symbols.filter(sym => ScopeSymbolKind.indexOf(sym.kind) != -1);
-        return scopeSymbols;
+
+        return ScopeFinder.filterScopeSymbolsRecursive(symbols);
+    }
+
+    private static filterScopeSymbolsRecursive(symbols: vscode.DocumentSymbol[]): vscode.DocumentSymbol[] {
+        return symbols.filter(sym => ScopeSymbolKind.indexOf(sym.kind) != -1).map(sym => {
+            sym.children = this.filterScopeSymbolsRecursive(sym.children);
+            return sym;
+        });
     }
 
     public update() {
