@@ -17,8 +17,12 @@ class graphMe(IScript):
                 if field:
                     update = self.create_field_update(ctx, field)
                 else:
-                    print("No Selected method or field")
-                    return
+                    cls = get_current_class(ctx)
+                    if cls:
+                        update = self.create_class_update(ctx, cls)
+                    else:
+                        print("No Selected method, field or class")
+                        return
 
             send_update(ctx, update)
 
@@ -66,6 +70,27 @@ class graphMe(IScript):
                             "name": "label",
                             "format": "{0}::\n_{1}",
                             "replacements": ["class", "field"]
+                        }
+                    ]
+                }
+            }
+
+    def create_class_update(self, ctx, cls):
+        class_name = cls.getName(True)
+        class_addr = cls.getSignature(False)
+        addr = cls.getSignature(False)
+
+        return {
+                "type": "addData", "node": {
+                    "project": "Jeb: " + rchop(rchop(ctx.mainProject.name, '.jdb2'), '.apk'),
+                    "address": addr, 
+                    "class": class_name, 
+                    "classAddress": class_addr,
+                    "computedProperties": [
+                        {
+                            "name": "label",
+                            "format": "{0}",
+                            "replacements": ["class"]
                         }
                     ]
                 }

@@ -48,5 +48,32 @@ def get_current_field(ctx):
 
     return None
 
+def get_current_class(ctx):
+    view = ctx.getFocusedView()
+    unit = view.getUnit()
+    if isinstance(unit, IJavaSourceUnit) or isinstance(unit, IDexUnit):
+        dexdec = unit.getDecompiler().getCodeUnit()
+        f = ctx.getFocusedFragment()
+        assert f, 'Need a focused fragment'
+        dex_addr = f.getActiveAddress()
+        assert dex_addr, 'Need to have dex address'
+        cls = dexdec.getClass(dex_addr)
+        return cls
+
+    return None
+
+def get_current_address(ctx):
+    view = ctx.getFocusedView()
+    unit = view.getUnit()
+    if isinstance(unit, IJavaSourceUnit) or isinstance(unit, IDexUnit):
+        dexdec = unit.getDecompiler().getCodeUnit()
+        f = ctx.getFocusedFragment()
+        assert f, 'Need a focused fragment'
+        dex_addr = f.getActiveAddress()
+        assert dex_addr, 'Need to have dex address'
+        return dex_addr
+
+    return None
+
 def rchop(s, sub):
     return s[:-len(sub)] if s.endswith(sub) else s
