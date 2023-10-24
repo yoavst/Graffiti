@@ -102,6 +102,7 @@ class TabController {
             const themesForNodes = THEMES.map(() => [])
             const markdownNodes = []
             const commentNodes = []
+            const lineNodes = []
             const commentNodesSet = new Set()
 
 
@@ -149,6 +150,10 @@ class TabController {
                     if (!gui || this.selectedNode == null || this.selectedNode.id != node.id) {
                             themesForNodes[node.theme || 0].push(nodeName)
                     }
+
+                    if (node.extra.hasOwnProperty('line')) {
+                        lineNodes.push(nodeName)
+                    }
                 }
             }
 
@@ -182,6 +187,11 @@ class TabController {
             if (commentNodes.length != 0) {
                 s += `classDef comment fill:${COMMENT_THEME[0]},color:${COMMENT_THEME[1]},stroke:black,stroke-width:2px\n`
                 s += `class ${commentNodes.join(',')} comment\n`
+            }
+
+            if (lineNodes.length != 0) {
+                s += `classDef lineNode stroke-dasharray: 5 5\n`
+                s += `class ${lineNodes.join(',')} lineNode\n`
             }
 
             // Cache the created mermaid
