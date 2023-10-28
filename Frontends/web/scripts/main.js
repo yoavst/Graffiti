@@ -202,7 +202,7 @@ function event_help() {
                 <li>Double click an edge allows you to change its text or delete the edge</li>
                 <li>To rename or remove a graph, right click the tab's name.</li>
                 <li>A list of the linked projects is also available under the tab</li>
-                <li>When node is selected, use 1-5 to theme it.</li>
+                <li>When node is selected, use 1-7 to theme it.</li>
                 <li>Right click the center button to toggle the renderer between default and elk</li>
                 </ul>
         `,
@@ -302,7 +302,7 @@ function elk_beforeCallback(id, graph) {
 }
 
 function initiateHotkeys() {
-    hotkeys('ctrl+z,ctrl+shift+z,ctrl+y,ctrl+s,ctrl+o,ctrl+i,ctrl+alt+shift+i,ctrl+q,delete,home,shift+/,ctrl+shift+/,1,2,3,4,5', function (event, handler) {
+    hotkeys('ctrl+z,ctrl+shift+z,ctrl+y,ctrl+s,ctrl+o,ctrl+i,ctrl+alt+shift+i,ctrl+q,delete,home,shift+/,ctrl+shift+/,1,2,3,4,5,6,7', function (event, handler) {
         switch (handler.key) {
             case 'ctrl+z':
                 event_undo();
@@ -343,6 +343,8 @@ function initiateHotkeys() {
             case '3':
             case '4':
             case '5':
+            case '6':
+            case '7':
                 themeIndex = parseInt(event.key) -1
                 event_setTheme(themeIndex)
                 return

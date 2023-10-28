@@ -13,6 +13,8 @@ const THEMES = [
     ['#FFE699', 'black', '#ffd34d'],
     ['#ED7D31', 'black', '#c15811'],
     ['#D9D9D9', 'black', '#b3b3b3'],
+    ['#FF695E', 'black', '#FF5145'],
+    ['#FFDDE1', 'black', '#FFDDEA']
 ]
 const MARKDOWN_THEME = ['white', 'black', '#e5e5e5']
 const COMMENT_THEME = ['#bfbfbf', 'black', '#858585']
