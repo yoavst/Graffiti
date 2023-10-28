@@ -25,8 +25,8 @@ let globalCounter = 0
 class TabController {
     constructor() {
         this.view = null
-        this.nodes = new vis.DataSet([])
-        this.edges = new vis.DataSet([])
+        this.nodes = new DataSet([])
+        this.edges = new DataSet([])
         this.undoHistory = []
         this.redoHistory = []
         this.idCounter = 1
@@ -70,7 +70,7 @@ class TabController {
     }
 
     export() {
-        return JSON.stringify([this.idCounter, this.nodes.get(), this.edges.get(), {
+        return JSON.stringify([this.idCounter, this.nodes.asReadOnly(), this.edges.asReadOnly(), {
             'elkRenderer': this.elkRenderer
         }], null, 4)
     }
@@ -79,8 +79,8 @@ class TabController {
         const [id, nodes, edges, config = {}] = JSON.parse(data)
 
         this.reset()
-        this.nodes = new vis.DataSet(nodes)
-        this.edges = new vis.DataSet(edges)
+        this.nodes = new DataSet(nodes)
+        this.edges = new DataSet(edges)
         this.idCounter = id
         this.elkRenderer = config['elkRenderer'] || false
         this.cachedMermaid = null
@@ -98,7 +98,7 @@ class TabController {
         if (gui && this.cachedMermaid != null) {
             s = this.cachedMermaid
         } else {
-            const [_, nodes, edges] = [this.idCounter, this.nodes.get(), this.edges.get()]
+            const [nodes, edges] = [this.nodes.asReadOnly(), this.edges.asReadOnly()]
             const themesForNodes = THEMES.map(() => [])
             const markdownNodes = []
             const commentNodes = []
@@ -109,11 +109,6 @@ class TabController {
             if (nodes.length == 0) {
                 return ""
             }
-
-            // We sort them, to preserve the order of edges, even after undo
-            const comparator = (x,y) => x.id - y.id
-            nodes.sort(comparator)
-            edges.sort(comparator)
 
             // to support older clients, we switch from flowchart to graph for export
             s = gui ? (elkRenderer ?  "flowchart-elk TD\n": "flowchart TD\n") : "graph TD\n"
@@ -278,7 +273,7 @@ class TabController {
 
     onEdgeRightClick(src, dst) {
         const _this = this
-        const edge = this.edges.get({ filter: item => item.from == src && item.to == dst })[0]
+        const edge = this.edges.filter(item => item.from == src && item.to == dst)[0]
         const edgeOldLabel = edge.label
 
         setTimeout(function () {
@@ -521,11 +516,7 @@ class TabController {
     }
 
     queryNodes(propertyName, propertyValue) {
-        return this.nodes.get({
-            filter: function (item) {
-                return item.extra[propertyName] == propertyValue;
-            }
-        });
+        return this.nodes.filter(item => item.extra[propertyName] == propertyValue);
     }
 
     selectNode(id) {
@@ -653,10 +644,7 @@ class TabController {
         // Update undo history for node
         this.undoHistory.push({ type: REMOVE_NODE, data: { ...removedNode } })
         // Get all edges containing the node
-        const removedEdges = this.edges.get({
-            filter: (edge) => edge.from == removedNodeId ||
-                edge.to == removedNodeId
-        })
+        const removedEdges = this.edges.filter((edge) => edge.from == removedNodeId || edge.to == removedNodeId)
         // Remove them, and update undo history
         for (const removedEdge of removedEdges) {
             this.edges.remove(removedEdge.id)
@@ -689,8 +677,7 @@ class TabController {
     updateNodes(selection, updateObj) {
         this.cachedMermaid = null
 
-        const updates = this.nodes.get({
-            filter: item => {
+        const updates = this.nodes.filter(item => {
                 const extra = item.extra
                 for (const [key, value] of selection) {
                     if (!(key in extra)) return false;
@@ -699,7 +686,7 @@ class TabController {
                 return true;
             }
 
-        }).map(item => mergeToVisNode(item, updateObj))
+        ).map(item => mergeToVisNode(item, updateObj))
         this.nodes.updateOnly(updates)
 
         const updateUndoItem = item => {
