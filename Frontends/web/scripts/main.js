@@ -257,7 +257,8 @@ function addTextualNode(title, extra_node_properties, extra_edge_properties={}) 
         input: 'textarea',
         inputValue: '',
         footer: 'You can use **text** for bold, and *text* for italic',
-        showCancelButton: true
+        showCancelButton: true,
+        didOpen: patchOnKeyDown
         }).then(({value=null}) => {
             if (value != null && value != '') {
                 // Bit of a hack, but why not

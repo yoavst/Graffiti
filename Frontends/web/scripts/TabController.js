@@ -326,26 +326,27 @@ class TabController {
                 footer: 'You can use **text** for bold, and *text* for italic',
                 showCancelButton: true,
                 showDenyButton: true,
-                denyButtonText: `Delete`,
-                }).then(result => {
-                    if (result.isConfirmed) {
-                        const {value=null} = result
-                        if (value != null && value != '') {
-                            node.label = value
+                denyButtonText: 'Delete',
+                didOpen: patchOnKeyDown
+            }).then(result => {
+                if (result.isConfirmed) {
+                    const { value = null } = result
+                    if (value != null && value != '') {
+                        node.label = value
 
-                            // update history
-                            _this.redoHistory = []
-                            _this.addUndoMarker()
-                            _this.undoHistory.push({ type: CHANGE_NODE_LABEL, data: { id: node.id, oldLabel: oldLabel, newLabel: value } }) 
+                        // update history
+                        _this.redoHistory = []
+                        _this.addUndoMarker()
+                        _this.undoHistory.push({ type: CHANGE_NODE_LABEL, data: { id: node.id, oldLabel: oldLabel, newLabel: value } })
 
-                            _this.cachedMermaid = null
+                        _this.cachedMermaid = null
 
-                            _this.draw()
-                        }
-                    } else if (result.isDenied) {
-                        this.deleteNode(node)
+                        _this.draw()
                     }
-                })
+                } else if (result.isDenied) {
+                    this.deleteNode(node)
+                }
+            })
         }
     }
 
@@ -792,11 +793,26 @@ function strToBool(s) {
     // will match one and only one of the string 'true','1', or 'on' rerardless
     // of capitalization and regardless off surrounding white-space.
 
-    regex=/^\s*(true|1|on)\s*$/i
+    regex = /^\s*(true|1|on)\s*$/i
 
     return regex.test(s);
 }
 
 function getIdFromNode(node) {
     return parseInt(node.id.split('-')[1].substring(1))
+}
+
+function patchOnKeyDown(dialog) {
+    // Set ctrl+enter behavior for textarea and whole dialog
+    [dialog, ...dialog.getElementsByTagName("textarea")].forEach(ta => {
+        ta.onkeydown = (e) => {
+            if (e.keyCode == 13) {
+                if (e.ctrlKey) {
+                    Swal.clickConfirm()
+                    //emulate enter press with a line break here.
+                    return true;
+                }
+            }
+        }
+    })
 }
