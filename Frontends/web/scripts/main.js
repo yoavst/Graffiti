@@ -200,6 +200,7 @@ function event_help() {
                 <li>Right clicking a node will open it in the editor</li>
                 <li>To find the matching keyboard shortcut, hover over the buttons.</li>
                 <li>Double click an edge allows you to change its text or delete the edge</li>
+                <li>Middle click to swap a node with the selected node (same parent). ctrl for same son, shift for id swap</li>
                 <li>To rename or remove a graph, right click the tab's name.</li>
                 <li>A list of the linked projects is also available under the tab</li>
                 <li>When node is selected, use 1-7 to theme it.</li>

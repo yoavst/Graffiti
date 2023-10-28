@@ -1,7 +1,8 @@
 class DataSet {
-    constructor(elements, id_func = (element => element.id)) {
+    constructor(elements, id_func = (element => element.id), id_set_func = ((element, new_id) => { element.id = new_id })) {
         this.elements = [...elements]
         this.id_func = id_func
+        this.id_set_func = id_set_func
 
         this.elements.sort((a, b) => id_func(a) - id_func(b))
     }
@@ -48,6 +49,24 @@ class DataSet {
 
     clear() {
         this.elements = []
+    }
+
+    swap(id1, id2) {
+        const firstIndex = binarySearch(this.elements, id1, this.id_func)
+        const secondIndex = binarySearch(this.elements, id2, this.id_func)
+
+        if (firstIndex < 0 || secondIndex < 0) {
+            throw new Error(`Failed to swap, as one of those ids are not in the dataset: ${id1}, ${id2}`)
+        }
+
+        const firstElement = this.elements[firstIndex]
+        const secondElement = this.elements[secondIndex]
+
+        this.id_set_func(firstElement, id2)
+        this.id_set_func(secondElement, id1)
+
+        this.elements[firstIndex] = secondElement
+        this.elements[secondIndex] = firstElement
     }
 
     asReadOnly() {

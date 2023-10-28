@@ -5,6 +5,8 @@ const REMOVE_NODE = "removeNode"
 const CHANGE_EDGE_LABEL = "changeEdgeLabel"
 const CHANGE_NODE_LABEL = "changeNodeLabel"
 const CHANGE_THEME = "changeTheme"
+const SWAP_EDGES = "swapEdges"
+const SWAP_IDS = "swapIds"
 const MARKER = "marker"
 
 const THEMES = [
@@ -240,6 +242,12 @@ class TabController {
         }
     }
 
+    onMiddleClick(target, elementId, isCtrlPressed, isShiftPressed) {
+        if (this.selectedNode != null) {
+            this.swapNodes(this.selectedNode.id, elementId, !isCtrlPressed, isShiftPressed)
+        }
+    }
+
     onToggleRenderer() {
         this.elkRenderer = !this.elkRenderer
         this.cachedMermaid = null
@@ -398,6 +406,15 @@ class TabController {
                         event.stopPropagation()
                     })
 
+                    // add middle click event
+                    node.addEventListener('auxclick', (event) => {
+                        if (event.button == 1) {
+                            _this.onMiddleClick(event.currentTarget, getIdFromNode(event.currentTarget), event.ctrlKey, event.shiftKey)
+                            event.preventDefault()
+                            event.stopPropagation()
+                        }
+                    })
+
                     const extra = _this.nodes.get(getIdFromNode(node)).extra
                     const hover = extra.hover?.join('\n') ?? extra.detail
                     if (hover) {
@@ -538,6 +555,84 @@ class TabController {
         }
     }
 
+    swapNodes(id1, id2, swapParents, swapIds) {
+        if (id1 == id2) {
+            return
+        }
+
+        if (swapIds) {
+            this.#swapIdsAsAction(id1, id2)
+        } else {
+            this.#trySwapEdges(id1, id2, swapParents)
+        }
+    }
+
+    #swapIds(id1, id2) {
+        const swap = (id, id1, id2) => id === id1 ? id2 : (id === id2 ? id1 : id)
+
+        this.edges = new DataSet(this.edges.map(e => ({ ...e, from: swap(e.from, id1, id2), to: swap(e.to, id1, id2) })))
+        this.nodes = new DataSet(this.nodes.map(n => ({ ...n, id: swap(n.id, id1, id2) })))
+        
+        if (this.selectedNode != null) {
+            this.selectedNode = this.nodes.get(swap(this.selectedNode.id, id1, id2))
+        }
+    }
+
+    #swapIdsAsAction(id1, id2) {
+        this.#swapIds(id1, id2)
+
+        // update history
+        this.redoHistory = []
+        this.addUndoMarker()
+        this.undoHistory.push({ type: SWAP_IDS, data: { id1, id2 } })
+
+        this.cachedMermaid = null
+        this.draw()
+
+        logEvent("Swapped nodes id")
+    }
+
+    #trySwapEdges(id1, id2, swapParents) {
+        const otherSide = swapParents ? (e) => e.from : (e) => e.to
+        const mySide = swapParents ? (e) => e.to : (e) => e.from
+        const type = swapParents ? "parent" : "son"
+
+        const firstNodeEdges = this.edges.filter(e => mySide(e) == id1)
+        const secondNodeEdges = this.edges.filter(e => mySide(e) == id2)
+        const commonSides = firstNodeEdges.filter(e => secondNodeEdges.some(e2 => otherSide(e) == otherSide(e2))).map(otherSide)
+
+        if (commonSides.length == 0) {
+            logEvent(`No common ${type} for the two nodes`)
+        } else if (commonSides.length > 1) {
+            // TODO: support multiple common sides 
+            logEvent(`Multiple common ${type}s for the two nodes`)
+        } else {
+            const side = commonSides[0]
+            const firstNodeSpecificEdges = firstNodeEdges.filter(e => otherSide(e) == side)
+            const secondNodeSpecificEdges = secondNodeEdges.filter(e => otherSide(e) == side)
+
+            if (firstNodeSpecificEdges.length != 1 || secondNodeSpecificEdges.length != 1) {
+                logEvent(`Multiple edges to the same ${type}`)
+            } else {
+                this.#swapEdges(firstNodeSpecificEdges[0], secondNodeSpecificEdges[0])
+
+                logEvent("Tried to swap nodes")
+            }
+        }
+    }
+
+    #swapEdges(edge1, edge2) {
+        this.edges.swap(edge1.id, edge2.id)
+
+        // update history
+        this.redoHistory = []
+        this.addUndoMarker()
+        this.undoHistory.push({ type: SWAP_EDGES, data: { id1: edge1.id, id2: edge2.id } })
+
+        this.cachedMermaid = null
+        this.draw()
+    }
+
     addUndoMarker() {
         this.undoHistory.push(HISTORY_MARKER)
     }
@@ -572,6 +667,12 @@ class TabController {
                     const { id, oldTheme } = data
                     const node = this.nodes.get(id)
                     node.theme = oldTheme
+                } else if (type == SWAP_EDGES) {
+                    const { id1, id2 } = data
+                    this.edges.swap(id1, id2)
+                } else if (type == SWAP_IDS) {
+                    const { id1, id2 } = data
+                    this.#swapIds(id1, id2)
                 }
 
 
@@ -619,7 +720,14 @@ class TabController {
                     const { id, newTheme } = data
                     const node = this.nodes.get(id)
                     node.theme = newTheme
+                } else if (type == SWAP_EDGES) {
+                    const { id1, id2 } = data
+                    this.edges.swap(id1, id2)
+                } else if (type == SWAP_IDS) {
+                    const { id1, id2 } = data
+                    this.#swapIds(id1, id2)
                 }
+
                 this.undoHistory.push(historyEntry)
             }
 
@@ -815,5 +923,15 @@ function patchOnKeyDown(dialog) {
                 }
             }
         }
+    })
+}
+
+function logEvent(title) {
+    Swal.fire({
+        title,
+        position: 'bottom-end',
+        toast: true,
+        showConfirmButton: false,
+        timer: 1500
     })
 }
