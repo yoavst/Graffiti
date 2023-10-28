@@ -1,4 +1,3 @@
-
 const ADD_EDGE = "addEdge"
 const ADD_NODE = "addNode"
 const REMOVE_EDGE = "removeEdge"
@@ -111,7 +110,7 @@ class TabController {
             }
 
             // to support older clients, we switch from flowchart to graph for export
-            s = gui ? (elkRenderer ?  "flowchart-elk TD\n": "flowchart TD\n") : "graph TD\n"
+            s = gui ? (elkRenderer ? "flowchart-elk TD\n" : "flowchart TD\n") : "graph TD\n"
 
             // Add nodes
             for (const node of nodes) {
@@ -131,7 +130,7 @@ class TabController {
                     if (node.extra.isComment) {
                         commentNodesSet.add(node.id)
                     }
-                    
+
                     if (!gui || this.selectedNode == null || this.selectedNode.id != node.id) {
                         if (node.extra.isComment) {
                             commentNodes.push(nodeName)
@@ -143,7 +142,7 @@ class TabController {
                 else {
                     s += `  ${nodeName}["${escapeHtml(node.label, gui)}"]\n`
                     if (!gui || this.selectedNode == null || this.selectedNode.id != node.id) {
-                            themesForNodes[node.theme || 0].push(nodeName)
+                        themesForNodes[node.theme || 0].push(nodeName)
                     }
 
                     if (node.extra.hasOwnProperty('line')) {
@@ -216,7 +215,7 @@ class TabController {
         if (commentIds.size > 0) {
             graph.children.forEach(child => {
                 if (commentIds.has(child.id)) {
-                   child.layoutOptions['org.eclipse.elk.commentBox'] = true
+                    child.layoutOptions['org.eclipse.elk.commentBox'] = true
                 }
             })
         }
@@ -250,7 +249,7 @@ class TabController {
             const currentTheme = this.selectedNode.theme || 0
             if (currentTheme != themeIndex) {
                 this.selectedNode.theme = themeIndex
-                
+
                 // update history
                 this.redoHistory = []
                 this.addUndoMarker()
@@ -286,7 +285,7 @@ class TabController {
                 denyButtonText: `Delete the edge`,
             }).then(result => {
                 if (result.isConfirmed) {
-                    const {value} = result
+                    const { value } = result
                     if (value != null) {
                         _this.#setLabelForEdge(edge, value)
 
@@ -407,7 +406,7 @@ class TabController {
                             placement: 'bottom',
                             hideOnClick: true,
                             onShow: () => _this.enableHoverDoc
-                          });
+                        });
                     }
                 }
             }
@@ -679,13 +678,13 @@ class TabController {
         this.cachedMermaid = null
 
         const updates = this.nodes.filter(item => {
-                const extra = item.extra
-                for (const [key, value] of selection) {
-                    if (!(key in extra)) return false;
-                    if (extra[key] != value) return false;
-                }
-                return true;
+            const extra = item.extra
+            for (const [key, value] of selection) {
+                if (!(key in extra)) return false;
+                if (extra[key] != value) return false;
             }
+            return true;
+        }
 
         ).map(item => mergeToVisNode(item, updateObj))
         this.nodes.updateOnly(updates)
