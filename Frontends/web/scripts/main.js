@@ -303,7 +303,7 @@ function elk_beforeCallback(id, graph) {
 }
 
 function initiateHotkeys() {
-    hotkeys('ctrl+z,ctrl+shift+z,ctrl+y,ctrl+s,ctrl+o,ctrl+i,ctrl+alt+shift+i,ctrl+q,delete,home,shift+/,ctrl+shift+/,1,2,3,4,5,6,7', function (event, handler) {
+    hotkeys('ctrl+z,ctrl+shift+z,ctrl+y,ctrl+s,ctrl+o,ctrl+i,ctrl+alt+shift+i,ctrl+q,ctrl+shift+q,delete,home,shift+/,ctrl+shift+/,1,2,3,4,5,6,7', function (event, handler) {
         switch (handler.key) {
             case 'ctrl+z':
                 event_undo();
@@ -326,6 +326,9 @@ function initiateHotkeys() {
                 return false;
             case 'ctrl+q':
                 event_addComment()
+                return false
+            case 'ctrl+shift+q':
+                event_addTextNode()
                 return false
             case 'delete':
                 event_delete();

@@ -28,7 +28,7 @@ class DataSet {
 
     remove(id) {
         const deletionIndex = binarySearch(this.elements, id, this.id_func)
-        if (deletionIndex <= 0) {
+        if (deletionIndex < 0) {
             throw new Error(`Element with the given id is not in the array. id: ${id}`);
         }
 
