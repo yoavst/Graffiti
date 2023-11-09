@@ -784,29 +784,30 @@ class TabController {
         this.draw()
     }
 
-    updateNodes(selection, updateObj) {
-        const updates = this.nodes.filter(item => {
-            const extra = item.extra
-            for (const [key, value] of selection) {
-                if (!(key in extra)) return false;
-                if (extra[key] != value) return false;
-            }
-            return true;
+    updateNodes(selection, updateObj, version) {
+        let updates;
+        if (version == 1) {
+            updates = this.nodes.filter(item => this.#selectionV1(item.extra, selection))
+        } else {
+            updates = this.nodes.filter(item => this.#selectionV2(item.extra, selection))
         }
 
-        ).map(item => mergeToVisNode(item, updateObj))
+        updates = updates.map(item => mergeToVisNode(item, updateObj))
         this.nodes.updateOnly(updates)
 
+        const _this = this;
         const updateUndoItem = item => {
             if (item.type != ADD_NODE && item.type != REMOVE_NODE)
                 return item
+            
 
-            const extra = item.data.extra
-            for (const [key, value] of selection) {
-                if (!(key in extra)) return item;
-                if (extra[key] != value) return item;
+            const shouldUpdate = version == 1 ? _this.#selectionV1(item.data.extra, selection) : _this.#selectionV2(item.data.extra, selection)
+
+            if (shouldUpdate) {
+                return ({ type: item.type, data: mergeToVisNode(item.data, updateObj) })
+            } else {
+                return item
             }
-            return ({ type: item.type, data: mergeToVisNode(item.data, updateObj) })
         }
 
         this.undoHistory = this.undoHistory.map(updateUndoItem)
@@ -817,6 +818,27 @@ class TabController {
             this.cachedMermaid = null
             this.draw()
         }
+    }
+
+    #selectionV1(extra, selection) {
+        // Scheme of selection is: [(key1, value1), (key2, value2)] and we requires key1=value1, key2=value2
+        for (const [key, value] of selection) {
+            if (!(key in extra)) return false;
+            if (extra[key] != value) return false;
+        }
+        return true;
+    }
+
+    #selectionV2(extra, selection) {
+        // Scheme of selection is: [[(key1, value1), (key2, value2)],[(key3, value3), (key4, value4)]] and we requires (key1=value1, key2=value2) or (key3=value3, key4=value4)
+        outerLoop: for (const specificSelection of selection) {
+            for (const [key, value] of specificSelection) {
+                if (!(key in extra)) return false;
+                if (extra[key] != value) continue outerLoop;
+            }
+            return true;
+        }
+        return false;
     }
 
     getProjects() {

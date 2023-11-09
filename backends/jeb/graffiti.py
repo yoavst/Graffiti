@@ -70,10 +70,11 @@ class GraffitiListener(IEventListener):
                 if isinstance(target, IDexMethod):
                     res = {
                         "type": "updateNodes",
-                        "selection": [["address", target.getSignature(False)]],
+                        "selection": [[["address", target.getSignature(False)]], [["methodAddress", target.getSignature(False)]]],
                         "update": {
                             "method": target.getName(True) or target.getName(False)
-                        }
+                        },
+                        "version": 2
                     }
                 elif isinstance(target, IDexClass):
                     res = {

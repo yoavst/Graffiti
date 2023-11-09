@@ -57,7 +57,7 @@ class NetworkController {
         } else if (msg.type == MSG_UPDATE_NODES) {
             // I assume all the opened tabs are from the same app, otherwise...
             for (const { tabController } of this.tabsController.tabs) {
-                tabController.updateNodes(msg.selection, msg.update)
+                tabController.updateNodes(msg.selection, msg.update, msg.version || 1)
             }
         }
     }
