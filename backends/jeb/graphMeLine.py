@@ -30,6 +30,7 @@ class graphMeLine(IScript):
         class_name = method.getClassType().getName(True)
         class_addr = method.getClassType().getSignature(False)
         method_name = method.getName(True)
+        method_addr = method.getSignature(False)
         
         # Calculate offset
         try:
@@ -46,6 +47,7 @@ class graphMeLine(IScript):
                     "class": class_name, 
                     "classAddress": class_addr,
                     "method": method_name, 
+                    "methodAddress": method_addr,
                     "line": offset,
                     "computedProperties": [
                         {

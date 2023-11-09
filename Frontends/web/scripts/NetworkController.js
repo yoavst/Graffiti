@@ -38,13 +38,18 @@ class NetworkController {
                     controller.selectNode(nodeId)
             })
         } else if (msg.type == MSG_ADD_NODES_AND_EDGES) {
+            let isExistingToNew = this.isExistingToNew()
+            if (msg.hasOwnProperty('direction')) {
+                isExistingToNew = msg.direction == 'e2n'
+            }
+
             this.tabsController.onCurrent((_, controller) => {
                 const selectedNode = controller.selectedNode
 
                 controller.addUndoMarker()
 
                 for (const node of msg.nodes) {
-                    this.addNodeAndEdge(controller, selectedNode, node, msg.edge, this.isExistingToNew(), false)
+                    this.addNodeAndEdge(controller, selectedNode, node, msg.edge, isExistingToNew, false)
                 }
             })
 
