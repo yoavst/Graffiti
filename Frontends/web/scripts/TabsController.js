@@ -106,6 +106,12 @@ class TabsController {
         }
     }
 
+    onEach(callback) {
+        this.tabs.forEach(({name, tabController}) => {
+            callback(name, tabController)
+        })
+    }
+
     onId(id, callback) {
         this.tabs.forEach(({name, tabController}) => {
             if (tabController.mermaidId == id) {

@@ -29,6 +29,12 @@ function event_reset() {
         })
 }
 
+function event_deselect() {
+    window.tabsController.onCurrent((_, controller) => {
+        controller.selectNode(null)
+    })
+}
+
 
 function event_undo() {
     window.tabsController.onCurrent((_, controller) => {
@@ -73,8 +79,15 @@ function event_center() {
 }
 
 function event_export() {
-    tabsController.onCurrent((name, controller) => {
-        const blob = new Blob([controller.export()])
+    tabsController.onCurrent(exportController)
+}
+
+function event_exportAll() {
+    tabsController.onEach(exportController)
+}
+
+function exportController(name, controller) {
+    const blob = new Blob([controller.export()])
         const url = window.URL.createObjectURL(blob)
         const a = document.createElement('a')
         a.style.display = 'none'
@@ -84,7 +97,6 @@ function event_export() {
         a.click()
         window.URL.revokeObjectURL(url)
         document.body.removeChild(a)
-    })
 }
 
 function event_import() {
@@ -303,8 +315,11 @@ function elk_beforeCallback(id, graph) {
 }
 
 function initiateHotkeys() {
-    hotkeys('ctrl+z,ctrl+shift+z,ctrl+y,ctrl+s,ctrl+o,ctrl+i,ctrl+alt+shift+i,ctrl+q,ctrl+shift+q,delete,home,shift+/,ctrl+shift+/,1,2,3,4,5,6,7', function (event, handler) {
+    hotkeys('esc,ctrl+z,ctrl+shift+z,ctrl+y,ctrl+s,ctrl+alt+s,ctrl+o,ctrl+i,ctrl+alt+shift+i,ctrl+q,ctrl+shift+q,delete,home,shift+/,ctrl+shift+/,1,2,3,4,5,6,7', function (event, handler) {
         switch (handler.key) {
+            case 'esc':
+                event_deselect();
+                return false;
             case 'ctrl+z':
                 event_undo();
                 return false;
@@ -314,6 +329,9 @@ function initiateHotkeys() {
                 return false;
             case 'ctrl+s':
                 event_export();
+                return false;
+            case 'ctrl+alt+s':
+                event_exportAll();
                 return false;
             case 'ctrl+o':
                 event_import();

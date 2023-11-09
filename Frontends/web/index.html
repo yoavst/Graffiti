@@ -12,7 +12,7 @@
         <div class="buttons right">
             <button onclick="event_import()" title="Import (Ctrl+O)"><img src="images/icon_import.svg" class="action_icon"
                     alt="Import" /></button>
-            <button onclick="event_export()" title="Export (Ctrl+S)"><img src="images/icon_export.svg"
+            <button onclick="event_export()" oncontextmenu="return event_exportAll()" title="Export (Ctrl+S); Export All (Ctrl+Alt+S)"><img src="images/icon_export.svg"
                     class="action_icon" alt="Export" /></button>
             <button onclick="event_mermaid()" title="Mermaid"><img src="images/icon_mermaid.svg" class="action_icon"
                     alt="Mermaid" /></button>
