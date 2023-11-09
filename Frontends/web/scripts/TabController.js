@@ -785,8 +785,6 @@ class TabController {
     }
 
     updateNodes(selection, updateObj) {
-        this.cachedMermaid = null
-
         const updates = this.nodes.filter(item => {
             const extra = item.extra
             for (const [key, value] of selection) {
@@ -814,8 +812,11 @@ class TabController {
         this.undoHistory = this.undoHistory.map(updateUndoItem)
         this.redoHistory = this.redoHistory.map(updateUndoItem)
 
-
-        this.draw()
+        if (updates.length != 0) {
+            // A node was actually updated, redraw
+            this.cachedMermaid = null
+            this.draw()
+        }
     }
 
     getProjects() {
