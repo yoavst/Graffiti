@@ -159,7 +159,7 @@ class TabController {
             // Add edges
             s += "\n\n"
             for (const edge of edges) {
-                if (commentNodesSet.has(edge.to)) {
+                if (commentNodesSet.has(edge.to) || commentNodesSet.has(edge.from)) {
                     s += `N${edge.from} --- N${edge.to}\n`
                 } else if ('label' in edge) {
                     s += `N${edge.from}-->|"${escapeHtml(edge.label, gui)}"|N${edge.to}\n`
