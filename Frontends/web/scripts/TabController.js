@@ -95,6 +95,27 @@ class TabController {
         this.zoom.zoomAbs(0, 0, 1)
     }
 
+    resetScrollingToSelected() {
+        if (this.selectedNode == null) {
+            this.resetScrolling()
+        } else {
+            const selectedElement = this.#getDomElementFromId(this.selectedNode.id)
+            const [x,y] = this.#getTransform(selectedElement)
+            
+            this.zoom.moveTo(-x + parseInt(this.view.offsetWidth / 2), -y + parseInt(this.view.offsetHeight / 2))
+            this.zoom.zoomAbs(0, 0, 1)
+        }
+    }
+
+    #getTransform(element) {
+        var xforms = element.transform.baseVal
+        var firstXForm = xforms.getItem(0)
+        if (firstXForm.type == SVGTransform.SVG_TRANSFORM_TRANSLATE){
+            return [firstXForm.matrix.e, firstXForm.matrix.f]
+        }
+        return [0, 0]
+    }
+
     toMermaid(gui = false, elkRenderer = false) {
         let s = ""
 
@@ -549,22 +570,34 @@ class TabController {
 
     #selectNodeInUI(oldId, newId) {
         if (this.nodes.size() != 0) { 
-            const nodesContainer = this.container.getElementsByTagName('diagram-div')[0].shadowRoot.querySelector('.nodes')
+            const nodesContainer = this.#getDomNodesContainerElement()
             if (oldId != null) {
-                const oldSelectedElement = nodesContainer.querySelector(`g.node[id^=flowchart-N${oldId}-]`)
+                const oldSelectedElement = this.#getDomElementFromId(oldId, nodesContainer)
                 const oldSelectedBorders = oldSelectedElement.querySelector('rect')
 
                 oldSelectedElement.style = ""
                 oldSelectedBorders.style = ""
             }
             if (newId != null) {
-                const newSelectedElement = nodesContainer.querySelector(`g.node[id^=flowchart-N${newId}-]`)
+                const newSelectedElement = this.#getDomElementFromId(newId, nodesContainer)
                 const newSelectedBorders = newSelectedElement.querySelector('rect')
 
                 newSelectedElement.style = "filter: brightness(90%);"
                 newSelectedBorders.style = "stroke:#333 !important; stroke-width:4px !important;"
             }
         }
+    }
+
+    #getDomElementFromId(id, nodesContainer=null) {
+        if (!nodesContainer) {
+            nodesContainer = this.#getDomNodesContainerElement()
+        }
+        return nodesContainer.querySelector(`g.node[id^=flowchart-N${id}-]`)
+
+    }
+
+    #getDomNodesContainerElement() {
+        return this.container.getElementsByTagName('diagram-div')[0].shadowRoot.querySelector('.nodes')   
     }
 
     swapNodes(id1, id2, swapParents, swapIds) {

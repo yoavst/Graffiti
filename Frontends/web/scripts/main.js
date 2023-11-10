@@ -76,6 +76,13 @@ function event_center() {
     window.tabsController.onCurrent((_, controller) => {
         controller.resetScrolling()
     })
+    return false;
+}
+
+function event_focusOnSelected() {
+    window.tabsController.onCurrent((_, controller) => {
+        controller.resetScrollingToSelected()
+    })
 }
 
 function event_export() {
@@ -84,6 +91,7 @@ function event_export() {
 
 function event_exportAll() {
     tabsController.onEach(exportController)
+    return false
 }
 
 function exportController(name, controller) {
@@ -315,7 +323,7 @@ function elk_beforeCallback(id, graph) {
 }
 
 function initiateHotkeys() {
-    hotkeys('esc,ctrl+z,ctrl+shift+z,ctrl+y,ctrl+s,ctrl+alt+s,ctrl+o,ctrl+i,ctrl+alt+shift+i,ctrl+q,ctrl+shift+q,delete,home,shift+/,ctrl+shift+/,1,2,3,4,5,6,7', function (event, handler) {
+    hotkeys('esc,ctrl+z,ctrl+shift+z,ctrl+y,ctrl+s,ctrl+alt+s,ctrl+o,ctrl+i,ctrl+alt+shift+i,ctrl+q,ctrl+shift+q,delete,home,ctrl+home,shift+`,shift+/,ctrl+shift+/,1,2,3,4,5,6,7', function (event, handler) {
         switch (handler.key) {
             case 'esc':
                 event_deselect();
@@ -352,6 +360,9 @@ function initiateHotkeys() {
                 event_delete();
                 return false;
             case 'home':
+                event_focusOnSelected();
+                return false;
+            case 'ctrl+home':
                 event_center();
                 return false;
             case 'shift+/':
@@ -359,6 +370,9 @@ function initiateHotkeys() {
                 return false;
             case 'ctrl+shift+/':
                 event_toggleHelp();
+                return false
+            case 'shift+`':
+                event_toggleRenderer();
                 return false
             case '1':
             case '2':
