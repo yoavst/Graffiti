@@ -97,6 +97,8 @@ class TabsController {
 
         // Save selected tab
         this.selectedTab = tab
+
+        this.saveSelectedTab()
     }
 
     onCurrent(callback) {
@@ -124,10 +126,18 @@ class TabsController {
         const data = JSON.stringify(this.tabs.map(({ name, tabController }) => [name, tabController.export()]))
         localStorage.setItem("__SAVED_DATA", data)
         localStorage.setItem("__SAVED_DATA_VERSION", STORAGE_VERSION)
+
+        this.saveSelectedTab()
+    }
+
+    saveSelectedTab() {
+        localStorage.setItem("__SAVED_TAB_INDEX", this.tabs.indexOf(this.selectedTab))
     }
 
     restore() {
         const data = JSON.parse(localStorage.getItem("__SAVED_DATA"))
+        const selectedTabIndex = parseInt(localStorage.getItem("__SAVED_TAB_INDEX") || 0)
+
         if (data != null) {
             // Support migrating from lower version
             const version = parseInt(localStorage.getItem("__SAVED_DATA_VERSION")) || 1;
@@ -144,9 +154,10 @@ class TabsController {
                     tab.tabController.import(innerData)
                 }
             }
+            
         }
         if (this.count() >= 1) {
-            this.selectTab(this.tabs[0])
+            this.selectTab(this.tabs[selectedTabIndex])
         } else {
             this.#addEmptyTab()
         }
