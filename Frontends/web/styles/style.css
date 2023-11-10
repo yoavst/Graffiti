@@ -100,6 +100,20 @@ body {
     background-color: #0078d7;
 }
 
+.tabs .divider {
+    background-color: inherit;
+    float: left;
+    border: white solid 2px;
+    outline: none;
+    cursor: grabbing;
+    height: 48px;
+    width: 20px;
+}
+
+.tabs .divider.dragover { 
+    filter: brightness(50%);
+}
+
 /* Style the buttons inside the tab */
 .tabs button {
     background-color: inherit;
@@ -116,10 +130,6 @@ body {
 /* Change background color of buttons on hover */
 .tabs button:hover {
     background-color: #005ca5;
-}
-
-.tabs button.over {
-    box-shadow:inset 0px 0px 0px 2px #fff;
 }
 
 /* Create an active/current tablink class */

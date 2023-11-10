@@ -8,7 +8,6 @@ class TabsController {
         this.contextMenu = contextMenu
         this.contextMenuOpenedForTab = null
         this.selectedTab = null
-        this.draggedElement = null
         this.tabIdCounter = 0
 
         this.#initiateContextMenu()
@@ -17,6 +16,7 @@ class TabsController {
     count() {
         return this.tabs.length
     }
+
 
     addTab(name, shouldSave = true) {
         const realThis = this
@@ -62,54 +62,79 @@ class TabsController {
         tabElement.addEventListener('dragstart', function (e) {
             tabElement.style.opacity = '0.4';
 
-            _this.draggedElement = tabElement
-            e.dataTransfer.effectAllowed = 'move';
-            e.dataTransfer.setData('text/plain', tabId);
+            setTimeout(() => {
+                _this.#addDividers(tabId)
+            }, 100)
         });
         tabElement.addEventListener('dragend', () => {
-            _this.#dragEnd(tabElement)
+            _this.#dragEnd()
         });
 
-        tabElement.addEventListener('dragenter', function () {
-            this.classList.add('over');
-        });
-        tabElement.addEventListener('dragleave', function () {
-            this.classList.remove('over');
-        });
 
         tabElement.addEventListener('dragover', function (e) {
             e.preventDefault();
-
-            e.dataTransfer.dropEffect = 'move';
-
             return false;
         });
+    }
 
-        tabElement.addEventListener('drop', function (e) {
+    #dragEnd() {
+        this.tabs.forEach(tab => tab.tabElement.style.opacity = '1.0');
+        this.#removeDividers()
+    }
+
+    #addDividers(tabId) {
+        let index = 0;
+        for (const { tabElement } of this.tabs) {
+            const dividerElement = this.#createDivider(index, tabId)
+            this.tabsView.insertBefore(dividerElement, tabElement)
+            index++
+        }
+        this.tabsView.appendChild(this.#createDivider(index, tabId))
+    }
+
+    #createDivider(index, tabId) {
+        const _this = this
+
+        const dividerElement = document.createElement("div")
+        dividerElement.classList.add("divider")
+        dividerElement.addEventListener('drop', function (e) {
             e.stopPropagation()
-            _this.#dragEnd(tabElement)
+            _this.#dragEnd()
 
-            const draggedTabId = parseInt(e.dataTransfer.getData('text/plain'))
-            if (draggedTabId != tabId) {
-                const thisTabIndex = _this.tabs.findIndex(({ id }) => id == tabId)
-                const draggedTabIndex = _this.tabs.findIndex(({ id }) => id == draggedTabId)
+            const draggedTabIndex = _this.tabs.findIndex(({ id }) => id == tabId)
 
-                // Move the tab to the left of the current tab
-                _this.tabsView.insertBefore(_this.tabs[draggedTabIndex].tabElement,
-                                            _this.tabs[thisTabIndex].tabElement)
-                arraymove(_this.tabs, draggedTabIndex, thisTabIndex)
+            if (index != draggedTabIndex) {
+                if (index < _this.tabs.length) {
+                    // Move the tab to the left of the current tab
+                    _this.tabsView.insertBefore(
+                        _this.tabs[draggedTabIndex].tabElement,
+                        _this.tabs[index].tabElement
+                    )
+                } else {
+                    _this.tabsView.insertAdjacentElement('beforeend', _this.tabs[draggedTabIndex].tabElement)
+                }
+                arraymove(_this.tabs, draggedTabIndex, index)
 
+                _this.save()
             }
-            
-            return false;
         })
+
+        dividerElement.addEventListener('dragenter', () => {
+            dividerElement.classList.add('dragover')
+        })
+        dividerElement.addEventListener('dragleave', () => {
+            dividerElement.classList.remove('dragover')
+        })
+
+        return dividerElement
     }
 
-    #dragEnd(tabElement) {
-        tabElement.style.opacity = '1.0';
-
-        this.tabs.forEach(tab => tab.tabElement.classList.remove('over'))
+    #removeDividers() {
+        [...this.tabsView.querySelectorAll('.divider')].forEach(e => e.remove())
     }
+
+
+
 
     removeTab(index) {
         const [{ tabController, tabElement, contentElement }] = this.tabs.splice(index, 1)
