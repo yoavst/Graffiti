@@ -80,6 +80,10 @@ class DataSet {
     filter(filter) {
         return this.elements.filter(filter)
     }
+
+    size() {
+        return this.elements.length
+    }
 }
 
 

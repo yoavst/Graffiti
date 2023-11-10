@@ -145,9 +145,8 @@ class TabController {
                 }
                 else {
                     s += `  ${nodeName}["${escapeHtml(node.label, gui)}"]\n`
-                    if (!gui || this.selectedNode == null || this.selectedNode.id != node.id) {
-                        themesForNodes[node.theme || 0].push(nodeName)
-                    }
+                    themesForNodes[node.theme || 0].push(nodeName)
+                    
 
                     if (node.extra.hasOwnProperty('line')) {
                         lineNodes.push(nodeName)
@@ -198,14 +197,6 @@ class TabController {
             }
         }
 
-        // Add selected node
-        if (gui) {
-            s += "\n\n"
-            if (this.selectedNode != null) {
-                const theme = (this.selectedNode.extra.isMarkdown ? MARKDOWN_THEME : THEMES[this.selectedNode.theme || 0])
-                s += `style N${this.selectedNode.id} fill:${theme[2]},stroke:#333,stroke-width:4px`
-            }
-        }
         return s
     }
 
@@ -427,6 +418,8 @@ class TabController {
                             onShow: () => _this.enableHoverDoc
                         });
                     }
+
+                    _this.#selectNodeInUI(null, _this.selectedNode?.id)
                 }
             }
 
@@ -550,8 +543,27 @@ class TabController {
             }
         }
         if (oldSelectedNode != this.selectedNode) {
-            this.cachedMermaid = null
-            this.draw()
+            this.#selectNodeInUI(oldSelectedNode?.id, id)
+        }
+    }
+
+    #selectNodeInUI(oldId, newId) {
+        if (this.nodes.size() != 0) { 
+            const nodesContainer = this.container.getElementsByTagName('diagram-div')[0].shadowRoot.querySelector('.nodes')
+            if (oldId != null) {
+                const oldSelectedElement = nodesContainer.querySelector(`g.node[id^=flowchart-N${oldId}-]`)
+                const oldSelectedBorders = oldSelectedElement.querySelector('rect')
+
+                oldSelectedElement.style = ""
+                oldSelectedBorders.style = ""
+            }
+            if (newId != null) {
+                const newSelectedElement = nodesContainer.querySelector(`g.node[id^=flowchart-N${newId}-]`)
+                const newSelectedBorders = newSelectedElement.querySelector('rect')
+
+                newSelectedElement.style = "filter: brightness(90%);"
+                newSelectedBorders.style = "stroke:#333 !important; stroke-width:4px !important;"
+            }
         }
     }
 
