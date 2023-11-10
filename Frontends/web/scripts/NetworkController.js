@@ -35,7 +35,7 @@ class NetworkController {
 
                 const nodeId = this.addNodeAndEdge(controller, selectedNode, msg.node, msg.edge, this.isExistingToNew(), true)
                 if (this.isNewWillBeSelected())
-                    controller.selectNode(nodeId)
+                    controller.selectNode(nodeId, true)
             })
         } else if (msg.type == MSG_ADD_NODES_AND_EDGES) {
             let isExistingToNew = this.isExistingToNew()

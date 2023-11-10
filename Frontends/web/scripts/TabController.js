@@ -10,13 +10,13 @@ const SWAP_IDS = "swapIds"
 const MARKER = "marker"
 
 const THEMES = [
-    ['#A9D18E', 'black', '#80bb58'],
-    ['#BDD0E9', 'black', '#84a7d6'],
-    ['#FFE699', 'black', '#ffd34d'],
-    ['#ED7D31', 'black', '#c15811'],
-    ['#D9D9D9', 'black', '#b3b3b3'],
-    ['#FF695E', 'black', '#FF5145'],
-    ['#FFDDE1', 'black', '#FFDDEA']
+    ['#A9D18E', 'black'],
+    ['#BDD0E9', 'black'],
+    ['#FFE699', 'black'],
+    ['#ED7D31', 'black'],
+    ['#D9D9D9', 'black'],
+    ['#FF695E', 'black'],
+    ['#FFDDE1', 'black'],
 ]
 const MARKDOWN_THEME = ['white', 'black', '#e5e5e5']
 const COMMENT_THEME = ['#bfbfbf', 'black', '#858585']
@@ -123,8 +123,8 @@ class TabController {
             s = this.cachedMermaid
         } else {
             const [nodes, edges] = [this.nodes.asReadOnly(), this.edges.asReadOnly()]
-            const themesForNodes = THEMES.map(() => [])
-            const markdownNodes = []
+            const themesForNodes = THEMES.map(() => []) 
+            const defaultMarkdownTheme = []
             const commentNodes = []
             const lineNodes = []
             const commentNodesSet = new Set()
@@ -156,12 +156,12 @@ class TabController {
                         commentNodesSet.add(node.id)
                     }
 
-                    if (!gui || this.selectedNode == null || this.selectedNode.id != node.id) {
-                        if (node.extra.isComment) {
-                            commentNodes.push(nodeName)
-                        } else {
-                            markdownNodes.push(nodeName)
-                        }
+                    if (node.extra.isComment) {
+                        commentNodes.push(nodeName)
+                    } else if (!node.theme) {
+                        defaultMarkdownTheme.push(nodeName)
+                    } else {
+                        themesForNodes[node.theme].push(nodeName)
                     }
                 }
                 else {
@@ -196,10 +196,10 @@ class TabController {
                     s += `class ${themesForNodes[index].join(',')} theme${index}\n`
                 }
             }
-            // Add theme for markdown
-            if (markdownNodes.length != 0) {
-                s += `classDef markdown fill:${MARKDOWN_THEME[0]},color:${MARKDOWN_THEME[1]},stroke:black,stroke-width:2px\n`
-                s += `class ${markdownNodes.join(',')} markdown\n`
+
+            if (defaultMarkdownTheme.length != 0) {
+                s += `classDef markdownDefaultTheme fill:${MARKDOWN_THEME[0]},color:${MARKDOWN_THEME[1]},stroke:black,stroke-width:2px\n`
+                s += `class ${defaultMarkdownTheme.join(',')} markdownDefaultTheme\n`
             }
 
             if (commentNodes.length != 0) {
@@ -267,7 +267,7 @@ class TabController {
     }
 
     onSetTheme(themeIndex) {
-        if (this.selectedNode != null && !this.selectedNode.extra.isMarkdown) {
+        if (this.selectedNode != null) {
             const currentTheme = this.selectedNode.theme || 0
             if (currentTheme != themeIndex) {
                 this.selectedNode.theme = themeIndex
@@ -552,7 +552,7 @@ class TabController {
         return this.nodes.filter(item => item.extra[propertyName] == propertyValue);
     }
 
-    selectNode(id) {
+    selectNode(id, shouldRedraw=false) {
         const oldSelectedNode = this.selectedNode
         if (id == null) {
             this.selectedNode = null
@@ -564,13 +564,23 @@ class TabController {
             }
         }
         if (oldSelectedNode != this.selectedNode) {
-            this.#selectNodeInUI(oldSelectedNode?.id, id)
+            if (shouldRedraw) {
+                this.cachedMermaid = null
+                this.draw()
+            } else {
+                this.#selectNodeInUI(oldSelectedNode?.id, id)
+            }
         }
     }
 
     #selectNodeInUI(oldId, newId) {
         if (this.nodes.size() != 0) { 
             const nodesContainer = this.#getDomNodesContainerElement()
+            if (!nodesContainer) {
+                // Nothing is drawn, so no need to do anything
+                return
+            }
+
             if (oldId != null) {
                 const oldSelectedElement = this.#getDomElementFromId(oldId, nodesContainer)
                 const oldSelectedBorders = oldSelectedElement.querySelector('rect')
@@ -597,7 +607,7 @@ class TabController {
     }
 
     #getDomNodesContainerElement() {
-        return this.container.getElementsByTagName('diagram-div')[0].shadowRoot.querySelector('.nodes')   
+        return this.container.getElementsByTagName('diagram-div')[0]?.shadowRoot?.querySelector('.nodes')   
     }
 
     swapNodes(id1, id2, swapParents, swapIds) {

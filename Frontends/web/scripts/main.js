@@ -381,7 +381,7 @@ function initiateHotkeys() {
             case '5':
             case '6':
             case '7':
-                themeIndex = parseInt(event.key) -1
+                themeIndex = parseInt(event.key) - 1
                 event_setTheme(themeIndex)
                 return
         }
