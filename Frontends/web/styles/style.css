@@ -118,11 +118,14 @@ body {
     background-color: #005ca5;
 }
 
-/* Create an active/current tablink class */
-.tabs button.active {
-    background-color: #006abe;
+.tabs button.over {
+    box-shadow:inset 0px 0px 0px 2px #fff;
 }
 
+/* Create an active/current tablink class */
+.tabs button.active {
+    background-color: #006abe !important;
+}
 
 .buttons>button {
     display: inline-block;

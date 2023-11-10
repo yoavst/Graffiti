@@ -8,6 +8,8 @@ class TabsController {
         this.contextMenu = contextMenu
         this.contextMenuOpenedForTab = null
         this.selectedTab = null
+        this.draggedElement = null
+        this.tabIdCounter = 0
 
         this.#initiateContextMenu()
     }
@@ -18,16 +20,18 @@ class TabsController {
 
     addTab(name, shouldSave = true) {
         const realThis = this
+        const tabId = this.tabIdCounter++
         // Add tab to tabs view
         const tabElement = document.createElement("button")
         tabElement.className = "tablinks"
         tabElement.textContent = name;
-        this.tabsView.appendChild(tabElement);
+        this.#setDraggable(tabElement, tabId)
+        this.tabsView.appendChild(tabElement)
 
         // add view's content to content view
         const contentElement = document.createElement("div")
         contentElement.className = "hidden"
-        this.contentView.appendChild(contentElement);
+        this.contentView.appendChild(contentElement)
 
         // initiate tab
         const tabController = new TabController()
@@ -36,7 +40,7 @@ class TabsController {
             tabController.elkRenderer = true
         }
         tabController.initView(contentElement)
-        const tab = { name, tabController, tabElement, contentElement }
+        const tab = { name, tabController, tabElement, contentElement, id: tabId }
         this.tabs.push(tab)
 
         // Now setup UI callbacks
@@ -48,6 +52,63 @@ class TabsController {
         }
 
         return tab
+    }
+
+    #setDraggable(tabElement, tabId) {
+        const _this = this
+
+        tabElement.draggable = true
+
+        tabElement.addEventListener('dragstart', function (e) {
+            tabElement.style.opacity = '0.4';
+
+            _this.draggedElement = tabElement
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/plain', tabId);
+        });
+        tabElement.addEventListener('dragend', () => {
+            _this.#dragEnd(tabElement)
+        });
+
+        tabElement.addEventListener('dragenter', function () {
+            this.classList.add('over');
+        });
+        tabElement.addEventListener('dragleave', function () {
+            this.classList.remove('over');
+        });
+
+        tabElement.addEventListener('dragover', function (e) {
+            e.preventDefault();
+
+            e.dataTransfer.dropEffect = 'move';
+
+            return false;
+        });
+
+        tabElement.addEventListener('drop', function (e) {
+            e.stopPropagation()
+            _this.#dragEnd(tabElement)
+
+            const draggedTabId = parseInt(e.dataTransfer.getData('text/plain'))
+            if (draggedTabId != tabId) {
+                const thisTabIndex = _this.tabs.findIndex(({ id }) => id == tabId)
+                const draggedTabIndex = _this.tabs.findIndex(({ id }) => id == draggedTabId)
+
+                // Move the tab to the left of the current tab
+                _this.tabsView.insertBefore(_this.tabs[draggedTabIndex].tabElement,
+                                            _this.tabs[thisTabIndex].tabElement)
+                arraymove(_this.tabs, draggedTabIndex, thisTabIndex)
+
+            }
+            
+            return false;
+        })
+    }
+
+    #dragEnd(tabElement) {
+        tabElement.style.opacity = '1.0';
+
+        this.tabs.forEach(tab => tab.tabElement.classList.remove('over'))
     }
 
     removeTab(index) {
@@ -109,13 +170,13 @@ class TabsController {
     }
 
     onEach(callback) {
-        this.tabs.forEach(({name, tabController}) => {
+        this.tabs.forEach(({ name, tabController }) => {
             callback(name, tabController)
         })
     }
 
     onId(id, callback) {
-        this.tabs.forEach(({name, tabController}) => {
+        this.tabs.forEach(({ name, tabController }) => {
             if (tabController.mermaidId == id) {
                 callback(name, tabController)
             }
@@ -154,7 +215,7 @@ class TabsController {
                     tab.tabController.import(innerData)
                 }
             }
-            
+
         }
         if (this.count() >= 1) {
             this.selectTab(this.tabs[selectedTabIndex])
@@ -188,15 +249,15 @@ class TabsController {
                         input: 'text',
                         inputValue: name,
                         showCancelButton: true
-                      }).then(({value=null}) => {
-                            if (value != null) {
-                                tabElement.textContent = value
-                                contextMenuOpenedForTab.name = value
-        
-                                realThis.save()
-                            }
-                      })
-                    
+                    }).then(({ value = null }) => {
+                        if (value != null) {
+                            tabElement.textContent = value
+                            contextMenuOpenedForTab.name = value
+
+                            realThis.save()
+                        }
+                    })
+
                 }
             });
         }
@@ -215,12 +276,12 @@ class TabsController {
             }
         }
 
-        this.contextMenu.querySelector("#sources").onclick = function() {
+        this.contextMenu.querySelector("#sources").onclick = function () {
             // Hide context menu
             const contextMenuOpenedForTab = realThis.contextMenuOpenedForTab
             realThis.contextMenuOpenedForTab = null
             realThis.contextMenu.classList.remove("visible");
-            
+
             setTimeout(() => {
                 if (contextMenuOpenedForTab != null) {
                     const { tabController } = contextMenuOpenedForTab
@@ -231,13 +292,13 @@ class TabsController {
                             text: 'This graffiti file was created with old utils. Consider upgrading to the latest version.',
                             type: 'info',
                             confirmButtonText: 'OK'
-                          })
+                        })
                     } else {
                         Swal.fire({
                             title: 'Linked projects',
                             html: projects.join('<br>'),
                             confirmButtonText: 'OK'
-                          })
+                        })
                     }
                 }
             })
@@ -309,3 +370,8 @@ class TabsController {
     };
 }
 
+function arraymove(arr, fromIndex, toIndex) {
+    var element = arr[fromIndex];
+    arr.splice(fromIndex, 1);
+    arr.splice(toIndex, 0, element);
+}
