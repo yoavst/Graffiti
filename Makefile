@@ -58,7 +58,7 @@ opengrok: check-env
 
 web: check-env
 	@echo "Building Graffiti for Web"
-	sed -i.bak "s/Version _VERSION_/Version $(VERSION)/" frontends/web/index.html
+	sed -i.bak "s/_VERSION_/$(VERSION)/g" frontends/web/index.html
 	cd frontends/web; find . -type f ! -name '*.bak' -exec zip ../../out/graffiti_v$(VERSION)_frontend_web.zip {} +
 	mv frontends/web/index.html.bak frontends/web/index.html
 

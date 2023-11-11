@@ -1,6 +1,8 @@
 const MSG_ADD_NODE_AND_EDGE = "addData"
 const MSG_ADD_NODES_AND_EDGES = "addDataBulk"
 const MSG_UPDATE_NODES = "updateNodes"
+const LOCAL_STORAGE_OLD_VERSION = "__OLD_VERSION"
+const LOCAL_STORAGE_BACKUP_KEY = "__OLD_BACKUP"
 const LOCAL_STORAGE_DEFAULT = {isKeymapReversed: false, hoverDoc: false}
 
 
@@ -404,9 +406,20 @@ function initializeDragAndDrop() {
 }
 
 function initiateLocalStorage() {
+    backupOnUpdate();
     for (const key of Object.keys(LOCAL_STORAGE_DEFAULT)) {
         if (localStorage.getItem(key) == null) {
             localStorage.setItem(key, LOCAL_STORAGE_DEFAULT[key])
+        }
+    }
+}
+
+function backupOnUpdate() {
+    if (window.version) {
+        const oldVersion = parseFloat(localStorage.getItem(LOCAL_STORAGE_OLD_VERSION))
+        if (oldVersion != window.version) {
+            localStorage.setItem(LOCAL_STORAGE_BACKUP_KEY, localStorage.getItem("__SAVED_DATA"))
+            localStorage.setItem(LOCAL_STORAGE_OLD_VERSION, window.version)
         }
     }
 }
