@@ -58,10 +58,6 @@ class TabController {
         const container = wrapperLayout.querySelector(".graph")
         this.container = container
 
-        const _this = this
-        container.addEventListener('click', (element) => {
-            _this.selectNode(null)
-        })
         this.zoom = panzoom(this.container, {
             smoothScroll: false
         })
@@ -100,20 +96,31 @@ class TabController {
             this.resetScrolling()
         } else {
             const selectedElement = this.#getDomElementFromId(this.selectedNode.id)
-            const [x,y] = this.#getTransform(selectedElement)
-            
-            this.zoom.moveTo(-x + parseInt(this.view.offsetWidth / 2), -y + parseInt(this.view.offsetHeight / 2))
+            const [transformX, transformY] = this.#getTransform(selectedElement)
+            const { x: svgX, y: svgY, width: svgWidth, height: svgHeight } = this.#getViewBox()
+
+            // Normalize zoom
             this.zoom.zoomAbs(0, 0, 1)
+
+            // calculate normalized position
+            const x = parseInt(this.view.offsetWidth / 2) - parseInt((transformX) / (svgWidth - svgX) * this.view.offsetWidth)
+            const y = parseInt(this.view.offsetHeight / 2) - parseInt((transformY) / (svgHeight - svgY) * this.view.offsetHeight)
+
+            this.zoom.moveTo(x, y)
         }
     }
 
     #getTransform(element) {
         var xforms = element.transform.baseVal
         var firstXForm = xforms.getItem(0)
-        if (firstXForm.type == SVGTransform.SVG_TRANSFORM_TRANSLATE){
+        if (firstXForm.type == SVGTransform.SVG_TRANSFORM_TRANSLATE) {
             return [firstXForm.matrix.e, firstXForm.matrix.f]
         }
         return [0, 0]
+    }
+
+    #getViewBox() {
+        return this.container.getElementsByTagName('diagram-div')[0].shadowRoot.querySelector('svg').viewBox.baseVal
     }
 
     toMermaid(gui = false, elkRenderer = false) {
@@ -123,7 +130,7 @@ class TabController {
             s = this.cachedMermaid
         } else {
             const [nodes, edges] = [this.nodes.asReadOnly(), this.edges.asReadOnly()]
-            const themesForNodes = THEMES.map(() => []) 
+            const themesForNodes = THEMES.map(() => [])
             const defaultMarkdownTheme = []
             const commentNodes = []
             const lineNodes = []
@@ -167,7 +174,7 @@ class TabController {
                 else {
                     s += `  ${nodeName}["${escapeHtml(node.label, gui)}"]\n`
                     themesForNodes[node.theme || 0].push(nodeName)
-                    
+
 
                     if (node.extra.hasOwnProperty('line')) {
                         lineNodes.push(nodeName)
@@ -552,7 +559,7 @@ class TabController {
         return this.nodes.filter(item => item.extra[propertyName] == propertyValue);
     }
 
-    selectNode(id, shouldRedraw=false) {
+    selectNode(id, shouldRedraw = false) {
         const oldSelectedNode = this.selectedNode
         if (id == null) {
             this.selectedNode = null
@@ -574,7 +581,7 @@ class TabController {
     }
 
     #selectNodeInUI(oldId, newId) {
-        if (this.nodes.size() != 0) { 
+        if (this.nodes.size() != 0) {
             const nodesContainer = this.#getDomNodesContainerElement()
             if (!nodesContainer) {
                 // Nothing is drawn, so no need to do anything
@@ -598,7 +605,7 @@ class TabController {
         }
     }
 
-    #getDomElementFromId(id, nodesContainer=null) {
+    #getDomElementFromId(id, nodesContainer = null) {
         if (!nodesContainer) {
             nodesContainer = this.#getDomNodesContainerElement()
         }
@@ -607,7 +614,7 @@ class TabController {
     }
 
     #getDomNodesContainerElement() {
-        return this.container.getElementsByTagName('diagram-div')[0]?.shadowRoot?.querySelector('.nodes')   
+        return this.container.getElementsByTagName('diagram-div')[0]?.shadowRoot?.querySelector('.nodes')
     }
 
     swapNodes(id1, id2, swapParents, swapIds) {
@@ -627,7 +634,7 @@ class TabController {
 
         this.edges = new DataSet(this.edges.map(e => ({ ...e, from: swap(e.from, id1, id2), to: swap(e.to, id1, id2) })))
         this.nodes = new DataSet(this.nodes.map(n => ({ ...n, id: swap(n.id, id1, id2) })))
-        
+
         if (this.selectedNode != null) {
             this.selectedNode = this.nodes.get(swap(this.selectedNode.id, id1, id2))
         }
@@ -854,7 +861,7 @@ class TabController {
         const updateUndoItem = item => {
             if (item.type != ADD_NODE && item.type != REMOVE_NODE)
                 return item
-            
+
 
             const shouldUpdate = version == 1 ? _this.#selectionV1(item.data.extra, selection) : _this.#selectionV2(item.data.extra, selection)
 
