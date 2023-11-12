@@ -47,10 +47,12 @@ class graphMeXrefsLine(IScript):
                     offset = xref_addr[plus_index+1:]
                 except ValueError:
                     offset = "0h"
+
+                normalized_address = method_addr + '+' + offset
                 
                 methods.append({
                     "project": "Jeb: " + rchop(rchop(ctx.mainProject.name, '.jdb2'), '.apk'),
-                    "address": xref_addr, 
+                    "address": normalized_address, 
                     "class": class_name, 
                     "classAddress": class_addr,
                     "method": method_name, 
