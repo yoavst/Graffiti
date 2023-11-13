@@ -97,32 +97,41 @@ class TabController {
         if (this.selectedNode == null) {
             this.resetScrolling()
         } else {
-            const selectedElement = this.#getDomElementFromId(this.selectedNode.id)
-            const [transformX, transformY] = this.#getTransform(selectedElement)
-            const selectedElementRect = selectedElement.getElementsByTagName('rect')[0]
-            const [rectX, rectY] = [selectedElementRect.x.baseVal.value, selectedElementRect.y.baseVal.value]
-            const [rectWidth, rectHeight] = [selectedElementRect.width.baseVal.value, selectedElementRect.height.baseVal.value]
-            const [boxX, boxY] = [transformX + rectX + rectWidth / 2, transformY + rectY + rectHeight / 2]
-            const screenHeight = document.body.getBoundingClientRect().height
-
-            const { x: svgX, y: svgY, width: svgWidth, height: svgHeight, offsetWidth, offsetHeight, viewportWidth, viewportHeight } = this.#getViewBox()
-
-            // Normalize zoom
             this.zoom.zoomAbs(0, 0, 1)
 
-            // calculate normalized position
-            const xRel = (boxX) / (svgWidth + svgX)
-            const yRel = (boxY) / (svgHeight + svgY)
-            const originalX = xRel * offsetWidth
-            const originalY = yRel * offsetHeight
-            const x = -originalX + viewportWidth / 2
-            const y = -originalY + viewportHeight / 2 - ((screenHeight - viewportHeight) / 2)
+            setTimeout(() => {
+                const selectedElement = this.#getDomElementFromId(this.selectedNode.id)
+                const [boxX, boxY, boxWidth, boxHeight] = this.#getSvgInnerPosition(selectedElement)
+                const screenHeight = document.body.getBoundingClientRect().height
 
-            this.zoom.moveTo(x, y)
+                const { x: svgX, y: svgY, width: svgWidth, height: svgHeight, offsetWidth, offsetHeight, viewportWidth, viewportHeight } = this.#getViewBox()
+
+                // calculate normalized position
+                const xRel = (boxX - svgX) / svgWidth
+                const yRel = (boxY - svgY) / svgHeight
+                const originalX = xRel * offsetWidth
+                const originalY = yRel * offsetHeight
+                const x = -originalX + viewportWidth / 2
+                const y = -originalY + viewportHeight / 2 - ((screenHeight - viewportHeight) / 2)
+                this.zoom.moveTo(x, y)               
+            }, 10)
         }
     }
 
-    #getTransform(element) {
+    #getSvgInnerPosition(element) {
+        // Group transformation
+        const [transformX, transformY] = this.#getSvgTransform(element)
+
+        // Inner rect relative position + size
+        const innerRect = element.getElementsByTagName('rect')[0]
+        const [rectX, rectY] = [innerRect.x, innerRect.y].map(toValue)
+        const [rectWidth, rectHeight] = [innerRect.width, innerRect.height].map(toValue)
+
+        // Calculate the x,y of the middle of element
+        return [transformX + rectX + rectWidth / 2, transformY + rectY + rectHeight / 2, rectWidth, rectHeight]
+    }
+
+    #getSvgTransform(element) {
         var xforms = element.transform.baseVal
         var firstXForm = xforms.getItem(0)
         if (firstXForm.type == SVGTransform.SVG_TRANSFORM_TRANSLATE) {
@@ -1039,4 +1048,8 @@ function logEvent(title) {
         showConfirmButton: false,
         timer: 1500
     })
+}
+
+function toValue(val) {
+    return val.baseVal.value
 }
