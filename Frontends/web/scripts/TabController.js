@@ -35,6 +35,7 @@ class TabController {
         this.idCounter = 1
         this.selectedNode = null
         this.container = null
+        this.wrapper = null
         this.zoom = null
         this.mermaidId = "mermaidStuff" + (globalCounter++)
         this.elkRenderer = false
@@ -53,6 +54,7 @@ class TabController {
         // add layout
         const wrapperLayout = htmlToElement('<div class="content"><div class="graph"></div></div>')
         this.view.appendChild(wrapperLayout)
+        this.wrapper = wrapperLayout
 
         // init layout
         const container = wrapperLayout.querySelector(".graph")
@@ -97,14 +99,24 @@ class TabController {
         } else {
             const selectedElement = this.#getDomElementFromId(this.selectedNode.id)
             const [transformX, transformY] = this.#getTransform(selectedElement)
-            const { x: svgX, y: svgY, width: svgWidth, height: svgHeight } = this.#getViewBox()
+            const selectedElementRect = selectedElement.getElementsByTagName('rect')[0]
+            const [rectX, rectY] = [selectedElementRect.x.baseVal.value, selectedElementRect.y.baseVal.value]
+            const [rectWidth, rectHeight] = [selectedElementRect.width.baseVal.value, selectedElementRect.height.baseVal.value]
+            const [boxX, boxY] = [transformX + rectX + rectWidth / 2, transformY + rectY + rectHeight / 2]
+            const screenHeight = document.body.getBoundingClientRect().height
+
+            const { x: svgX, y: svgY, width: svgWidth, height: svgHeight, offsetWidth, offsetHeight, viewportWidth, viewportHeight } = this.#getViewBox()
 
             // Normalize zoom
             this.zoom.zoomAbs(0, 0, 1)
 
             // calculate normalized position
-            const x = parseInt(this.view.offsetWidth / 2) - parseInt((transformX) / (svgWidth - svgX) * this.view.offsetWidth)
-            const y = parseInt(this.view.offsetHeight / 2) - parseInt((transformY) / (svgHeight - svgY) * this.view.offsetHeight)
+            const xRel = (boxX) / (svgWidth + svgX)
+            const yRel = (boxY) / (svgHeight + svgY)
+            const originalX = xRel * offsetWidth
+            const originalY = yRel * offsetHeight
+            const x = -originalX + viewportWidth / 2
+            const y = -originalY + viewportHeight / 2 - ((screenHeight - viewportHeight) / 2)
 
             this.zoom.moveTo(x, y)
         }
@@ -120,7 +132,15 @@ class TabController {
     }
 
     #getViewBox() {
-        return this.container.getElementsByTagName('diagram-div')[0].shadowRoot.querySelector('svg').viewBox.baseVal
+        const svg = this.container.getElementsByTagName('diagram-div')[0].shadowRoot.querySelector('svg')
+        const svgRect = svg.getClientRects()[0]
+        const viewPortRect = this.wrapper.getClientRects()[0]
+        const svgViewBox = svg.viewBox.baseVal
+        return {
+            x: svgViewBox.x, y: svgViewBox.y, width: svgViewBox.width, height: svgViewBox.height,
+            offsetWidth: svgRect.width, offsetHeight: svgRect.height,
+            viewportWidth: viewPortRect.width, viewportHeight: viewPortRect.height
+        }
     }
 
     toMermaid(gui = false, elkRenderer = false) {
