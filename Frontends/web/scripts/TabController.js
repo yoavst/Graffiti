@@ -97,6 +97,7 @@ class TabController {
         if (this.selectedNode == null) {
             this.resetScrolling()
         } else {
+            this.container.style.visibility = "hidden"
             this.zoom.zoomAbs(0, 0, 1)
 
             setTimeout(() => {
@@ -104,7 +105,8 @@ class TabController {
                 const [boxX, boxY, boxWidth, boxHeight] = this.#getSvgInnerPosition(selectedElement)
                 const screenHeight = document.body.getBoundingClientRect().height
 
-                const { x: svgX, y: svgY, width: svgWidth, height: svgHeight, offsetWidth, offsetHeight, viewportWidth, viewportHeight } = this.#getViewBox()
+                const { x: svgX, y: svgY, width: svgWidth, height: svgHeight, offsetWidth, offsetHeight,
+                    viewportWidth, viewportHeight, viewportRectX, viewportRectY } = this.#getViewBox()
 
                 // calculate normalized position
                 const xRel = (boxX - svgX) / svgWidth
@@ -113,8 +115,20 @@ class TabController {
                 const originalY = yRel * offsetHeight
                 const x = -originalX + viewportWidth / 2
                 const y = -originalY + viewportHeight / 2 - ((screenHeight - viewportHeight) / 2)
-                this.zoom.moveTo(x, y)               
-            }, 10)
+                this.zoom.moveTo(x, y)
+
+                setTimeout(() => {
+                    const [newX, newY, newWidth] = this.#getRectPosition(selectedElement)
+                    const [zoomX, zoomY] = [newX - viewportRectX, newY - viewportRectY]
+
+                    const ratio = Math.max((viewportHeight / 3) / newWidth, 3)
+                    this.zoom.zoomAbs(zoomX, zoomY, ratio)
+
+                    setTimeout(() => {
+                        this.container.style.visibility = "visible"
+                    }, 50)
+                }, 50)
+            }, 50)
         }
     }
 
@@ -131,6 +145,17 @@ class TabController {
         return [transformX + rectX + rectWidth / 2, transformY + rectY + rectHeight / 2, rectWidth, rectHeight]
     }
 
+    #getRectPosition(element) {
+        // Inner rect relative position + size
+        const innerRect = element.getElementsByTagName('rect')[0]
+        const boudingRect = innerRect.getBoundingClientRect()
+        const [rectX, rectY] = [boudingRect.x, boudingRect.y]
+        const [rectWidth, rectHeight] = [innerRect.width, innerRect.height].map(toValue)
+
+        // Calculate the x,y of the middle of element
+        return [rectX + rectWidth / 2, rectY + rectHeight / 2, rectWidth, rectHeight]
+    }
+
     #getSvgTransform(element) {
         var xforms = element.transform.baseVal
         var firstXForm = xforms.getItem(0)
@@ -143,12 +168,13 @@ class TabController {
     #getViewBox() {
         const svg = this.container.getElementsByTagName('diagram-div')[0].shadowRoot.querySelector('svg')
         const svgRect = svg.getClientRects()[0]
-        const viewPortRect = this.wrapper.getClientRects()[0]
+        const viewportRect = this.wrapper.getClientRects()[0]
         const svgViewBox = svg.viewBox.baseVal
         return {
             x: svgViewBox.x, y: svgViewBox.y, width: svgViewBox.width, height: svgViewBox.height,
             offsetWidth: svgRect.width, offsetHeight: svgRect.height,
-            viewportWidth: viewPortRect.width, viewportHeight: viewPortRect.height
+            viewportWidth: viewportRect.width, viewportHeight: viewportRect.height,
+            viewportRectX: viewportRect.x, viewportRectY: viewportRect.y
         }
     }
 
