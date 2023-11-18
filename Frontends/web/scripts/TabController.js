@@ -19,7 +19,6 @@ const THEMES = [
     ['#FFDDE1', 'black'],
     ['#9500ae', 'white'],
     ['#2c387e', 'white'],
-    ['#00695f', 'white']
 ]
 const MARKDOWN_THEME = ['white', 'black', '#e5e5e5']
 const COMMENT_THEME = ['#bfbfbf', 'black', '#858585']
