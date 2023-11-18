@@ -17,6 +17,9 @@ const THEMES = [
     ['#D9D9D9', 'black'],
     ['#FF695E', 'black'],
     ['#FFDDE1', 'black'],
+    ['#9500ae', 'white'],
+    ['#2c387e', 'white'],
+    ['#00695f', 'white']
 ]
 const MARKDOWN_THEME = ['white', 'black', '#e5e5e5']
 const COMMENT_THEME = ['#bfbfbf', 'black', '#858585']
@@ -33,7 +36,7 @@ class TabController {
         this.undoHistory = []
         this.redoHistory = []
         this.idCounter = 1
-        this.selectedNode = null
+        this._selectedNode = null
         this.container = null
         this.wrapper = null
         this.zoom = null
@@ -70,6 +73,14 @@ class TabController {
         // do nothing
     }
 
+    get selectedNode() {
+        const node = this._selectedNode
+        if (!node || node.extra.isUnclickable) {
+            return null;
+        }
+        return node;
+    }
+
     export() {
         return JSON.stringify([this.idCounter, this.nodes.asReadOnly(), this.edges.asReadOnly(), {
             'elkRenderer': this.elkRenderer
@@ -94,14 +105,14 @@ class TabController {
     }
 
     resetScrollingToSelected() {
-        if (this.selectedNode == null) {
+        if (this._selectedNode == null) {
             this.resetScrolling()
         } else {
             this.container.style.visibility = "hidden"
             this.zoom.zoomAbs(0, 0, 1)
 
             setTimeout(() => {
-                const selectedElement = this.#getDomElementFromId(this.selectedNode.id)
+                const selectedElement = this.#getDomElementFromId(this._selectedNode.id)
                 const [boxX, boxY, boxWidth, boxHeight] = this.#getSvgInnerPosition(selectedElement)
                 const screenHeight = document.body.getBoundingClientRect().height
 
@@ -187,7 +198,7 @@ class TabController {
             const [nodes, edges] = [this.nodes.asReadOnly(), this.edges.asReadOnly()]
             const themesForNodes = THEMES.map(() => [])
             const defaultMarkdownTheme = []
-            const commentNodes = []
+            const defaultCommentTheme = []
             const lineNodes = []
             const commentNodesSet = new Set()
 
@@ -216,14 +227,18 @@ class TabController {
 
                     if (node.extra.isComment) {
                         commentNodesSet.add(node.id)
-                    }
 
-                    if (node.extra.isComment) {
-                        commentNodes.push(nodeName)
-                    } else if (!node.theme) {
-                        defaultMarkdownTheme.push(nodeName)
+                        if (node.theme === undefined || node.theme === 4) {
+                            defaultCommentTheme.push(nodeName)
+                        } else {
+                            themesForNodes[node.theme].push(nodeName)
+                        }
                     } else {
-                        themesForNodes[node.theme].push(nodeName)
+                        if (!node.theme) {
+                            defaultMarkdownTheme.push(nodeName)
+                        } else {
+                            themesForNodes[node.theme].push(nodeName)
+                        }
                     }
                 }
                 else {
@@ -264,9 +279,9 @@ class TabController {
                 s += `class ${defaultMarkdownTheme.join(',')} markdownDefaultTheme\n`
             }
 
-            if (commentNodes.length != 0) {
+            if (defaultCommentTheme.length != 0) {
                 s += `classDef comment fill:${COMMENT_THEME[0]},color:${COMMENT_THEME[1]},stroke:black,stroke-width:2px\n`
-                s += `class ${commentNodes.join(',')} comment\n`
+                s += `class ${defaultCommentTheme.join(',')} comment\n`
             }
 
             if (lineNodes.length != 0) {
@@ -317,8 +332,8 @@ class TabController {
     }
 
     onMiddleClick(target, elementId, isCtrlPressed, isShiftPressed) {
-        if (this.selectedNode != null) {
-            this.swapNodes(this.selectedNode.id, elementId, !isCtrlPressed, isShiftPressed)
+        if (this._selectedNode != null) {
+            this.swapNodes(this._selectedNode.id, elementId, !isCtrlPressed, isShiftPressed)
         }
     }
 
@@ -329,15 +344,15 @@ class TabController {
     }
 
     onSetTheme(themeIndex) {
-        if (this.selectedNode != null) {
-            const currentTheme = this.selectedNode.theme || 0
+        if (this._selectedNode != null) {
+            const currentTheme = this._selectedNode.theme || 0
             if (currentTheme != themeIndex) {
-                this.selectedNode.theme = themeIndex
+                this._selectedNode.theme = themeIndex
 
                 // update history
                 this.redoHistory = []
                 this.addUndoMarker()
-                this.undoHistory.push({ type: CHANGE_THEME, data: { id: this.selectedNode.id, oldTheme: currentTheme, newTheme: themeIndex } })
+                this.undoHistory.push({ type: CHANGE_THEME, data: { id: this._selectedNode.id, oldTheme: currentTheme, newTheme: themeIndex } })
 
                 this.cachedMermaid = null
 
@@ -509,7 +524,7 @@ class TabController {
                         });
                     }
 
-                    _this.#selectNodeInUI(null, _this.selectedNode?.id)
+                    _this.#selectNodeInUI(null, _this._selectedNode?.id)
                 }
             }
 
@@ -547,7 +562,7 @@ class TabController {
         this.edges.clear()
         this.nodes.clear()
 
-        this.selectedNode = null
+        this._selectedNode = null
         this.cachedMermaid = null
 
         this.draw()
@@ -622,22 +637,18 @@ class TabController {
     }
 
     selectNode(id, shouldRedraw = false) {
-        const oldSelectedNode = this.selectedNode
+        const old_selectedNode = this._selectedNode
         if (id == null) {
-            this.selectedNode = null
+            this._selectedNode = null
         } else {
-            this.selectedNode = this.nodes.get(id)
-            if (this.selectedNode.extra.isUnclickable) {
-                // Clicking on comment is like clicking on the background
-                this.selectedNode = null
-            }
+            this._selectedNode = this.nodes.get(id)
         }
-        if (oldSelectedNode != this.selectedNode) {
+        if (old_selectedNode != this._selectedNode) {
             if (shouldRedraw) {
                 this.cachedMermaid = null
                 this.draw()
             } else {
-                this.#selectNodeInUI(oldSelectedNode?.id, id)
+                this.#selectNodeInUI(old_selectedNode?.id, id)
             }
         }
     }
@@ -652,14 +663,14 @@ class TabController {
 
             if (oldId != null) {
                 const oldSelectedElement = this.#getDomElementFromId(oldId, nodesContainer)
-                const oldSelectedBorders = oldSelectedElement.querySelector('rect')
+                const oldSelectedBorders = oldSelectedElement.querySelector('rect, polygon')
 
                 oldSelectedElement.style = ""
                 oldSelectedBorders.style = ""
             }
             if (newId != null) {
                 const newSelectedElement = this.#getDomElementFromId(newId, nodesContainer)
-                const newSelectedBorders = newSelectedElement.querySelector('rect')
+                const newSelectedBorders = newSelectedElement.querySelector('rect, polygon')
 
                 newSelectedElement.style = "filter: brightness(90%);"
                 newSelectedBorders.style = "stroke:#333 !important; stroke-width:4px !important;"
@@ -697,8 +708,8 @@ class TabController {
         this.edges = new DataSet(this.edges.map(e => ({ ...e, from: swap(e.from, id1, id2), to: swap(e.to, id1, id2) })))
         this.nodes = new DataSet(this.nodes.map(n => ({ ...n, id: swap(n.id, id1, id2) })))
 
-        if (this.selectedNode != null) {
-            this.selectedNode = this.nodes.get(swap(this.selectedNode.id, id1, id2))
+        if (this._selectedNode != null) {
+            this._selectedNode = this.nodes.get(swap(this._selectedNode.id, id1, id2))
         }
     }
 
@@ -805,8 +816,8 @@ class TabController {
 
             }
 
-            if (this.selectedNode != null && this.nodes.get(this.selectedNode.id) == null) {
-                this.selectedNode = null
+            if (this._selectedNode != null && this.nodes.get(this._selectedNode.id) == null) {
+                this._selectedNode = null
             }
 
             this.draw()
@@ -855,8 +866,8 @@ class TabController {
                 this.undoHistory.push(historyEntry)
             }
 
-            if (this.selectedNode != null && this.nodes.get(this.selectedNode.id) == null) {
-                this.selectedNode = null
+            if (this._selectedNode != null && this.nodes.get(this._selectedNode.id) == null) {
+                this._selectedNode = null
             }
 
             this.draw()
@@ -864,8 +875,8 @@ class TabController {
     }
 
     deleteCurrentNode() {
-        if (this.selectedNode) {
-            this.deleteNode(this.selectedNode)
+        if (this._selectedNode) {
+            this.deleteNode(this._selectedNode)
         }
     }
 
@@ -899,8 +910,8 @@ class TabController {
         this.redoHistory = []
 
         // remember to clear selected node
-        if (this.selectedNode == removedNode) {
-            this.selectedNode = null
+        if (this._selectedNode == removedNode) {
+            this._selectedNode = null
         }
 
         this.cachedMermaid = null

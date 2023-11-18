@@ -325,7 +325,7 @@ function elk_beforeCallback(id, graph) {
 }
 
 function initiateHotkeys() {
-    hotkeys('esc,ctrl+z,ctrl+shift+z,ctrl+y,ctrl+s,ctrl+alt+s,ctrl+o,ctrl+i,ctrl+alt+shift+i,ctrl+q,ctrl+shift+q,delete,home,ctrl+home,shift+`,shift+/,ctrl+shift+/,1,2,3,4,5,6,7', function (event, handler) {
+    hotkeys('esc,ctrl+z,ctrl+shift+z,ctrl+y,ctrl+s,ctrl+alt+s,ctrl+o,ctrl+i,ctrl+alt+shift+i,ctrl+q,ctrl+shift+q,delete,home,ctrl+home,shift+`,shift+/,ctrl+shift+/,1,2,3,4,5,6,7,8,9,0', function (event, handler) {
         switch (handler.key) {
             case 'esc':
                 event_deselect();
@@ -383,8 +383,13 @@ function initiateHotkeys() {
             case '5':
             case '6':
             case '7':
+            case '8':
+            case '9':
                 themeIndex = parseInt(event.key) - 1
                 event_setTheme(themeIndex)
+                return
+            case '0':
+                event_setTheme(9)
                 return
         }
     });
