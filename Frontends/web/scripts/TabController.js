@@ -489,6 +489,13 @@ class TabController {
                         }
                     })
 
+                    // Fix scrolling bug
+                    node.addEventListener('mousedown', (event) => {
+                        if (event.which === 2) {
+                          event.preventDefault();
+                        }
+                      })
+
                     const extra = _this.nodes.get(getIdFromNode(node)).extra
                     const hover = extra.hover?.join('\n') ?? extra.detail
                     if (hover) {
