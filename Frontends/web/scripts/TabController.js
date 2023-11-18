@@ -105,7 +105,7 @@ class TabController {
     }
 
     resetScrollingToSelected() {
-        if (this._selectedNode == null) {
+        if (this.selectedNode == null) {
             this.resetScrolling()
         } else {
             this.container.style.visibility = "hidden"
