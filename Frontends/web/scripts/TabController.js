@@ -209,6 +209,16 @@ class TabController {
             // to support older clients, we switch from flowchart to graph for export
             s = gui ? (elkRenderer ? "flowchart-elk TD\n" : "flowchart TD\n") : "graph TD\n"
 
+            if (isDarkMode()) {
+                s = `---
+config:
+    theme: dark
+    themeVariables:
+        lineColor: '#55565a'
+---
+` + s
+            }
+
             // Add nodes
             for (const node of nodes) {
                 const nodeName = `N${node.id}`
@@ -265,10 +275,11 @@ class TabController {
             }
 
             // Add themes
+            const stroke = isDarkMode() ? "#55565a" : "black"
             s += "\n\n"
             for (const [index, [backgroundColor, textColor]] of THEMES.entries()) {
                 if (themesForNodes[index].length != 0) {
-                    s += `classDef theme${index} fill:${backgroundColor},color:${textColor},stroke:black,stroke-width:2px\n`
+                    s += `classDef theme${index} fill:${backgroundColor},color:${textColor},stroke:${stroke},stroke-width:2px\n`
                     s += `class ${themesForNodes[index].join(',')} theme${index}\n`
                 }
             }
@@ -279,7 +290,7 @@ class TabController {
             }
 
             if (defaultCommentTheme.length != 0) {
-                s += `classDef comment fill:${COMMENT_THEME[0]},color:${COMMENT_THEME[1]},stroke:black,stroke-width:2px\n`
+                s += `classDef comment fill:${COMMENT_THEME[0]},color:${COMMENT_THEME[1]},stroke:${stroke},stroke-width:2px\n`
                 s += `class ${defaultCommentTheme.join(',')} comment\n`
             }
 
@@ -506,9 +517,9 @@ class TabController {
                     // Fix scrolling bug
                     node.addEventListener('mousedown', (event) => {
                         if (event.which === 2) {
-                          event.preventDefault();
+                            event.preventDefault();
                         }
-                      })
+                    })
 
                     const extra = _this.nodes.get(getIdFromNode(node)).extra
                     const hover = extra.hover?.join('\n') ?? extra.detail
@@ -672,7 +683,8 @@ class TabController {
                 const newSelectedBorders = newSelectedElement.querySelector('rect, polygon')
 
                 newSelectedElement.style = "filter: brightness(90%);"
-                newSelectedBorders.style = "stroke:#333 !important; stroke-width:4px !important;"
+                const borderColor = isDarkMode() ? "#fff" : "#333"
+                newSelectedBorders.style = `stroke:${borderColor} !important; stroke-width:4px !important;`
             }
         }
     }
@@ -1095,4 +1107,8 @@ function logEvent(title) {
 
 function toValue(val) {
     return val.baseVal.value
+}
+
+function isDarkMode() {
+    return (localStorage.getItem("darkMode") || "false") === "true"
 }

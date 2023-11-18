@@ -3,7 +3,7 @@ const MSG_ADD_NODES_AND_EDGES = "addDataBulk"
 const MSG_UPDATE_NODES = "updateNodes"
 const LOCAL_STORAGE_OLD_VERSION = "__OLD_VERSION"
 const LOCAL_STORAGE_BACKUP_KEY = "__OLD_BACKUP"
-const LOCAL_STORAGE_DEFAULT = {isKeymapReversed: false, hoverDoc: false}
+const LOCAL_STORAGE_DEFAULT = {isKeymapReversed: false, hoverDoc: false, darkMode: true}
 
 
 
@@ -203,6 +203,14 @@ function setHelpBarAppearance() {
     }
 }
 
+function handleDarkMode() {
+    if (isDarkMode()) {
+        document.documentElement.classList.remove("lightTheme")
+    } else {
+        document.documentElement.classList.add("lightTheme")
+    }
+}
+
 function event_help() {
     Swal.fire({
         title: 'Graffiti',
@@ -299,6 +307,7 @@ function main() {
     initiateHotkeys();
     initializeDragAndDrop();
     setHelpBarAppearance();
+    handleDarkMode();
 
     // Initiate tabs
     const tabsController = new TabsController(document.getElementsByClassName("tabs")[0], document.getElementsByClassName("view")[0], document.getElementById("context-menu"));

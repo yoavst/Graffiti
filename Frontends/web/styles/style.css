@@ -6,12 +6,24 @@
 
 html {
     font: 62.5% "segoe ui", helvetica, arial, sans-serif;
+    background-color: #2b2d31;
+    --primary-color: #1e1f22;
+    --primary-color-hover: #2a2b30;
+    --primary-color-active: #42444b;
+    --text-color: #fff;
+}
+
+html.lightTheme {
     background-color: #fff;
+    --primary-color: #687078;
+    --primary-color-hover: #005ca5;
+    --primary-color-active: #006abe;
+    --text-color: #000;
 }
 
 
 header {
-    background-color: #0078d7;
+    background-color: var(--primary-color);
     color: #fff;
     padding: 1rem;
     padding-right: 0px;
@@ -97,7 +109,7 @@ body {
 /* Style the tab */
 .tabs {
     overflow: hidden;
-    background-color: #0078d7;
+    background-color: var(--primary-color);
 }
 
 .tabs .divider {
@@ -129,12 +141,12 @@ body {
 
 /* Change background color of buttons on hover */
 .tabs button:hover {
-    background-color: #005ca5;
+    background-color: var(--primary-color-hover);
 }
 
 /* Create an active/current tablink class */
 .tabs button.active {
-    background-color: #006abe !important;
+    background-color: var(--primary-color-active) !important;
 }
 
 .buttons>button {
@@ -203,7 +215,7 @@ footer {
     bottom: 0;
     left: 0;
     right: 0;
-    background-color: #0078d7;
+    background-color: var(--primary-color);
     color: #fff;
     padding: 1rem;
 }
@@ -296,4 +308,8 @@ footer {
 
 .hoverDoc * {
     color: white !important;
+}
+
+.graph {
+    color: var(--text-color);
 }
