@@ -15,7 +15,7 @@ html {
 
 html.lightTheme {
     background-color: #fff;
-    --primary-color: #687078;
+    --primary-color: #0078d7;
     --primary-color-hover: #005ca5;
     --primary-color-active: #006abe;
     --text-color: #000;

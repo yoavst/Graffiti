@@ -3,7 +3,7 @@ const MSG_ADD_NODES_AND_EDGES = "addDataBulk"
 const MSG_UPDATE_NODES = "updateNodes"
 const LOCAL_STORAGE_OLD_VERSION = "__OLD_VERSION"
 const LOCAL_STORAGE_BACKUP_KEY = "__OLD_BACKUP"
-const LOCAL_STORAGE_DEFAULT = {isKeymapReversed: false, hoverDoc: false, darkMode: true}
+const LOCAL_STORAGE_DEFAULT = {isKeymapReversed: false, hoverDoc: false, darkMode: true, isCurvedEdges: false}
 
 
 

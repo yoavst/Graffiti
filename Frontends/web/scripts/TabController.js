@@ -214,7 +214,7 @@ class TabController {
 config:
     theme: dark
     themeVariables:
-        lineColor: '#55565a'
+        lineColor: '#c0c0c0'
 ---
 ` + s
             }
@@ -275,7 +275,7 @@ config:
             }
 
             // Add themes
-            const stroke = isDarkMode() ? "#55565a" : "black"
+            const stroke = isDarkMode() ? "white" : "black"
             s += "\n\n"
             for (const [index, [backgroundColor, textColor]] of THEMES.entries()) {
                 if (themesForNodes[index].length != 0) {
@@ -312,6 +312,10 @@ config:
         // Increase spacing for comments
         graph.layoutOptions['org.eclipse.elk.spacing.commentNode'] = 30
         graph.layoutOptions['org.eclipse.elk.layered.considerModelOrder.strategy'] = 'PREFER_EDGES'
+
+        if (strToBool(localStorage.getItem("isCurvedEdges"))) {
+            graph.layoutOptions['org.eclipse.elk.edgeRouting'] = 'POLYLINE'
+        }
 
         // Annotate comments
         const commentIds = new Set(this.queryNodes('isComment', true).map(n => `N${n.id}`))
@@ -1070,6 +1074,7 @@ class MermaidDiv extends HTMLElement {
 function strToBool(s) {
     // will match one and only one of the string 'true','1', or 'on' rerardless
     // of capitalization and regardless off surrounding white-space.
+    if (s === null) return false;
 
     regex = /^\s*(true|1|on)\s*$/i
 
