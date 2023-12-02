@@ -135,16 +135,27 @@ class GraffitiHandlePullOnUI(Runnable):
     def run(self):
         try:
             prj = self.ctx.getMainProject()
-            unit = RuntimeProjectUtil.findUnitsByType(prj, IJavaSourceUnit, False).get(0)
-            if not unit:
-                print('The DEX unit was not found')
+
+            for dexunit in RuntimeProjectUtil.findUnitsByType(prj, IDexUnit, False):
+                if dexunit.isValidAddress(self.address):
+                    break
+            else:
+                print("Navigation to %s failed. No matching Dex Unit found." % self.address)
                 return
 
+            clazz = self.address.split(";")[0] + ";"
+            javaunit = dexunit.decompiler.decompileToUnit(clazz)
+            if javaunit is None:
+                print("Navigation to %s failed. Couldn't decompile class %s" % (self.address, clazz))
+                return
+            
             if hasattr(self.ctx, 'navigate'):
-                self.ctx.navigate(unit, self.address)
+                self.ctx.navigate(javaunit, self.address)
             else:
                 # this code assumes that the active fragment is the disassembly (it may not be; strong script should focus the assembly fragment)
-                self.ctx.openView(unit)
+                if not self.ctx.openView(javaunit):
+                    print("Navigation to %s failed. Failed opening decompiled unit.")
+                    return
                 self.ctx.getFocusedView().getActiveFragment().setActiveAddress(self.address)
         except:
             traceback.print_exc(file=sys.stdout)
