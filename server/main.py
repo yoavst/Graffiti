@@ -5,6 +5,7 @@ from typing import List, Tuple
 import websockets
 from websockets.server import WebSocketServerProtocol
 import struct
+import sys
 
 logging.basicConfig()
 logging.root.setLevel(logging.INFO)
@@ -17,10 +18,13 @@ frontend_wss: List[WebSocketServerProtocol] = []
 ide_wss: List[WebSocketServerProtocol] = []
 ide_tcps: List[Tuple[asyncio.StreamReader, asyncio.StreamWriter]] = []
 
+dump_messages = False
+
 
 async def send_frontend(request: str, src):
-    logging.warning(f"Received push from {src}")
-    logging.info(f"Push: {request}")
+    if dump_messages:
+        logging.warning(f"Received push from {src}")
+        logging.info(f"Push: {request}")
 
     # We duplicate the list, to prevent modification of the list while we use it. 
     # handle_frontend is reponsible for cleaning the list in case of a closed socket.
@@ -31,8 +35,9 @@ async def send_frontend(request: str, src):
             logging.info(f"[WS] Frontend Connection from {websocket.remote_address} is closed, and was yet to be cleaned from the list")
 
 async def send_ide(request: str, src):
-    logging.warning(f"Received pull from {src}")
-    logging.info(f"pull: {request}")
+    if dump_messages:
+        logging.warning(f"Received pull from {src}")
+        logging.info(f"pull: {request}")
 
     # We duplicate the lists, to prevent modification of the lists while we use it. 
     # handle_ide_X are reponsible for cleaning the lists in case of a closed socket.
@@ -113,7 +118,11 @@ async def handle_frontend(websocket: WebSocketServerProtocol):
         frontend_wss.remove(websocket)
 
 
-async def main():
+async def main(args):
+    global dump_messages
+    if len(args) == 2 and args[1] == "--dump":
+        dump_messages = True
+
     async with websockets.serve(handle_frontend, "0.0.0.0", FRONTEND_WEBSOCKET_PORT):
         async with await asyncio.start_server(handle_ide_tcp, '0.0.0.0', IDE_TCP_PORT):
             async with websockets.serve(handle_ide_websocket, "0.0.0.0", IDE_WEBSOCKET_PORT):
@@ -121,4 +130,4 @@ async def main():
                 await asyncio.Future()  
 
 
-asyncio.run(main())
+asyncio.run(main(sys.argv))

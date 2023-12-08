@@ -5,7 +5,6 @@ import traceback
 import json
 from com.pnfsoftware.jeb.client.api import IScript
 from com.pnfsoftware.jeb.core import RuntimeProjectUtil
-from com.pnfsoftware.jeb.core.units.code.android.dex import IDexMethod, IDexClass, IDexField
 
 from java.io import DataInputStream
 from com.pnfsoftware.jeb.core.units.code.java import IJavaSourceUnit
@@ -19,7 +18,7 @@ from com.pnfsoftware.jeb.core.events import JebEvent, J
 from org.python.core.util import StringUtil
 import jarray
 
-from graphUtils import send_update
+from graphUtils import send_update, create_rename
 
 
 class graffiti(IScript):
@@ -66,32 +65,7 @@ class GraffitiListener(IEventListener):
         if isinstance(e, JebEvent) and e.type == J.UnitChange and e.data is not None:
             if e.data.type == UnitChangeEventData.NameUpdate:
                 target = e.data.target
-                res = None
-                if isinstance(target, IDexMethod):
-                    res = {
-                        "type": "updateNodes",
-                        "selection": [[["address", target.getSignature(False)]], [["methodAddress", target.getSignature(False)]]],
-                        "update": {
-                            "method": target.getName(True) or target.getName(False)
-                        },
-                        "version": 2
-                    }
-                elif isinstance(target, IDexClass):
-                    res = {
-                        "type": "updateNodes",
-                        "selection": [["classAddress", target.getSignature(False)]],
-                        "update": {
-                            "class": target.getName(True) or target.getName(False)
-                        }
-                    }
-                elif isinstance(target, IDexField):
-                    res = {
-                        "type": "updateNodes",
-                        "selection": [["address", target.getSignature(False)]],
-                        "update": {
-                            "field": target.getName(True) or target.getName(False)
-                        }
-                    }
+                res = create_rename(target)
 
                 if res:
                     send_update(self.ctx, res)
