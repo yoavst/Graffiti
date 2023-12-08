@@ -78,7 +78,7 @@ function event_shareGraph() {
             } else if (result.isDenied) {
                 // svg
               controller.exportToSvg(name)
-            } else {
+            } else if (result.dismiss == Swal.DismissReason.cancel){
                 // mermaid
                 const s = controller.toMermaid()
     
