@@ -49,8 +49,9 @@ class NetworkController {
                 controller.addUndoMarker()
 
                 for (const node of msg.nodes) {
-                    this.addNodeAndEdge(controller, selectedNode, node, msg.edge, isExistingToNew, false)
+                    this.addNodeAndEdge(controller, selectedNode, node, msg.edge, isExistingToNew, false, false)
                 }
+                controller.draw()
             })
 
 
@@ -62,7 +63,7 @@ class NetworkController {
         }
     }
 
-    addNodeAndEdge(controller, selectedNode, msgNode, msgEdge, isExistingToNew, shouldAddUndo) {
+    addNodeAndEdge(controller, selectedNode, msgNode, msgEdge, isExistingToNew, shouldAddUndo, shouldDraw=true) {
         // 1. If msgEdge forces isExistingToNew, replace
         isExistingToNew = (msgEdge != null && 'isExistingToNew' in msgEdge) ? msgEdge.isExistingToNew : isExistingToNew
         // 2. Check if dest node exists
@@ -71,17 +72,17 @@ class NetworkController {
             // 3. Check if needs to add edge to the existing node
             if (selectedNode != null) {
                 if (shouldAddUndo) controller.addUndoMarker()
-                controller.addEdge({ ...createFromTo(selectedNode.id, existingDestNode.id, isExistingToNew), ...(msgEdge || {}) })
+                controller.addEdge({ ...createFromTo(selectedNode.id, existingDestNode.id, isExistingToNew), ...(msgEdge || {}) }, null, shouldDraw)
             }
             // return new node
             return existingDestNode.id
         } else {
             if (shouldAddUndo) controller.addUndoMarker()
             // 2. create a new node
-            const newNode = controller.addNode(msgNode)
+            const newNode = controller.addNode(msgNode, shouldDraw)
             // 3. add new edge
             if (selectedNode != null) {
-                controller.addEdge({ ...createFromTo(selectedNode.id, newNode.id, isExistingToNew), ...(msgEdge || {}) })
+                controller.addEdge({ ...createFromTo(selectedNode.id, newNode.id, isExistingToNew), ...(msgEdge || {}) }, null, shouldDraw)
             }
             // 4. selected added node
             return newNode.id

@@ -582,7 +582,7 @@ config:
         this.draw()
     }
 
-    addNode(node) {
+    addNode(node, draw=true) {
         updateNodeProperties(node)
 
         // create the vis node
@@ -600,13 +600,15 @@ config:
         this.undoHistory.push({ type: ADD_NODE, data: { ...visNode } })
 
         this.cachedMermaid = null
-
-        this.draw()
+        
+        if (draw) {
+            this.draw()
+        }
 
         return visNode
     }
 
-    addEdge(edge, design = null) {
+    addEdge(edge, design = null, draw = true) {
         updateNodeProperties(edge)
 
         // TODO make design customizable
@@ -632,8 +634,10 @@ config:
         this.undoHistory.push({ type: ADD_EDGE, data: { ...visEdge } })
 
         this.cachedMermaid = null
-
-        this.draw()
+        
+        if (draw) {
+            this.draw()
+        }
 
         return visEdge
     }
