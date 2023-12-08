@@ -67,6 +67,7 @@ function event_shareGraph() {
         denyButtonText: "SVG",
         input: "number",
         inputValue: "600",
+        inputLabel: "dpi"
       }).then((result) => {
         window.tabsController.onCurrent((name, controller) => {
             if (result.isConfirmed) {
