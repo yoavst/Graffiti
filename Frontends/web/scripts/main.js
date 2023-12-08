@@ -59,7 +59,7 @@ function event_delete() {
 
 function event_shareGraph() {
     Swal.fire({
-        title: "Do you want to save the changes?",
+        title: "Share graph",
         showDenyButton: true,
         showCancelButton: true,
         confirmButtonText: "JPEG",
