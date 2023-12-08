@@ -68,20 +68,20 @@ function event_shareGraph() {
         input: "number",
         inputValue: "600",
         inputLabel: "dpi"
-      }).then((result) => {
+    }).then((result) => {
         window.tabsController.onCurrent((name, controller) => {
             if (result.isConfirmed) {
                 // jpeg
-              if (result.value) {
-                controller.exportToJpeg(name, parseInt(result.value))
-              }
+                if (result.value) {
+                    controller.exportToJpeg(name, parseInt(result.value))
+                }
             } else if (result.isDenied) {
                 // svg
-              controller.exportToSvg(name)
-            } else if (result.dismiss == Swal.DismissReason.cancel){
+                controller.exportToSvg(name)
+            } else if (result.dismiss == Swal.DismissReason.cancel) {
                 // mermaid
                 const s = controller.toMermaid()
-    
+
                 try {
                     navigator.clipboard.writeText(s).then(function () {
                         logEvent('Copied to clipboard');
@@ -95,7 +95,7 @@ function event_shareGraph() {
                 }
             }
         })
-      })  
+    })
 }
 
 function event_center() {
@@ -230,6 +230,7 @@ function setHelpBarAppearance() {
 function handleDarkMode() {
     if (isDarkMode()) {
         document.documentElement.classList.remove("lightTheme")
+        document.querySelector('ninja-keys').classList.add("dark")
     } else {
         document.documentElement.classList.add("lightTheme")
     }
@@ -327,6 +328,19 @@ function addTextualNode(title, extra_node_properties, extra_edge_properties = {}
     })
 }
 
+function event_search() {
+    window.tabsController.onCurrent((_, controller) => {
+        const ninja = document.querySelector('ninja-keys')
+        const searchResults = controller.getSearchResults()
+        if (searchResults.length != 0) {
+            ninja.data = searchResults
+            ninja.open()
+        } else {
+            logEvent("Empty graph")
+        }
+    })
+}
+
 function main() {
     initiateLocalStorage();
     initiateDependencies();
@@ -360,7 +374,7 @@ function elk_beforeCallback(id, graph) {
 }
 
 function initiateHotkeys() {
-    hotkeys('esc,ctrl+z,ctrl+shift+z,ctrl+y,ctrl+s,ctrl+alt+s,ctrl+o,ctrl+i,ctrl+alt+shift+i,ctrl+q,ctrl+shift+q,delete,home,ctrl+home,shift+`,shift+/,ctrl+shift+/,1,2,3,4,5,6,7,8,9', function (event, handler) {
+    hotkeys('esc,ctrl+z,ctrl+shift+z,ctrl+y,ctrl+s,ctrl+alt+s,ctrl+o,ctrl+i,ctrl+alt+shift+i,ctrl+q,ctrl+f,ctrl+shift+q,delete,home,ctrl+home,shift+`,shift+/,ctrl+shift+/,1,2,3,4,5,6,7,8,9', function (event, handler) {
         switch (handler.key) {
             case 'esc':
                 event_deselect();
@@ -411,6 +425,9 @@ function initiateHotkeys() {
             case 'shift+`':
                 event_toggleRenderer();
                 return false
+            case 'ctrl+f':
+                event_search();
+                return false;
             case '1':
             case '2':
             case '3':

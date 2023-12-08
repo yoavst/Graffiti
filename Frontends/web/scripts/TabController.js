@@ -656,24 +656,24 @@ config:
         return this.nodes.filter(item => item.extra[propertyName] == propertyValue);
     }
 
-    selectNode(id, shouldRedraw = false) {
+    selectNode(id, shouldRedraw = false, searchSelect = false) {
         const old_selectedNode = this._selectedNode
         if (id == null) {
             this._selectedNode = null
         } else {
             this._selectedNode = this.nodes.get(id)
         }
-        if (old_selectedNode != this._selectedNode) {
+        if (old_selectedNode != this._selectedNode || !shouldRedraw) {
             if (shouldRedraw) {
                 this.cachedMermaid = null
                 this.draw()
             } else {
-                this.#selectNodeInUI(old_selectedNode?.id, id)
+                this.#selectNodeInUI(old_selectedNode?.id, id, searchSelect)
             }
         }
     }
 
-    #selectNodeInUI(oldId, newId) {
+    #selectNodeInUI(oldId, newId, searchSelect = false) {
         if (this.nodes.size() != 0) {
             const nodesContainer = this.#getDomNodesContainerElement()
             if (!nodesContainer) {
@@ -693,8 +693,13 @@ config:
                 const newSelectedBorders = newSelectedElement.querySelector('rect, polygon')
 
                 newSelectedElement.style = "filter: brightness(90%);"
-                const borderColor = isDarkMode() ? "#fff" : "#333"
-                newSelectedBorders.style = `stroke:${borderColor} !important; stroke-width:4px !important;`
+                if (!searchSelect) {
+                    const borderColor = isDarkMode() ? "#fff" : "#333"
+                    newSelectedBorders.style = `stroke:${borderColor} !important; stroke-width:4px !important;`
+                } else {
+                    const borderColor = "#B71C1C"
+                    newSelectedBorders.style = `stroke:${borderColor} !important; stroke-width:8px !important;`
+                }
             }
         }
     }
@@ -1059,6 +1064,17 @@ config:
         };
 
         img.src = url;
+    }
+
+    getSearchResults() {
+        return this.nodes.asReadOnly().map(node => ({
+            id: "" + node.id,
+            title: node.label,
+            handler: () => {
+                this.selectNode(node.id, false, true)
+                this.resetScrollingToSelected()
+            }
+        }))
     }
 }
 

@@ -29,7 +29,9 @@
             <button onclick="event_delete()" title="Delete (Delete)"><img src="images/icon_delete.svg"
                     class="action_icon" alt="Delete" /></button>
             <button onclick="event_focusOnSelected()" oncontextmenu="return event_center()" title="Focus selecred node (Home)&#10;&#13;Right click to reset zoom (Ctrl+Home)"><img src="images/icon_layout.svg" class="action_icon"
-                    alt="Layout" /></button>
+                    alt="Focus" /></button>
+            <button onclick="event_search()" title="Search (Ctrl+F)"><img src="images/icon_search.svg" class="action_icon"
+                alt="Search" /></button>
             <div class="arrowToggle" title="Arrow direction (Ctrl+I)&#10;&#13;Focus (Ctrl+Alt+Shift+I)" oncontextmenu="return event_toggleFocusTarget()">
                 <label for="isExistingToNew">
                     <input class="input" type="checkbox" id="isExistingToNew" checked="true"></input>
@@ -69,6 +71,10 @@
         <div class="clearfix">&nbsp;</div>
     </footer>
 
+    <ninja-keys hideBreadcrumbs openHotkey placeholder="Search node">
+        <div slot="footer"></div>
+    </ninja-keys>
+
     <!-- Dependencies -->
     <script>
         window.version = parseFloat("_VERSION_")
@@ -80,6 +86,7 @@
     <script src="scripts/third_party/showdown.min.js"></script>
     <script src="scripts/third_party/popper.min.js"></script>
     <script src="scripts/third_party/tippy.min.js"></script>
+    <script src="scripts/third_party/ninja-keys.js"></script>
 
     <!-- The code -->
     <script src="scripts/DataSet.js"></script>
