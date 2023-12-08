@@ -3,7 +3,7 @@ const MSG_ADD_NODES_AND_EDGES = "addDataBulk"
 const MSG_UPDATE_NODES = "updateNodes"
 const LOCAL_STORAGE_OLD_VERSION = "__OLD_VERSION"
 const LOCAL_STORAGE_BACKUP_KEY = "__OLD_BACKUP"
-const LOCAL_STORAGE_DEFAULT = {isKeymapReversed: false, hoverDoc: false, darkMode: true, isCurvedEdges: false}
+const LOCAL_STORAGE_DEFAULT = { isKeymapReversed: false, hoverDoc: false, darkMode: true, isCurvedEdges: false }
 
 
 
@@ -22,13 +22,13 @@ function event_reset() {
         title: 'Reset',
         text: 'Do you want to clear the current tab?',
         showCancelButton: true
-        }).then(({value=null}) => {
-            if (value) {
-                window.tabsController.onCurrent((_, controller) => {
-                    controller.reset(shouldSupportUndo = true)
-                })
-            }
-        })
+    }).then(({ value = null }) => {
+        if (value) {
+            window.tabsController.onCurrent((_, controller) => {
+                controller.reset(shouldSupportUndo = true)
+            })
+        }
+    })
 }
 
 function event_deselect() {
@@ -57,21 +57,44 @@ function event_delete() {
 
 }
 
-function event_mermaid() {
-    window.tabsController.onCurrent((_, controller) => {
-        const s = controller.toMermaid()
-
-        try {
-            navigator.clipboard.writeText(s).then(function () {
-                console.log('Copied to clipboard');
-            }, function (err) {
-                console.log(s)
-            });
-        } catch (err) {
-            console.log(s)
-        }
-    })
-
+function event_shareGraph() {
+    Swal.fire({
+        title: "Do you want to save the changes?",
+        showDenyButton: true,
+        showCancelButton: true,
+        confirmButtonText: "JPEG",
+        cancelButtonText: "Mermaid",
+        denyButtonText: "SVG",
+        input: "number",
+        inputValue: "600",
+      }).then((result) => {
+        window.tabsController.onCurrent((name, controller) => {
+            if (result.isConfirmed) {
+                // jpeg
+              if (result.value) {
+                controller.exportToJpeg(name, parseInt(result.value))
+              }
+            } else if (result.isDenied) {
+                // svg
+              controller.exportToSvg(name)
+            } else {
+                // mermaid
+                const s = controller.toMermaid()
+    
+                try {
+                    navigator.clipboard.writeText(s).then(function () {
+                        logEvent('Copied to clipboard');
+                    }, function (err) {
+                        console.log(s)
+                        logEvent("Logged to console")
+                    });
+                } catch (err) {
+                    console.log(s)
+                    logEvent("Logged to console")
+                }
+            }
+        })
+      })  
 }
 
 function event_center() {
@@ -98,15 +121,15 @@ function event_exportAll() {
 
 function exportController(name, controller) {
     const blob = new Blob([controller.export()])
-        const url = window.URL.createObjectURL(blob)
-        const a = document.createElement('a')
-        a.style.display = 'none'
-        a.href = url
-        a.download = name + '.json'
-        document.body.appendChild(a)
-        a.click()
-        window.URL.revokeObjectURL(url)
-        document.body.removeChild(a)
+    const url = window.URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.style.display = 'none'
+    a.href = url
+    a.download = name + '.json'
+    document.body.appendChild(a)
+    a.click()
+    window.URL.revokeObjectURL(url)
+    document.body.removeChild(a)
 }
 
 function event_import() {
@@ -163,12 +186,12 @@ function event_addTab() {
         input: 'text',
         inputValue: '',
         showCancelButton: true
-      }).then(({value=null}) => {
-            if (value != null && value != '') {
-                const tab = window.tabsController.addTab(value)
-                window.tabsController.selectTab(tab)
-            }
-      })
+    }).then(({ value = null }) => {
+        if (value != null && value != '') {
+            const tab = window.tabsController.addTab(value)
+            window.tabsController.selectTab(tab)
+        }
+    })
 }
 
 function event_toggleRenderer() {
@@ -250,7 +273,7 @@ function event_setTheme(themeIndex) {
 }
 
 function event_addTextNode() {
-    addTextualNode('Add text node', {isMarkdown: true})    
+    addTextualNode('Add text node', { isMarkdown: true })
 }
 
 function event_addComment() {
@@ -266,11 +289,11 @@ function event_addComment() {
             return
         }
 
-        addTextualNode('Add comment', {isMarkdown: true, isComment: true, isUnclickable: true}, {isExistingToNew: true})
+        addTextualNode('Add comment', { isMarkdown: true, isComment: true, isUnclickable: true }, { isExistingToNew: true })
     })
 }
 
-function addTextualNode(title, extra_node_properties, extra_edge_properties={}) {
+function addTextualNode(title, extra_node_properties, extra_edge_properties = {}) {
     // FIXME: don't depend on network controller
     if (!('networkController' in window)) {
         Swal.fire({
@@ -290,15 +313,17 @@ function addTextualNode(title, extra_node_properties, extra_edge_properties={}) 
         footer: 'You can use **text** for bold, and *text* for italic',
         showCancelButton: true,
         didOpen: patchOnKeyDown
-        }).then(({value=null}) => {
-            if (value != null && value != '') {
-                // Bit of a hack, but why not
-                window.networkController.handleMessage({type: MSG_ADD_NODE_AND_EDGE, node: {
+    }).then(({ value = null }) => {
+        if (value != null && value != '') {
+            // Bit of a hack, but why not
+            window.networkController.handleMessage({
+                type: MSG_ADD_NODE_AND_EDGE, node: {
                     label: value,
                     ...extra_node_properties
-                }, edge: extra_edge_properties})
-            }
-        })
+                }, edge: extra_edge_properties
+            })
+        }
+    })
 }
 
 function main() {

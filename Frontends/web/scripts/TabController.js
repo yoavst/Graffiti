@@ -215,6 +215,8 @@ config:
     theme: dark
     themeVariables:
         lineColor: '#c0c0c0'
+    flowchart:
+        htmlLabels: false
 ---
 ` + s
             }
@@ -582,7 +584,7 @@ config:
         this.draw()
     }
 
-    addNode(node, draw=true) {
+    addNode(node, draw = true) {
         updateNodeProperties(node)
 
         // create the vis node
@@ -600,7 +602,7 @@ config:
         this.undoHistory.push({ type: ADD_NODE, data: { ...visNode } })
 
         this.cachedMermaid = null
-        
+
         if (draw) {
             this.draw()
         }
@@ -634,7 +636,7 @@ config:
         this.undoHistory.push({ type: ADD_EDGE, data: { ...visEdge } })
 
         this.cachedMermaid = null
-        
+
         if (draw) {
             this.draw()
         }
@@ -998,6 +1000,66 @@ config:
     getProjects() {
         return new Set(this.nodes.map(it => ('project' in it.extra) ? it.extra.project : null).filter(it => it != null));
     }
+
+    exportToSvg(name) {
+        const svg = this.container.getElementsByTagName('diagram-div')[0].shadowRoot.querySelector('svg')
+        const svgContent = new XMLSerializer().serializeToString(svg);
+        const backgroundColor = window.getComputedStyle(document.documentElement)
+            .getPropertyValue('background-color')
+
+        const combinedSVG = `<svg xmlns="http://www.w3.org/2000/svg">
+                              <rect x="0" y="0" width="100%" height="100%" fill="${backgroundColor}" />
+                              ${svgContent}
+                            </svg>`;
+
+        const blob = new Blob([combinedSVG], { type: 'image/svg+xml;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+
+        const link = document.createElement('a');
+        link.download = `${name}.svg`;
+        link.href = url;
+        link.click();
+
+
+    }
+
+    exportToJpeg(name, dpi) {
+        const originalSVG = this.container.getElementsByTagName('diagram-div')[0].shadowRoot.querySelector('svg')
+        const svgContent = new XMLSerializer().serializeToString(originalSVG);
+        const backgroundColor = window.getComputedStyle(document.documentElement)
+            .getPropertyValue('background-color')
+
+        const combinedSVG = `<svg xmlns="http://www.w3.org/2000/svg">
+                          <rect x="0" y="0" width="100%" height="100%" fill="${backgroundColor}" />
+                          ${svgContent}
+                        </svg>`;
+
+                        const scaleFactor = dpi / 96; // 96 is the standard screen DPI
+
+        const width = originalSVG.width.baseVal.value * scaleFactor;
+        const height = originalSVG.height.baseVal.value * scaleFactor;
+
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+
+        const ctx = canvas.getContext('2d');
+        const img = new Image();
+
+        const svgBlob = new Blob([combinedSVG], { type: 'image/svg+xml;charset=utf-8' });
+        const url = URL.createObjectURL(svgBlob);
+
+        img.onload = function () {
+            ctx.drawImage(img, 0, 0, width, height);
+
+            const link = document.createElement('a');
+            link.download = `${name}.png`;
+            link.href = canvas.toDataURL('image/jpeg');
+            link.click();
+        };
+
+        img.src = url;
+    }
 }
 
 const NODE_COMPUTED_PROPERTIES = "computedProperties"
@@ -1110,6 +1172,7 @@ function logEvent(title) {
         position: 'bottom-end',
         toast: true,
         showConfirmButton: false,
+        timerProgressBar: true,
         timer: 1500
     })
 }
