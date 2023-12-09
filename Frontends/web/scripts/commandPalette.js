@@ -300,7 +300,14 @@ class CommandPalette {
                 section: 'Graph',
                 handler: () => { event_addEdgeBetweenSelected(); },
             },
-            
+            {
+                id: 'UnselectNode',
+                title: 'Unselect the currently selected node in the current graph',
+                hotkey: 'Esc',
+                icon: iconFor('click'),
+                section: 'Graph',
+                handler: () => { event_deselect(); },
+            },
         ];
     }
 }
