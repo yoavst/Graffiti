@@ -17,6 +17,10 @@ function event_connect() {
     window.networkController = new NetworkController(url, window.tabsController)
 }
 
+function event_disconnect() {
+    window.networkController.close()
+}
+
 function event_reset() {
     Swal.fire({
         title: 'Reset',
@@ -334,6 +338,7 @@ function event_search() {
         if (searchResults.length != 0) {
             const ninja = document.querySelector('ninja-keys')
             ninja.setAttribute("placeholder", "Search node in current graph")
+            ninja.setAttribute("hideBreadcrumbs", "")
             ninja.data = searchResults
             ninja.open()
         } else {
@@ -359,12 +364,39 @@ function event_searchAll() {
     if (searchResults.length != 0) {
         const ninja = document.querySelector('ninja-keys')
         ninja.setAttribute("placeholder", "Search node in all graphs")
+        ninja.setAttribute("hideBreadcrumbs", "")
         ninja.data = searchResults
         ninja.open()
     } else {
         logEvent("Empty graphs")
     }
     return false;
+}
+
+function event_removeCurrentTab() {
+    Swal.fire({
+        title: 'Remove tab',
+        text: 'Are you sure you want to remove the current tab',
+        showCancelButton: true
+    }).then(({ value = null }) => {
+        if (value) {
+            window.tabsController.removeCurrentTab()
+        }
+    })
+}
+
+function event_renameCurrentTab() {
+    window.tabsController.renameCurrentTab()
+}
+
+function event_showSourcesCurrentTab() {
+    window.tabsController.onCurrent((_, tabController) => {
+        window.tabsController.openSourcesForTab(tabController)
+    })
+}
+
+function event_commandPalette() {
+    window.commandPalette.open();
 }
 
 function main() {
@@ -380,6 +412,9 @@ function main() {
     tabsController.restore()
 
     window.tabsController = tabsController
+
+    // initiate command palatte
+    window.commandPalette = new CommandPalette(tabsController, document.querySelector('ninja-keys'))
 }
 
 function initiateDependencies() {
@@ -400,7 +435,8 @@ function elk_beforeCallback(id, graph) {
 }
 
 function initiateHotkeys() {
-    hotkeys('esc,ctrl+z,ctrl+shift+z,ctrl+y,ctrl+s,ctrl+alt+s,ctrl+o,ctrl+i,ctrl+alt+shift+i,ctrl+q,ctrl+f,ctrl+shift+f,ctrl+shift+q,delete,home,ctrl+home,shift+`,shift+/,ctrl+shift+/,1,2,3,4,5,6,7,8,9', function (event, handler) {
+    hotkeys('esc,ctrl+z,ctrl+shift+z,ctrl+y,ctrl+s,ctrl+alt+s,ctrl+o,ctrl+i,ctrl+alt+shift+i,ctrl+q,ctrl+f,ctrl+shift+f,ctrl+shift+q,ctrl+shift+p,delete,home,ctrl+home,shift+`,shift+/,ctrl+shift+/,1,2,3,4,5,6,7,8,9', function (event, handler) {
+        window.commandPalette.close()
         switch (handler.key) {
             case 'esc':
                 event_deselect();
@@ -456,6 +492,9 @@ function initiateHotkeys() {
                 return false;
             case 'ctrl+shift+f':
                 event_searchAll();
+                return false;
+            case 'ctrl+shift+p':
+                event_commandPalette();
                 return false;
             case '1':
             case '2':

@@ -271,23 +271,7 @@ class TabsController {
             realThis.contextMenu.classList.remove("visible");
 
             setTimeout(() => {
-                if (contextMenuOpenedForTab != null) {
-                    const { name, tabElement } = contextMenuOpenedForTab
-                    Swal.fire({
-                        title: 'Rename tab',
-                        input: 'text',
-                        inputValue: name,
-                        showCancelButton: true
-                    }).then(({ value = null }) => {
-                        if (value != null) {
-                            tabElement.textContent = value
-                            contextMenuOpenedForTab.name = value
-
-                            realThis.save()
-                        }
-                    })
-
-                }
+                realThis.#renameTab(contextMenuOpenedForTab)
             });
         }
 
@@ -297,12 +281,7 @@ class TabsController {
             realThis.contextMenuOpenedForTab = null
             realThis.contextMenu.classList.remove("visible");
 
-            if (contextMenuOpenedForTab != null) {
-                realThis.removeTab(realThis.tabs.indexOf(contextMenuOpenedForTab))
-                if (realThis.count() == 0) {
-                    realThis.#addEmptyTab()
-                }
-            }
+            realThis.#removeTab(contextMenuOpenedForTab)
         }
 
         this.contextMenu.querySelector("#sources").onclick = function () {
@@ -313,23 +292,62 @@ class TabsController {
 
             setTimeout(() => {
                 if (contextMenuOpenedForTab != null) {
-                    const { tabController } = contextMenuOpenedForTab
-                    const projects = [...tabController.getProjects()]
-                    if (projects.length == 0) {
-                        Swal.fire({
-                            title: 'No linked projects',
-                            text: 'This graffiti file was created with old utils. Consider upgrading to the latest version.',
-                            type: 'info',
-                            confirmButtonText: 'OK'
-                        })
-                    } else {
-                        Swal.fire({
-                            title: 'Linked projects',
-                            html: projects.join('<br>'),
-                            confirmButtonText: 'OK'
-                        })
-                    }
+                    realThis.openSourcesForTab(contextMenuOpenedForTab.tabController)
                 }
+            })
+        }
+    }
+
+    removeCurrentTab() {
+        this.#removeTab(this.selectedTab)
+    }
+    
+    #removeTab(tab) {
+        if (tab != null) {
+            this.removeTab(this.tabs.indexOf(tab))
+            if (this.count() == 0) {
+                this.#addEmptyTab()
+            }
+        }
+    }
+
+    renameCurrentTab() {
+        this.#renameTab(this.selectedTab)
+    }
+
+    #renameTab(tab) {
+        if (tab != null) {
+            const { name, tabElement } = tab
+            Swal.fire({
+                title: 'Rename tab',
+                input: 'text',
+                inputValue: name,
+                showCancelButton: true
+            }).then(({ value = null }) => {
+                if (value != null) {
+                    tabElement.textContent = value
+                    tab.name = value
+
+                    this.save()
+                }
+            })
+        }
+    }
+
+    openSourcesForTab(tabController) {
+        const projects = [...tabController.getProjects()]
+        if (projects.length == 0) {
+            Swal.fire({
+                title: 'No linked projects',
+                text: 'This graffiti file was created with old utils. Consider upgrading to the latest version.',
+                type: 'info',
+                confirmButtonText: 'OK'
+            })
+        } else {
+            Swal.fire({
+                title: 'Linked projects',
+                html: projects.join('<br>'),
+                confirmButtonText: 'OK'
             })
         }
     }

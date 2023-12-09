@@ -1088,7 +1088,7 @@ config:
 
     getSearchResults() {
         const borderColor = isDarkMode() ? 'white' : 'black'
-        const baseStyle = `width: 10px; height: 10px; border-radius: 50%; margin-right: 5px; border: 1px solid ${borderColor};`
+        const baseStyle = `width: 10px; height: 10px; border-radius: 50%; margin-right: 1em; border: 1px solid ${borderColor};`
         return this.nodes.asReadOnly().map(node => {
             const nodeTheme = this.getThemeForNode(node)
             if (node.extra.hasOwnProperty('line')) {
@@ -1238,9 +1238,13 @@ function hasUrlParameter(property) {
     return urlParams.hasOwnProperty(property)
 }
 
-function isDarkMode() {
+function _isDarkMode() {
     if (hasUrlParameter('dark')) return true;
     if (hasUrlParameter('light')) return false;
 
     return (localStorage.getItem("darkMode") || "false") === "true"
+}
+const darkModeCached = _isDarkMode()
+function isDarkMode() {
+    return darkModeCached;
 }
