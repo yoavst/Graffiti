@@ -293,6 +293,14 @@ class CommandPalette {
                 section: 'Tabs',
                 handler: () => { event_removeCurrentTab(); },
             },
+            {
+                id: 'AddEdgeBetweenSelected',
+                title: 'Add an edge from the selected node to a specific node',
+                icon: iconFor('arrow'),
+                section: 'Graph',
+                handler: () => { event_addEdgeBetweenSelected(); },
+            },
+            
         ];
     }
 }

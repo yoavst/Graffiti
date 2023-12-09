@@ -395,6 +395,12 @@ function event_showSourcesCurrentTab() {
     })
 }
 
+function event_addEdgeBetweenSelected() {
+    window.tabsController.onCurrent((_, tabController) => {
+        tabController.addNodeBetweenSelected()
+    })
+}
+
 function event_commandPalette() {
     window.commandPalette.open();
 }

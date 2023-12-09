@@ -819,6 +819,7 @@ config:
     }
 
     undo() {
+        console.log("Called!!")
         this.cachedMermaid = null
 
         if (this.undoHistory.length) {
@@ -1105,6 +1106,28 @@ config:
             }
         })
     }
+
+    addNodeBetweenSelected() {
+        setTimeout(() => {
+            if (this.selectedNode == null) {
+                logEvent("No selected node")
+                return;
+            }
+            const targetNodes = this.getSearchResults().map(node => {
+                node.handler = () => {
+                    this.addUndoMarker()
+                    this.addEdge(createFromTo(this.selectedNode.id, node.id, true))
+                }
+                return node
+            })
+            const ninja = document.querySelector('ninja-keys')
+            ninja.setAttribute("placeholder", "Chooose target node")
+            ninja.setAttribute("hideBreadcrumbs", "")
+            ninja.data = targetNodes
+            ninja.open()
+        })
+
+    }
 }
 
 const NODE_COMPUTED_PROPERTIES = "computedProperties"
@@ -1229,7 +1252,7 @@ function toValue(val) {
 function _getUrlParameters() {
     var out = {};
     var str = window.location.search.replace("?", "");
-    str.split(`&`).map((si)=>{var keyVal = si.split(`=`); out[keyVal[0]]=keyVal[1];});
+    str.split(`&`).map((si) => { var keyVal = si.split(`=`); out[keyVal[0]] = keyVal[1]; });
     return out
 }
 
