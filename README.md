@@ -145,8 +145,8 @@ Go to Plguins->"Graffiti: Connect to server". Now, you can use the shortcut **A*
 A Rename will be reflected in the opened graphs.  
 Current relevant issues: [#1905](https://github.com/skylot/jadx/issues/1905)
 
-
-## Mermaid patch
+## Patches
+### Mermaid
 The project uses a the following patch to support comments on the web frontend:
 ```diff
 diff --git a/packages/mermaid/src/diagrams/flowchart/elk/flowRenderer-elk.js b/packages/mermaid/src/diagrams/flowchart/elk/flowRenderer-elk.js
@@ -162,5 +162,24 @@ index 5ed06723..dc0fde0e 100644
    const g = await elk.layout(graph);
    drawNodes(0, 0, g.children, svg, subGraphsEl, diagObj, 0);
 ```
+### NinjaKeys
+The projects patches out the hotkey registeration of ninja keys, since it has a bug:
+```diff
+diff a/ninja-keys/src/ninja-keys.ts b/ninja-keys/src/ninja-keys.ts
+--- a/ninja-keys/src/ninja-keys.ts
++++ b/ninja-keys/src/ninja-keys.ts
+@@ -223,10 +223,0 @@ override update(changedProperties: PropertyValues<this>) {
+-      this._flatData
+-        .filter((action) => !!action.hotkey)
+-        .forEach((action) => {
+-          hotkeys(action.hotkey!, (event) => {
+-            event.preventDefault();
+-            if (action.handler) {
+-              action.handler(action);
+-            }
+-          });
+-        });
+```
+
 # Credits
 The logo icons created by Freepik - Flaticon.
