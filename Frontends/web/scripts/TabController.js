@@ -310,6 +310,26 @@ config:
         return s
     }
 
+    getThemeForNode(node) {
+        if (node.extra.isMarkdown) {
+            if (node.extra.isComment) {
+                if (node.theme === undefined || node.theme === 4) {
+                    return COMMENT_THEME
+                } else {
+                    return THEMES[node.theme]
+                }
+            } else {
+                if (!node.theme) {
+                    return MARKDOWN_THEME
+                } else {
+                    return THEMES[node.theme]
+                }
+            }
+        } else {
+            return THEMES[node.theme || 0]
+        }
+    }
+
     modifyElkGraph(graph) {
         // Increase spacing for comments
         graph.layoutOptions['org.eclipse.elk.spacing.commentNode'] = 30
@@ -1039,7 +1059,7 @@ config:
                           ${svgContent}
                         </svg>`;
 
-                        const scaleFactor = dpi / 96; // 96 is the standard screen DPI
+        const scaleFactor = dpi / 96; // 96 is the standard screen DPI
 
         const width = originalSVG.width.baseVal.value * scaleFactor;
         const height = originalSVG.height.baseVal.value * scaleFactor;
@@ -1067,14 +1087,23 @@ config:
     }
 
     getSearchResults() {
-        return this.nodes.asReadOnly().map(node => ({
-            id: "" + node.id,
-            title: node.label,
-            handler: () => {
-                this.selectNode(node.id, false, true)
-                this.resetScrollingToSelected()
+        const borderColor = isDarkMode() ? 'white' : 'black'
+        const baseStyle = `width: 10px; height: 10px; border-radius: 50%; margin-right: 5px; border: 1px solid ${borderColor};`
+        return this.nodes.asReadOnly().map(node => {
+            const nodeTheme = this.getThemeForNode(node)
+            if (node.extra.hasOwnProperty('line')) {
+
             }
-        }))
+            return {
+                id: "" + node.id,
+                title: node.label,
+                icon: ` <div style="${baseStyle} background-color: ${nodeTheme[0]};"></div>`,
+                handler: () => {
+                    this.selectNode(node.id, false, true)
+                    this.resetScrollingToSelected()
+                }
+            }
+        })
     }
 }
 
@@ -1197,6 +1226,21 @@ function toValue(val) {
     return val.baseVal.value
 }
 
+function _getUrlParameters() {
+    var out = {};
+    var str = window.location.search.replace("?", "");
+    str.split(`&`).map((si)=>{var keyVal = si.split(`=`); out[keyVal[0]]=keyVal[1];});
+    return out
+}
+
+const urlParams = _getUrlParameters()
+function hasUrlParameter(property) {
+    return urlParams.hasOwnProperty(property)
+}
+
 function isDarkMode() {
+    if (hasUrlParameter('dark')) return true;
+    if (hasUrlParameter('light')) return false;
+
     return (localStorage.getItem("darkMode") || "false") === "true"
 }

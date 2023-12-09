@@ -195,9 +195,13 @@ class TabsController {
     }
 
     onEach(callback) {
-        this.tabs.forEach(({ name, tabController }) => {
-            callback(name, tabController)
+        this.tabs.forEach(({ name, tabController }, index) => {
+            callback(name, tabController, index)
         })
+    }
+
+    map(func) {
+        return this.tabs.map(({ name, tabController }, index) => func(name, tabController, index))
     }
 
     onId(id, callback) {

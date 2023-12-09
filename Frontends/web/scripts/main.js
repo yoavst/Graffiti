@@ -330,15 +330,41 @@ function addTextualNode(title, extra_node_properties, extra_edge_properties = {}
 
 function event_search() {
     window.tabsController.onCurrent((_, controller) => {
-        const ninja = document.querySelector('ninja-keys')
         const searchResults = controller.getSearchResults()
         if (searchResults.length != 0) {
+            const ninja = document.querySelector('ninja-keys')
+            ninja.setAttribute("placeholder", "Search node in current graph")
             ninja.data = searchResults
             ninja.open()
         } else {
             logEvent("Empty graph")
         }
     })
+}
+
+function event_searchAll() {
+    const searchResults = window.tabsController.map((name, controller, index) => {
+        return controller.getSearchResults().map(result => {
+            result.section = name
+            result.id = `${index}@@${result.id}`
+            const originalHandler = result.handler
+            result.handler = () => {
+                window.tabsController.selectTabByIndex(index)
+                originalHandler()
+            }
+            return result
+        })
+    }).flatMap(l => l)
+    
+    if (searchResults.length != 0) {
+        const ninja = document.querySelector('ninja-keys')
+        ninja.setAttribute("placeholder", "Search node in all graphs")
+        ninja.data = searchResults
+        ninja.open()
+    } else {
+        logEvent("Empty graphs")
+    }
+    return false;
 }
 
 function main() {
@@ -374,7 +400,7 @@ function elk_beforeCallback(id, graph) {
 }
 
 function initiateHotkeys() {
-    hotkeys('esc,ctrl+z,ctrl+shift+z,ctrl+y,ctrl+s,ctrl+alt+s,ctrl+o,ctrl+i,ctrl+alt+shift+i,ctrl+q,ctrl+f,ctrl+shift+q,delete,home,ctrl+home,shift+`,shift+/,ctrl+shift+/,1,2,3,4,5,6,7,8,9', function (event, handler) {
+    hotkeys('esc,ctrl+z,ctrl+shift+z,ctrl+y,ctrl+s,ctrl+alt+s,ctrl+o,ctrl+i,ctrl+alt+shift+i,ctrl+q,ctrl+f,ctrl+shift+f,ctrl+shift+q,delete,home,ctrl+home,shift+`,shift+/,ctrl+shift+/,1,2,3,4,5,6,7,8,9', function (event, handler) {
         switch (handler.key) {
             case 'esc':
                 event_deselect();
@@ -427,6 +453,9 @@ function initiateHotkeys() {
                 return false
             case 'ctrl+f':
                 event_search();
+                return false;
+            case 'ctrl+shift+f':
+                event_searchAll();
                 return false;
             case '1':
             case '2':

@@ -30,7 +30,7 @@
                     class="action_icon" alt="Delete" /></button>
             <button onclick="event_focusOnSelected()" oncontextmenu="return event_center()" title="Focus selecred node (Home)&#10;&#13;Right click to reset zoom (Ctrl+Home)"><img src="images/icon_layout.svg" class="action_icon"
                     alt="Focus" /></button>
-            <button onclick="event_search()" title="Search (Ctrl+F)"><img src="images/icon_search.svg" class="action_icon"
+            <button onclick="event_search()" oncontextmenu="return event_searchAll()" title="Search (Ctrl+F); Search all (Ctrl+Shift+F)"><img src="images/icon_search.svg" class="action_icon"
                 alt="Search" /></button>
             <div class="arrowToggle" title="Arrow direction (Ctrl+I)&#10;&#13;Focus (Ctrl+Alt+Shift+I)" oncontextmenu="return event_toggleFocusTarget()">
                 <label for="isExistingToNew">
@@ -71,7 +71,7 @@
         <div class="clearfix">&nbsp;</div>
     </footer>
 
-    <ninja-keys hideBreadcrumbs openHotkey placeholder="Search node">
+    <ninja-keys hideBreadcrumbs openHotkey>
         <div slot="footer"></div>
     </ninja-keys>
 
