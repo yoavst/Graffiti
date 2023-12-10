@@ -104,9 +104,10 @@ class TabController {
     }
 
     resetScrollingToSelected() {
-        if (this.selectedNode == null) {
+        if (this._selectedNode == null) {
             this.resetScrolling()
         } else {
+            this.selectNode(this._selectedNode.id, false, true)
             this.container.style.visibility = "hidden"
             this.zoom.zoomAbs(0, 0, 1)
 
@@ -146,21 +147,31 @@ class TabController {
         // Group transformation
         const [transformX, transformY] = this.#getSvgTransform(element)
 
-        // Inner rect relative position + size
-        const innerRect = element.getElementsByTagName('rect')[0]
-        const [rectX, rectY] = [innerRect.x, innerRect.y].map(toValue)
-        const [rectWidth, rectHeight] = [innerRect.width, innerRect.height].map(toValue)
+        const rects = element.querySelectorAll(':scope > rect')
+        if (rects.length != 0) {
+            // Inner rect relative position + size
+            const innerRect = rects[0]
+            const [rectX, rectY] = [innerRect.x, innerRect.y].map(toValue)
+            const [rectWidth, rectHeight] = [innerRect.width, innerRect.height].map(toValue)
 
-        // Calculate the x,y of the middle of element
-        return [transformX + rectX + rectWidth / 2, transformY + rectY + rectHeight / 2, rectWidth, rectHeight]
+            // Calculate the x,y of the middle of element
+            return [transformX + rectX + rectWidth / 2, transformY + rectY + rectHeight / 2, rectWidth, rectHeight]
+        }
+        const polygons = element.querySelectorAll(':scope > polygon')
+        if (polygons.length != 0) {
+            const innerPolygon = polygons[0]
+            const bbox = innerPolygon.getBBox()
+            return [transformX + bbox.x + bbox.width / 2, bbox.y + bbox.height / 2]
+        }
+
     }
 
     #getRectPosition(element) {
         // Inner rect relative position + size
-        const innerRect = element.getElementsByTagName('rect')[0]
+        const innerRect = element.querySelectorAll(':scope > rect, :scope > polygon')[0]
         const boudingRect = innerRect.getBoundingClientRect()
         const [rectX, rectY] = [boudingRect.x, boudingRect.y]
-        const [rectWidth, rectHeight] = [innerRect.width, innerRect.height].map(toValue)
+        const [rectWidth, rectHeight] = [boudingRect.width, boudingRect.height]
 
         // Calculate the x,y of the middle of element
         return [rectX + rectWidth / 2, rectY + rectHeight / 2, rectWidth, rectHeight]
@@ -1100,7 +1111,7 @@ config:
                 title: node.label,
                 icon: ` <div style="${baseStyle} background-color: ${nodeTheme[0]};"></div>`,
                 handler: () => {
-                    this.selectNode(node.id, false, true)
+                    this.selectNode(node.id, false)
                     this.resetScrollingToSelected()
                 }
             }
