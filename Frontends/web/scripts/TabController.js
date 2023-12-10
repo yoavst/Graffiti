@@ -1079,7 +1079,7 @@ config:
             ctx.drawImage(img, 0, 0, width, height);
 
             const link = document.createElement('a');
-            link.download = `${name}.png`;
+            link.download = `${name}.jpg`;
             link.href = canvas.toDataURL('image/jpeg');
             link.click();
         };
