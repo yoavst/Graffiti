@@ -416,6 +416,16 @@ config:
         }
     }
 
+    onEdgeClick(src, dst) {
+        const selectedId = this._selectedNode?.id
+        if (selectedId == src) {
+            this.selectNode(dst, false, true)
+        } else if (selectedId == dst) {
+            this.selectNode(src, false, true)
+
+        }
+    }
+
     onEdgeRightClick(src, dst) {
         const _this = this
         const edge = this.edges.filter(item => item.from == src && item.to == dst)[0]
@@ -587,6 +597,14 @@ config:
                         const src = parseInt(classes.filter(it => it.startsWith('LS-N'))[0].substring(4))
                         const dst = parseInt(classes.filter(it => it.startsWith('LE-N'))[0].substring(4))
                         _this.onEdgeRightClick(src, dst)
+                        event.preventDefault()
+                        event.stopPropagation()
+                    })
+                    edge.addEventListener('click', (event) => {
+                        const classes = [...edge.classList]
+                        const src = parseInt(classes.filter(it => it.startsWith('LS-N'))[0].substring(4))
+                        const dst = parseInt(classes.filter(it => it.startsWith('LE-N'))[0].substring(4))
+                        _this.onEdgeClick(src, dst)
                         event.preventDefault()
                         event.stopPropagation()
                     })
