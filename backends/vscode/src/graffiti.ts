@@ -18,18 +18,29 @@ class UpdateParams {
     hover?: string[]
 }
 
-export function createUpdate(document: vscode.TextDocument, symbol: SymbolNode, updateParams: UpdateParams) {
-    const nameAndSymbol = getNameAndLastSymbol(basename(document.fileName), symbol)
-    if (nameAndSymbol == null) return null
+export function createUpdate(document: vscode.TextDocument, symbol: SymbolNode | null, updateParams: UpdateParams) {
+    const nameAndSymbol = symbol == null ? null : getNameAndLastSymbol(basename(document.fileName), symbol)
+    let address = ""
+    let name = ""
+    if (nameAndSymbol != null) {
+        let [name1, lastSymbol] = nameAndSymbol
+        if (updateParams.lineNumber !== undefined) {
+            name1 = `${name1}:${updateParams.lineNumber}`
+        }
+        const fullName = symbol.getFullName()
+        name = name1
 
-    let [name, lastSymbol] = nameAndSymbol
-    if (updateParams.lineNumber !== undefined) {
-        name = `${name}:${updateParams.lineNumber}`
+        address = vscode.workspace.asRelativePath(document.uri) + ":" +
+            (updateParams.lineNumber ?? lastSymbol.range.start.line) + ":" + fullName;
+    } else if (updateParams.lineNumber !== undefined) {
+        const path = document.uri.path
+        const filename = path.substring(path.lastIndexOf('/') + 1);
+
+        address = vscode.workspace.asRelativePath(document.uri) + ":" + updateParams.lineNumber
+        name = filename + ":" + updateParams.lineNumber
+    } else {
+        return null;
     }
-    const fullName = symbol.getFullName()
-
-    let address = vscode.workspace.asRelativePath(document.uri) + ":" +
-        (updateParams.lineNumber ?? lastSymbol.range.start.line) + ":" + fullName;
 
     const base = {
         type: "addData", node: {
@@ -52,7 +63,7 @@ export function createUpdate(document: vscode.TextDocument, symbol: SymbolNode, 
         base['node']['line'] = updateParams.lineNumber
     }
 
-    const detail = symbol.symbolInfo?.detail
+    const detail = symbol?.symbolInfo?.detail
     if (detail) {
         base['node']['detail'] = detail
     }
