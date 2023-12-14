@@ -226,8 +226,6 @@ config:
     theme: dark
     themeVariables:
         lineColor: '#c0c0c0'
-    flowchart:
-        htmlLabels: false
 ---
 ` + s
             }
@@ -848,7 +846,6 @@ config:
     }
 
     undo() {
-        console.log("Called!!")
         this.cachedMermaid = null
 
         if (this.undoHistory.length) {
