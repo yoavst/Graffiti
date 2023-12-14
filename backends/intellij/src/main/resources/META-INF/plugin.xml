@@ -37,6 +37,14 @@
             <add-to-group group-id="EditorPopupMenu" anchor="last"/>
             <keyboard-shortcut keymap="$default" first-keystroke="shift ctrl A"/>
         </action>
+        <action id="com.yoavst.graffiti.intellij.AddLineToGraffitiAction"
+                class="com.yoavst.graffiti.intellij.AddLineToGraffitiAction"
+                text="Add Current Line to Graffiti"
+                icon="MyIcons.Action"
+                description="Add the current line to graffiti graph">
+            <add-to-group group-id="EditorPopupMenu" anchor="last"/>
+            <keyboard-shortcut keymap="$default" first-keystroke="shift ctrl alt A"/>
+        </action>
 
         <action id="com.yoavst.graffiti.intellij.EnableGraffitiSyncAction"
                 class="com.yoavst.graffiti.intellij.EnableGraffitiSyncAction"
