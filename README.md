@@ -9,7 +9,7 @@ Create customized callgraph directly from your favorite editor.
 * You choose what to add and where.
 * Open the selected node in the editor using right click.
 * Add text nodes, and comments
-* Export the graph to mermaid 
+* Export the graph to mermaid, svg or png 
 * The graph support scrolling and zooming
 * Auto save to localstorage, can export to file.
 * Multiple tabs
@@ -32,6 +32,7 @@ Graffiti consists of 3 separate components
     - Navigating the graph
     - Import and export graph
     - Undo, Redo
+    - etc...
 - **Server** - A middleware between the backend and the frontend. Support multiple of them in the same time, by multiplexing all the requests.
 Need to support:
     - TCP editor connection
@@ -59,14 +60,15 @@ python3 -m http.server 80
 4. Follow the usage instructions for the specific backend below.
 
 ## Backends
-| Editor   | Languages                            | add to graph | open in editor | Rename support | Field support | Add line to graph |Socket type |
-| -------- | ------------------------------------ | ------------ | -------------- | -------------- | ------------- | ----------------- | ---------- |
-| JEB      | Java                                 | ✅           | ✅            | ✅            | ✅            | ❌                |TCP         |
-| Intellij | Java, Kotlin                         | ✅           | ✅            | ❌            | ✅            | ❌                |TCP         |
-| VSCode   | Depends on available language server | ✅           | ✅            | ❌            | ❌            | ✅                |TCP         |
-| OpenGrok | *                                    | ✅           | ✅            | ❌            | ❌            | ❌                |Websocket   |
-| IDA      | *                                    | ✅           | ✅            | ✅            | ❌            | ❌                |TCP         |
-| Jadx     | Java                                 | ✅           | ✅            | ✅            | ✅            | ❌                |TCP         |
+| Editor   | Languages                            | add to graph | open in editor | Rename support | Field support | Add line to graph | Add xrefs |Socket type |
+| -------- | ------------------------------------ | ------------ | -------------- | -------------- | ------------- | ----------------- | --------- | ---------- |
+| JEB      | Java                                 | ✅           | ✅            | ✅            | ✅            | ✅                |    ✅    | TCP        |
+| Intellij | Java, Kotlin                         | ✅           | ✅            | ❌            | ✅            | ✅                |    ✅    | TCP        |
+| CLion    | C, C++                               | ✅           | ✅            | ❌            | ✅            | ✅                |    ❌    | TCP        |
+| VSCode   | Depends on available language server | ✅           | ✅            | ❌            | ❌            | ✅                |    ❌    | TCP        |
+| OpenGrok | *                                    | ✅           | ✅            | ❌            | ❌            | ❌                |    ❌    | Websocket  |
+| IDA      | *                                    | ✅           | ✅            | ✅            | ❌            | ❌                |    ❌    | TCP        |
+| Jadx     | Java                                 | ✅           | ✅            | ✅            | ✅            | ❌                |    ❌    | TCP        |
 
 The common shortcuts are:
 * Ctrl+Shift+A - Add a new node to the graph.
@@ -82,19 +84,22 @@ You can build all the backends using `make backends`.
 * Restart JEB
 #### Usage
 Press F2 and then double click `graffiti` to connect the graffiti server. Now, you can use the shortcuts.
-* An additional short is: Ctrl+Shift+Q - Add all of the xrefs of a node to the graph.
+* Ctrl+Shift+Z - Add line node to the graph
+* Ctrl+Shift+Q - Add all of the xrefs of a node to the graph.
+* Ctrl+Shift+Alt+Q - Add all of the line xrefs of a node to the graph.
 
 A Rename will be reflected in the opened graphs.
 
-### Intellij
+### Intellij/CLion
 #### Build
-* Run `gradle jar` inside `backends/intellij`.
+* Run `gradle jar` inside `backends/intellij` or `backends/clion`.
 * The generated plugin will be in `build/libs/`
 #### Installation
-* In Intellij settings, go to plugins, then choose the setting icon and "Install plugin from Disk..."
-* In Intellij settings, go to keymap. Press the find actions by shortcut (on the right) and search for Ctrl+Shift+A. Remove the non-Graffiti shortcut.
+* In Intellij/CLion settings, go to plugins, then choose the setting icon and "Install plugin from Disk..."
+* In Intellij/CLion settings, go to keymap. Press the find actions by shortcut (on the right) and search for Ctrl+Shift+A. Remove the non-Graffiti shortcut.
 #### Usage
 Go to Menu->Tools->"Graffiti: Connect to server". Now, you can use the shortcuts.
+Right click inside the editor to see all the possible shortcuts
 
 ### Visual Studio Code
 #### Build
@@ -143,7 +148,6 @@ Inside a project, Right click `scripts` and choose `Add scripts`. Select `graffi
 Go to Plguins->"Graffiti: Connect to server". Now, you can use the shortcut **A** (the only supported shortcut for now) to add to the graph.
 
 A Rename will be reflected in the opened graphs.  
-Current relevant issues: [#1905](https://github.com/skylot/jadx/issues/1905)
 
 ## Patches
 ### Mermaid
