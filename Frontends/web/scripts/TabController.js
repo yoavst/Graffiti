@@ -568,9 +568,12 @@ config:
 
                     const extra = _this.nodes.get(getIdFromNode(node)).extra
                     const hover = extra.hover?.join('\n') ?? extra.detail
+                    const hoverType = extra.hoverCT ?? "markdown"
                     if (hover) {
+                        const renderedHover = hoverType == "markdown" ? markdownConverter.makeHtml(hover) : hover;
+
                         tippy(node, {
-                            content: '<div class="hoverDoc">' + markdownConverter.makeHtml(hover) + '</div>',
+                            content: '<div class="hoverDoc">' + renderedHover + '</div>',
                             allowHTML: true,
                             delay: [300, 0],
                             placement: 'bottom',

@@ -7,7 +7,6 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.psi.*
-import org.jetbrains.kotlin.idea.core.util.getLineStartOffset
 
 
 open class AddToGraffitiAction : AnAction() {
@@ -17,7 +16,6 @@ open class AddToGraffitiAction : AnAction() {
         event.presentation.isEnabledAndVisible = (event.project != null && event.getData(CommonDataKeys.EDITOR) != null)
     }
 
-    @Suppress("UNCHECKED_CAST")
     override fun actionPerformed(event: AnActionEvent) {
         val project = event.project!!
         val editor = event.getData(CommonDataKeys.EDITOR) ?: return
@@ -38,8 +36,8 @@ open class AddToGraffitiAction : AnAction() {
         }
 
         applyLineOrHover(lineUpdate, editor.caretModel.primaryCaret.logicalPosition.line, nodeUpdate, psiFile, info)
-
         val update = mutableMapOf("type" to "addData", "node" to nodeUpdate)
+
         if (edgeText) {
             val label = Messages.showInputDialog(
                 project, "Enter label for edge",
@@ -50,10 +48,13 @@ open class AddToGraffitiAction : AnAction() {
             }
         }
 
-        SocketHolder.sendJson(event.project!!, update)
+        SocketHolder.sendJson(project, update)
+
+        println(info)
     }
 
     companion object {
+        @Suppress("UNCHECKED_CAST")
         fun applyLineOrHover(
             lineUpdate: Boolean,
             line: Int,
@@ -64,6 +65,8 @@ open class AddToGraffitiAction : AnAction() {
             if (lineUpdate) {
                 // need to update line, label and address
                 nodeUpdate["line"] = line
+
+
 
                 nodeUpdate["address"] = (nodeUpdate["address"] as String).replaceOffset(psiFile.getLineStartOffset(line)!!)
 
@@ -79,30 +82,20 @@ open class AddToGraffitiAction : AnAction() {
             }
         }
 
-        fun addDocumentation(update: MutableMap<String, Any>, psiElement: PsiElement?) {
-            if (psiElement == null) return
-
-            val doc =
-                DocumentationManager.getProviderFromElement(psiElement).generateDoc(psiElement, null)?.trim() ?: ""
-            if (doc.isNotEmpty()) {
-                update["hover"] = arrayOf(doc)
-                update["hoverCT"] = "html"
-            }
-        }
 
         fun createMemberNodeUpdate(
             project: Project,
             memberInfo: Info.Member
         ): MutableMap<String, Any> = mutableMapOf(
-            "project" to ("Intellij: " + project.name),
+            "project" to ("Clion: " + project.name),
             "address" to memberInfo.address,
-            "class" to (memberInfo.containingClassName ?: memberInfo.containingFileName),
+            "namespace" to (memberInfo.namespace ?: memberInfo.containingFileName),
             memberInfo.type.toName() to memberInfo.name,
             "computedProperties" to arrayOf(
                 ComputedProperty(
                     "label",
                     "{0}::\n${memberInfo.type.prefix}{1}",
-                    listOf("class", memberInfo.type.toName())
+                    listOf("namespace", memberInfo.type.toName())
                 )
             )
         )
@@ -111,7 +104,7 @@ open class AddToGraffitiAction : AnAction() {
             project: Project,
             classInfo: Info.Class
         ): MutableMap<String, Any> = mutableMapOf(
-            "project" to ("Intellij: " + project.name),
+            "project" to ("Clion: " + project.name),
             "address" to classInfo.address,
             "class" to classInfo.name,
             "computedProperties" to arrayOf(
@@ -125,7 +118,7 @@ open class AddToGraffitiAction : AnAction() {
             project: Project,
             fileInfo: Info.File,
         ): MutableMap<String, Any> = mutableMapOf(
-            "project" to ("Intellij: " + project.name),
+            "project" to ("Clion: " + project.name),
             "address" to fileInfo.address,
             "computedProperties" to arrayOf(
                 ComputedProperty(
@@ -133,6 +126,17 @@ open class AddToGraffitiAction : AnAction() {
                 )
             )
         )
+
+        fun addDocumentation(update: MutableMap<String, Any>, psiElement: PsiElement?) {
+            if (psiElement == null) return
+
+            val doc =
+                DocumentationManager.getProviderFromElement(psiElement).generateDoc(psiElement, null)?.trim() ?: ""
+            if (doc.isNotEmpty()) {
+                update["hover"] = arrayOf(doc)
+                update["hoverCT"] = "html"
+            }
+        }
     }
 }
 
