@@ -46,10 +46,28 @@
             <keyboard-shortcut keymap="$default" first-keystroke="shift ctrl alt A"/>
         </action>
 
+        <action id="com.yoavst.graffiti.intellij.AddAllXrefsToGraffitiAction"
+                class="com.yoavst.graffiti.intellij.AddAllXrefsToGraffitiAction"
+                text="Add All Xrefs to Graffiti"
+                icon="MyIcons.Action"
+                description="Add all xrefs of the current method/field to graffiti">
+            <add-to-group group-id="EditorPopupMenu" anchor="last"/>
+            <keyboard-shortcut keymap="$default" first-keystroke="shift ctrl Q"/>
+        </action>
+
+        <action id="com.yoavst.graffiti.intellij.AddAllXrefsLineToGraffitiAction"
+                class="com.yoavst.graffiti.intellij.AddAllXrefsLineToGraffitiAction"
+                text="Add All Xrefs Lines to Graffiti"
+                icon="MyIcons.Action"
+                description="Add all xrefs lines of the current method/field to graffiti">
+            <add-to-group group-id="EditorPopupMenu" anchor="last"/>
+            <keyboard-shortcut keymap="$default" first-keystroke="shift ctrl alt Q"/>
+        </action>
+
         <action id="com.yoavst.graffiti.intellij.EnableGraffitiSyncAction"
                 class="com.yoavst.graffiti.intellij.EnableGraffitiSyncAction"
                 icon="MyIcons.Action"
-                text="Graffiti: Connect to server">
+                text="Graffiti: Connect to Server">
             <add-to-group group-id="ToolsMenu" anchor="last"/>
         </action>
     </actions>

@@ -5,136 +5,140 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.Messages
 import com.intellij.psi.*
-import com.intellij.psi.util.PsiTreeUtil
-import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.psi.KtNamedFunction
-import org.jetbrains.kotlin.psi.KtProperty
-import org.jetbrains.kotlin.psi.psiUtil.containingClass
-import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
+import org.jetbrains.kotlin.idea.core.util.getLineStartOffset
 
 
 open class AddToGraffitiAction : AnAction() {
+    open val lineUpdate get() = false
+    open val edgeText get() = false
     override fun update(event: AnActionEvent) {
         event.presentation.isEnabledAndVisible = (event.project != null && event.getData(CommonDataKeys.EDITOR) != null)
     }
 
+    @Suppress("UNCHECKED_CAST")
     override fun actionPerformed(event: AnActionEvent) {
+        val project = event.project!!
         val editor = event.getData(CommonDataKeys.EDITOR) ?: return
         val psiFile = event.getData(CommonDataKeys.PSI_FILE) ?: return
-        val currentElement = psiFile.findElementAt(editor.caretModel.offset) ?: return
+        val currentElement = psiFile.findElementAt(editor.caretModel.offset)
 
-        var update: MutableMap<String, Any>? = null
-        if (psiFile is PsiJavaFile) {
-            val method = PsiTreeUtil.getParentOfType(currentElement, PsiMethod::class.java)
-            if (method != null) {
-                update = createJavaMethodUpdate(event.project!!, psiFile, method)
+        val info = getParentInfo(currentElement, psiFile) ?: return
+
+        if (info is Info.File && !lineUpdate) {
+            // file is only relevant for line updates
+            return
+        }
+
+        val nodeUpdate = when (info) {
+            is Info.Class -> createClassNodeUpdate(project, info)
+            is Info.File -> createFileInfoUpdate(project, info)
+            is Info.Member -> createMemberNodeUpdate(project, info)
+        }
+
+        applyLineOrHover(lineUpdate, editor.caretModel.primaryCaret.logicalPosition.line, nodeUpdate, psiFile, info)
+
+        val update = mutableMapOf("type" to "addData", "node" to nodeUpdate)
+        if (edgeText) {
+            val label = Messages.showInputDialog(
+                project, "Enter label for edge",
+                "Input", Messages.getQuestionIcon()
+            )
+            if (!label.isNullOrBlank()) {
+                update["edge"] = mutableMapOf("label" to label)
+            }
+        }
+
+        SocketHolder.sendJson(event.project!!, update)
+    }
+
+    companion object {
+        fun applyLineOrHover(
+            lineUpdate: Boolean,
+            line: Int,
+            nodeUpdate: MutableMap<String, Any>,
+            psiFile: PsiFile,
+            info: Info
+        ) {
+            if (lineUpdate) {
+                // need to update line, label and address
+                nodeUpdate["line"] = line
+
+                nodeUpdate["address"] = (nodeUpdate["address"] as String).replaceOffset(psiFile.getLineStartOffset(line)!!)
+
+                val computedProperties = nodeUpdate["computedProperties"] as Array<ComputedProperty>
+                val labelProp = computedProperties[0]
+                computedProperties[0] = ComputedProperty(
+                    labelProp.name,
+                    labelProp.format + ":{" + labelProp.replacements.size + "}",
+                    labelProp.replacements + "line"
+                )
             } else {
-                val field = PsiTreeUtil.getParentOfType(currentElement, PsiField::class.java)
-                if (field != null) {
-                    update = createJavaFieldUpdate(event.project!!, psiFile, field)
-                }
-            }
-        } else if (psiFile is KtFile) {
-            val method = PsiTreeUtil.getParentOfType(currentElement, KtNamedFunction::class.java)
-            if (method != null) {
-                update = createKotlinMethodUpdate(event.project!!, psiFile, method)
-            }
-            if (update == null) {
-                val field = PsiTreeUtil.getParentOfType(currentElement, KtProperty::class.java)
-                if (field != null) {
-                    update = createKotlinFieldUpdate(event.project!!, psiFile, field)
-                }
+                addDocumentation(nodeUpdate, info.element)
             }
         }
 
-        if (update != null) {
-            SocketHolder.sendUpdate(event.project!!, update)
+        fun addDocumentation(update: MutableMap<String, Any>, psiElement: PsiElement?) {
+            if (psiElement == null) return
+
+            val doc =
+                DocumentationManager.getProviderFromElement(psiElement).generateDoc(psiElement, null)?.trim() ?: ""
+            if (doc.isNotEmpty()) {
+                update["hover"] = arrayOf(doc)
+            }
         }
-    }
 
-    private fun createKotlinMethodUpdate(project: Project, psiFile: PsiFile, method: KtNamedFunction): MutableMap<String, Any> {
-        val className = method.containingClassOrObject?.name ?: psiFile.name
-        val methodName = method.name ?: "<anonymous>"
-        val address = psiFile.originalFile.virtualFile.path + "@" + method.textOffset
-        return createMethodUpdate(project, className, methodName, address, method)
-    }
-
-    private fun createKotlinFieldUpdate(project: Project, psiFile: PsiFile, field: KtProperty): MutableMap<String, Any> {
-        val className = field.containingClassOrObject?.name ?: psiFile.name
-        val fieldName = field.name!!
-        val address = psiFile.originalFile.virtualFile.path + "@" + field.textOffset
-        return createFieldUpdate(project, className, fieldName, address, field)
-    }
-
-    private fun createJavaMethodUpdate(project: Project, psiFile: PsiFile, method: PsiMethod): MutableMap<String, Any> {
-        val className = method.containingClass!!.name!!
-        val methodName = method.name
-        val address = psiFile.originalFile.virtualFile.path + "@" + method.textOffset
-        return createMethodUpdate(project, className, methodName, address, method)
-    }
-
-    private fun createJavaFieldUpdate(project: Project, psiFile: PsiFile, field: PsiField): MutableMap<String, Any> {
-        val className = field.containingClass!!.name!!
-        val fieldName = field.name
-        val address = psiFile.originalFile.virtualFile.path + "@" + field.textOffset
-        return createFieldUpdate(project, className, fieldName, address, field)
-    }
-
-    protected open fun createMethodUpdate(
-        project: Project,
-        className: String,
-        methodName: String,
-        address: String,
-        element: PsiElement
-    ): MutableMap<String, Any> {
-        return mutableMapOf(
-            "type" to "addData", "node" to mapOf(
-                "project" to ("Intellij: " + project.name),
-                "class" to className,
-                "method" to methodName,
-                "address" to address,
-                "computedProperties" to arrayOf(
-                    mapOf(
-                        "name" to "label",
-                        "format" to "{0}::\n{1}",
-                        "replacements" to arrayOf("class", "method")
-                    )
+        fun createMemberNodeUpdate(
+            project: Project,
+            memberInfo: Info.Member
+        ): MutableMap<String, Any> = mutableMapOf(
+            "project" to ("Intellij: " + project.name),
+            "address" to memberInfo.address,
+            "class" to (memberInfo.containingClassName ?: memberInfo.containingFileName),
+            memberInfo.type.toName() to memberInfo.name,
+            "computedProperties" to arrayOf(
+                ComputedProperty(
+                    "label",
+                    "{0}::\n${memberInfo.type.prefix}{1}",
+                    listOf("class", memberInfo.type.toName())
                 )
             )
-        ).addDocumentation(element)
-    }
+        )
 
-    protected open fun createFieldUpdate(
-        project: Project,
-        className: String,
-        fieldName: String,
-        address: String,
-        element: PsiElement
-    ): MutableMap<String, Any> {
-        return mutableMapOf(
-            "type" to "addData", "node" to mapOf(
-                "project" to ("Intellij: " + project.name),
-                "class" to className,
-                "field" to fieldName,
-                "address" to address,
-                "computedProperties" to arrayOf(
-                    mapOf(
-                        "name" to "label",
-                        "format" to "{0}::\n_{1}",
-                        "replacements" to arrayOf("class", "field")
-                    )
+        fun createClassNodeUpdate(
+            project: Project,
+            classInfo: Info.Class
+        ): MutableMap<String, Any> = mutableMapOf(
+            "project" to ("Intellij: " + project.name),
+            "address" to classInfo.address,
+            "class" to classInfo.name,
+            "computedProperties" to arrayOf(
+                ComputedProperty(
+                    "label", "{0}", listOf("class")
                 )
             )
-        ).addDocumentation(element)
-    }
+        )
 
-    private fun MutableMap<String, Any>.addDocumentation(psiElement: PsiElement): MutableMap<String, Any> {
-        val doc = DocumentationManager.getProviderFromElement(psiElement).generateDoc(psiElement, null)?.trim() ?: ""
-        if (doc.isNotEmpty()) {
-            @Suppress("UNCHECKED_CAST")
-            (this["node"] as MutableMap<String, Any>)["hover"] = arrayOf(doc)
-        }
-        return this
+        fun createFileInfoUpdate(
+            project: Project,
+            fileInfo: Info.File,
+        ): MutableMap<String, Any> = mutableMapOf(
+            "project" to ("Intellij: " + project.name),
+            "address" to fileInfo.address,
+            "computedProperties" to arrayOf(
+                ComputedProperty(
+                    "label", fileInfo.name, listOf()
+                )
+            )
+        )
     }
+}
+
+class AddToGraffitiWithEdgeInfoAction : AddToGraffitiAction() {
+    override val edgeText: Boolean get() = true
+}
+
+class AddLineToGraffitiAction: AddToGraffitiAction() {
+    override val lineUpdate: Boolean get() = true
 }

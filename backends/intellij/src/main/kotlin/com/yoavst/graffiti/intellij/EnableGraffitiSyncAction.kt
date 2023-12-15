@@ -1,17 +1,17 @@
 package com.yoavst.graffiti.intellij
 
 import com.google.gson.JsonParser
+import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vfs.LocalFileSystem
-import java.net.Socket
 import java.io.DataInputStream
 import kotlin.concurrent.thread
-import com.intellij.openapi.diagnostic.Logger;
 
 
 class EnableGraffitiSyncAction : AnAction() {
@@ -24,15 +24,14 @@ class EnableGraffitiSyncAction : AnAction() {
     override fun actionPerformed(e: AnActionEvent) {
         val (address, port) = getAddressAndPort(e.project!!)
 
-        val old = SocketHolder.socket
-        SocketHolder.socket = null
-        old?.close()
-        SocketHolder.socket = Socket(address, port)
-
-        thread(start = true, isDaemon = true) {
-            threadCode(e.project!!)
+        if (SocketHolder.connect(address, port)) {
+            e.project!!.notify("Connected to graffiti at $address:$port", NotificationType.INFORMATION)
+            thread(start = true, isDaemon = true) {
+                threadCode(e.project!!)
+            }
+        } else {
+            e.project!!.notify("Failed to connect to graffiti", NotificationType.ERROR)
         }
-
     }
 
     private fun threadCode(project: Project) {
@@ -45,7 +44,7 @@ class EnableGraffitiSyncAction : AnAction() {
                     // readInt is bigEndian
                     val length = dataInputStream.readInt()
                     val rawData = String(ByteArray(length).also(dataInputStream::readFully))
-                    logger.info("Received data from socket: $rawData")
+                    logger.debug("Received data from socket: $rawData")
 
                     if (rawData.isEmpty())
                         break
@@ -60,13 +59,14 @@ class EnableGraffitiSyncAction : AnAction() {
             }
         } catch (e: Exception) {
             e.printStackTrace()
+            project.notify("Disconnected from graffiti", NotificationType.ERROR)
         }
     }
 
     private fun threadCodeForUi(project: Project, target: String) {
-        val (file, line) = target.split("@")
+        val (file, offset) = target.split("@")
         val vFile = LocalFileSystem.getInstance().findFileByPath(file) ?: return
-        OpenFileDescriptor(project, vFile, line.toInt()).navigate(true)
+        OpenFileDescriptor(project, vFile, offset.toInt()).navigate(true)
     }
 
     private fun getAddressAndPort(project: Project): Pair<String, Int> {
