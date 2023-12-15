@@ -8,7 +8,7 @@ clean:
 init:
 	mkdir -p out
 
-backends: jeb intellij ida vscode opengrok jadx
+backends: jeb intellij clion ida vscode opengrok jadx
 frontends: web visio
 
 ida: check-env
@@ -48,7 +48,19 @@ intellij: check-env
 	cd backends/intellij && ./gradlew jar
 
 	@echo "Copying the file"
-	cp backends/intellij//build/libs/intellij-$(VERSION).jar out/graffiti_v$(VERSION)_for_intellij.jar
+	cp backends/intellij/build/libs/intellij-$(VERSION).jar out/graffiti_v$(VERSION)_for_intellij.jar
+
+clion: check-env
+	@echo "Building Graffiti for CLion"
+	
+	@echo "Updating the version in build.gradle.kts"
+	sed -i 's/version = "[^"]*"/version = "$(VERSION)"/' backends/clion/build.gradle.kts
+
+	@echo "Compiling the extension"
+	cd backends/clion && ./gradlew jar
+
+	@echo "Copying the file"
+	cp backends/clion/build/libs/clion-$(VERSION).jar out/graffiti_v$(VERSION)_for_clion.jar
 
 opengrok: check-env
 	@echo "Building Graffiti for OpenGrok"
