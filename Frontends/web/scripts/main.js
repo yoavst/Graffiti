@@ -401,6 +401,12 @@ function event_addEdgeBetweenSelected() {
     })
 }
 
+function event_overrideLabel() {
+    window.tabsController.onCurrent((_, tabController) => {
+        tabController.overrideCurrentNodeLabel();
+    })
+}
+
 function event_commandPalette() {
     window.commandPalette.open();
 }

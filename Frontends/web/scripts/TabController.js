@@ -4,6 +4,7 @@ const REMOVE_EDGE = "removeEdge"
 const REMOVE_NODE = "removeNode"
 const CHANGE_EDGE_LABEL = "changeEdgeLabel"
 const CHANGE_NODE_LABEL = "changeNodeLabel"
+const OVERRIDE_NODE_LABEL = "overrideNodeLabel"
 const CHANGE_THEME = "changeTheme"
 const SWAP_EDGES = "swapEdges"
 const SWAP_IDS = "swapIds"
@@ -233,16 +234,17 @@ config:
             // Add nodes
             for (const node of nodes) {
                 const nodeName = `N${node.id}`
+                const label = node.overrideLabel ?? node.label
                 if (node.extra.isMarkdown) {
                     if (gui) {
                         if (node.extra.isComment) {
-                            s += `  ${nodeName}{{"\`${escapeHtml(node.label, gui)}\`"}}\n`
+                            s += `  ${nodeName}{{"\`${escapeHtml(label, gui)}\`"}}\n`
                         } else {
-                            s += `  ${nodeName}(["\`${escapeHtml(node.label, gui)}\`"])\n`
+                            s += `  ${nodeName}(["\`${escapeHtml(label, gui)}\`"])\n`
                         }
                     } else {
                         // We support older mermaid version, so no markdown support
-                        s += `${nodeName}("${escapeMarkdown(node.label)}")\n`
+                        s += `${nodeName}("${escapeMarkdown(label)}")\n`
                     }
 
                     if (node.extra.isComment) {
@@ -262,7 +264,7 @@ config:
                     }
                 }
                 else {
-                    s += `  ${nodeName}["${escapeHtml(node.label, gui)}"]\n`
+                    s += `  ${nodeName}["${escapeHtml(label, gui)}"]\n`
                     themesForNodes[node.theme || 0].push(nodeName)
 
 
@@ -874,6 +876,10 @@ config:
                     const { id, oldLabel } = data
                     const node = this.nodes.get(id)
                     node.label = oldLabel
+                } else if (type == OVERRIDE_NODE_LABEL) {
+                    const { id, oldLabel } = data
+                    const node = this.nodes.get(id)
+                    node.overrideLabel = oldLabel
                 } else if (type == CHANGE_THEME) {
                     const { id, oldTheme } = data
                     const node = this.nodes.get(id)
@@ -927,6 +933,10 @@ config:
                     const { id, newLabel } = data
                     const node = this.nodes.get(id)
                     node.label = newLabel
+                } else if (type == OVERRIDE_NODE_LABEL) {
+                    const { id, newLabel } = data
+                    const node = this.nodes.get(id)
+                    node.overrideLabel = newLabel
                 } else if (type == CHANGE_THEME) {
                     const { id, newTheme } = data
                     const node = this.nodes.get(id)
@@ -1156,6 +1166,57 @@ config:
             ninja.open()
         })
 
+    }
+
+    overrideCurrentNodeLabel() {
+        if (this._selectedNode == null) {
+            logEvent('No selected node')
+            return;
+        }
+
+        if (this._selectedNode.extra.isMarkdown) {
+            // No need for override if you can just edit the text
+            this.editMarkdownNode(this._selectedNode)
+        } else { 
+            const oldOverride = this._selectedNode.overrideLabel
+            Swal.fire({
+                title: 'Override node text',
+                input: 'textarea',
+                inputValue: oldOverride ?? this._selectedNode.label,
+                showCancelButton: true,
+                showDenyButton: true,
+                denyButtonText: "Restore original",
+                didOpen: patchOnKeyDown
+            }).then(result => {
+                if (result.isConfirmed) {
+                    const { value = null } = result
+                    if (value != null && value != '') {
+                        this._selectedNode.overrideLabel = value
+
+                        // update history
+                        this.redoHistory = []
+                        this.addUndoMarker()
+                        this.undoHistory.push({ type: OVERRIDE_NODE_LABEL, data: { id: this._selectedNode.id, oldLabel: oldOverride, newLabel: value } })
+
+                        this.cachedMermaid = null
+
+                        this.draw()
+                    }
+                } else if (result.isDenied) {
+                    this._selectedNode.overrideLabel = undefined
+
+                      // update history
+                      this.redoHistory = []
+                      this.addUndoMarker()
+                      this.undoHistory.push({ type: OVERRIDE_NODE_LABEL, data: { id: this._selectedNode.id, oldLabel: oldOverride, newLabel: undefined } })
+
+                      this.cachedMermaid = null
+
+                      this.draw()
+
+                }
+            })
+        }
     }
 }
 

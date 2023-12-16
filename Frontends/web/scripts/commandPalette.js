@@ -308,6 +308,13 @@ class CommandPalette {
                 section: 'Graph',
                 handler: () => { event_deselect(); },
             },
+            {
+                id: 'OverrideLabel',
+                title: 'Override the label of the selected node in the current graph',
+                icon: iconFor('edit'),
+                section: 'Graph',
+                handler: () => { event_overrideLabel(); },
+            },
         ];
     }
 }
