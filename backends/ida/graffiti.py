@@ -69,8 +69,15 @@ class AddToGraphHandler(idaapi.action_handler_t):
                 "type": "addData", "node": {
                     "project": "IDA: " + db_filename,
                     "address": str(ctx.cur_func.start_ea), 
-                    "label": func_name,
-                    "computedProperties": []
+                    "function": func_name,
+                    "functionAddress": str(ctx.cur_func.start_ea),
+                    "computedProperties": [
+                        {
+                            "name": "label",
+                            "format": "{0}",
+                            "replacements": ["function"]
+                        }
+                    ]
                 }
         }
     # This action is always available.
@@ -83,6 +90,20 @@ class AddToGraphWithEdgeInfoHandler(AddToGraphHandler):
         edge_text = ida_kernwin.ask_str('', 2, 'Enter label for edge')
         if edge_text and edge_text.strip():
             base["edge"] = {"label": edge_text}
+        return base
+    
+class AddToGraphLineHandler(AddToGraphHandler):
+    def create_payload(self, ctx):
+        base = AddToGraphHandler.create_payload(self, ctx)
+        base['node']['computedProperties'] = [
+            {
+                "name": "label",
+                "format": "{0}+{1}",
+                "replacements": ["function", "line"]
+            }
+        ]
+        base['node']['address'] = str(ctx.cur_ea)
+        base['node']['line'] = '{0:x}'.format(ctx.cur_ea - ctx.cur_func.start_ea)
         return base
     
 class EnableSyncHandler(idaapi.action_handler_t):
@@ -152,6 +173,13 @@ add_to_graph_with_edge_info_action_desc = idaapi.action_desc_t(
     'Ctrl+Shift+X',      # Optional: the action shortcut
     'Add to graph with edge comment'
     )
+add_line_to_graph_action_desc = idaapi.action_desc_t(
+    'graffiti:addLineToGraph', 
+    'Graffiti: Add current line to graph',  # The action text.
+    AddToGraphLineHandler(),   # The action handler.
+    'Ctrl+Alt+A',      # Optional: the action shortcut
+    'Add line to graph'
+    )
 enable_graffiti_sync_action_desc = idaapi.action_desc_t(
     'graffiti:ConnectToServer', 
     'Graffiti: Connect to server',  # The action text.
@@ -165,6 +193,8 @@ idaapi.unregister_action('graffiti:addToGraph')
 idaapi.register_action(add_to_graph_action_desc)
 idaapi.unregister_action('graffiti:addToGraphWithEdgeInfo')
 idaapi.register_action(add_to_graph_with_edge_info_action_desc)
+idaapi.unregister_action('graffiti:addLineToGraph')
+idaapi.register_action(add_line_to_graph_action_desc)
 idaapi.unregister_action('graffiti:ConnectToServer')
 idaapi.register_action(enable_graffiti_sync_action_desc)
 
@@ -179,6 +209,7 @@ class GraffitiUIHooks(idaapi.UI_Hooks):
         if idaapi.get_widget_type(form) == idaapi.BWN_DISASM or idaapi.get_widget_type(form) == idaapi.BWN_PSEUDOCODE:
             idaapi.attach_action_to_popup(form, popup, "graffiti:addToGraph", "Graffiti/")
             idaapi.attach_action_to_popup(form, popup, "graffiti:addToGraphWithEdgeInfo", "Graffiti/")
+            idaapi.attach_action_to_popup(form, popup, "graffiti:addLineToGraph", "Graffiti/")
 
 class GrafitiIDBHooks(idaapi.IDB_Hooks):
     def renamed(self, ea, new_name, is_local):
@@ -186,9 +217,9 @@ class GrafitiIDBHooks(idaapi.IDB_Hooks):
         if sock is not None and new_name:
             payload = {
                 "type": "updateNodes",
-                "selection": [["address", str(ea)]],
+                "selection": [["functionAddress", str(ea)]],
                 "update": {
-                    "label": new_name
+                    "function": new_name
                 }
             }
             lengthy_send(sock, to_bytes(json.dumps(payload)))
