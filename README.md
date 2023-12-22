@@ -67,7 +67,7 @@ python3 -m http.server 80
 | CLion    | C, C++                               | ✅           | ✅            | ❌            | ✅            | ✅                |    ❌    | TCP        |
 | VSCode   | Depends on available language server | ✅           | ✅            | ❌            | ❌            | ✅                |    ❌    | TCP        |
 | OpenGrok | *                                    | ✅           | ✅            | ❌            | ❌            | ❌                |    ❌    | Websocket  |
-| IDA      | *                                    | ✅           | ✅            | ✅            | ❌            | ❌                |    ❌    | TCP        |
+| IDA      | *                                    | ✅           | ✅            | ✅            | -             | ✅                |    ✅    | TCP        |
 | Jadx     | Java                                 | ✅           | ✅            | ✅            | ✅            | ❌                |    ❌    | TCP        |
 
 The common shortcuts are:
@@ -136,6 +136,7 @@ Right click inside the editor to see all the possible shortcuts
 Inside a project, run `file->execute script`, choose the `graffiti.py` script.
 #### Usage
 Go to Options->"Graffiti: Connect to server". Now, you can use the shortcuts.
+Also, you can see the shortcus by right clicking on function/address, selecting graffiti.
 
 A Rename will be reflected in the opened graphs.
 
