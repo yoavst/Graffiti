@@ -33,7 +33,7 @@ jadx.events.addListener(JadxEvents.NODE_RENAMED_BY_USER) { rename ->
 			sendUpdate(
 				mutableMapOf(
 					"type" to "updateNodes",
-					"selection" to arrayOf(arrayOf("classAddress", renamedNode.fullName)),
+					"selection" to arrayOf(arrayOf("classAddress", renamedNode.classInfo.fullName)),
 					"update" to mutableMapOf("class" to rename.newName)
 				)
 			)
@@ -161,8 +161,8 @@ fun addToGraph(node: ICodeNodeRef) {
 
 fun ICodeNodeRef.toAddress(): String {
 	return when (this) {
-		is MethodNode -> "1|${parentClass.fullName}|${methodInfo.shortId}"
-		is FieldNode -> "2|${parentClass.fullName}|${fieldInfo.shortId}"
+		is MethodNode -> "1|${parentClass.classInfo.fullName}|${methodInfo.shortId}"
+		is FieldNode -> "2|${parentClass.classInfo.fullName}|${fieldInfo.shortId}"
 		else -> throw IllegalArgumentException("Should not be called with a node that is not a method nor field")
 	}
 }
