@@ -265,10 +265,11 @@ fun sendUpdate(data: Any) {
 
 	val json: String = Gson().toJson(data)
 	jadx.log.debug { "Sending to graffiti: $json" }
+	val message = json.toByteArray()
 
 	socket.getOutputStream().buffered().let { writer ->
-		writer.write(ByteBuffer.allocate(4).order(ByteOrder.BIG_ENDIAN).putInt(json.length).array())
-		writer.write(json.toByteArray())
+		writer.write(ByteBuffer.allocate(4).order(ByteOrder.BIG_ENDIAN).putInt(message.size).array())
+		writer.write(message)
 		writer.flush()
 	}
 }

@@ -42,10 +42,11 @@ async def send_ide(request: str, src):
     # We duplicate the lists, to prevent modification of the lists while we use it. 
     # handle_ide_X are reponsible for cleaning the lists in case of a closed socket.
 
+    request_bytes = request.encode('utf-8')
     for _, writer in ide_tcps[:]:
         try:
-            writer.write(struct.pack('>i', len(request)))
-            writer.write(request.encode('utf-8'))
+            writer.write(struct.pack('>i', len(request_bytes)))
+            writer.write(request_bytes)
             await writer.drain()
 
         except socket.error:
