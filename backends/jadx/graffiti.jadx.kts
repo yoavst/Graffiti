@@ -24,6 +24,13 @@ jadx.gui.ifAvailable {
 		action = ::addToGraph,
 	)
 
+	addPopupMenuAction(
+		"Graffiti: Add xrefs to graph (q)",
+		enabled = { true },
+		keyBinding = "Q",
+		action = ::addXrefsToGraph,
+	)
+
 	addMenuAction("Graffiti: Connect to server", ::connectToServer)
 }
 
@@ -81,7 +88,7 @@ fun connectToServer() {
 }
 
 fun threadCode() {
-	jadx.log.info { "Graffiti: Background thread is running" }
+	log.info { "Graffiti: Background thread is running" }
 	try {
 		socket?.use { sock ->
 			val dataInputStream = DataInputStream(sock.getInputStream())
@@ -90,7 +97,7 @@ fun threadCode() {
 				// readInt is bigEndian
 				val length = dataInputStream.readInt()
 				val rawData = String(ByteArray(length).also(dataInputStream::readFully))
-				jadx.log.info { "Received data from socket: $rawData" }
+				log.info { "Received data from socket: $rawData" }
 
 				if (rawData.isEmpty())
 					break
@@ -115,7 +122,7 @@ fun threadCodeForUi(target: String) {
 	val (type, clazz, sub) = target.split('|')
 	val isMethod = (type == "1")
 	val classInstance = jadx.search.classByFullName(clazz) ?: run {
-		jadx.log.warn { "Class not found: $target" }
+		log.warn { "Class not found: $target" }
 		return
 	}
 	val node =
@@ -124,7 +131,7 @@ fun threadCodeForUi(target: String) {
 		} else {
 			classInstance.searchFieldByShortId(sub)
 		}) ?: run {
-			jadx.log.warn { "${if (isMethod) "Method" else "Field"} not found: $target" }
+			log.warn { "${if (isMethod) "Method" else "Field"} not found: $target" }
 			return
 		}
 
@@ -144,7 +151,7 @@ fun addToGraph(node: ICodeNodeRef) {
 	}
 
 	val enclosing = jadx.gui.enclosingNodeUnderCaret ?: run {
-		jadx.log.info { "Graffiti: No enclosing node, aborting." }
+		log.info { "Graffiti: No enclosing node, aborting." }
 		return
 	}
 
@@ -154,6 +161,38 @@ fun addToGraph(node: ICodeNodeRef) {
 	val target = if (enclosing is MethodNode) enclosing else node
 
 	val update = createUpdate(target) ?: return
+	sendUpdate(update)
+}
+
+fun addXrefsToGraph(node: ICodeNodeRef) {
+	log.debug { "Graffiti xrefs action called on $node" }
+	if (socket == null) {
+		JOptionPane.showMessageDialog(
+			null, "Not connected to graffiti server", "Graffiti error",
+			JOptionPane.ERROR_MESSAGE
+		)
+		return
+	}
+
+	val enclosing = jadx.gui.enclosingNodeUnderCaret ?: run {
+		log.info { "Graffiti: No enclosing node, aborting." }
+		return
+	}
+
+	// We support either a field or a method
+	// If enclosing is a method - we activated the keybinding inside a method, so we want the method
+	// If enclosing is the class, so we've activated the keybinding on a field decl.
+	val target = if (enclosing is MethodNode) enclosing else node
+
+	val xrefs = when (target) {
+		is MethodNode -> target.useIn
+		is FieldNode -> target.useIn
+		else -> return
+	}.distinctBy { it.methodInfo.shortId }
+
+	if (xrefs.isEmpty()) return
+
+	val update = mapOf("type" to "addDataBulk", "direction" to "n2e", "nodes" to xrefs.mapNotNull(::createUpdate).map { it["node"] })
 	sendUpdate(update)
 }
 

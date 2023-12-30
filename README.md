@@ -68,7 +68,7 @@ python3 -m http.server 80
 | VSCode   | Depends on available language server | ✅           | ✅            | ❌            | ❌            | ✅                |    ❌    | TCP        |
 | OpenGrok | *                                    | ✅           | ✅            | ❌            | ❌            | ❌                |    ❌    | Websocket  |
 | IDA      | *                                    | ✅           | ✅            | ✅            | -             | ✅                |    ✅    | TCP        |
-| Jadx     | Java                                 | ✅           | ✅            | ✅            | ✅            | ❌                |    ❌    | TCP        |
+| Jadx     | Java                                 | ✅           | ✅            | ✅            | ✅            | ❌                |    ✅    | TCP        |
 
 The common shortcuts are:
 * Ctrl+Shift+A - Add a new node to the graph.
@@ -146,7 +146,7 @@ A Rename will be reflected in the opened graphs.
 #### Installation
 Inside a project, Right click `scripts` and choose `Add scripts`. Select `graffiti.py` script.
 #### Usage
-Go to Plguins->"Graffiti: Connect to server". Now, you can use the shortcut **A** (the only supported shortcut for now) to add to the graph.
+Go to Plguins->"Graffiti: Connect to server". Now, you can use the shortcut **A** to add to the graph. **Q** Will add all the xrefs to the graph.
 
 A Rename will be reflected in the opened graphs.  
 
