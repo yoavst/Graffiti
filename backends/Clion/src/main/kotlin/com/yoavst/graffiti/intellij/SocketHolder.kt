@@ -29,11 +29,11 @@ object SocketHolder {
             return
         }
         socket.getOutputStream().buffered().let { stream ->
-            val json = Gson().toJson(data)
+            val message = Gson().toJson(data).toByteArray()
             // write length
-            stream.write(ByteBuffer.allocate(4).order(ByteOrder.BIG_ENDIAN).putInt(json.length).array())
+            stream.write(ByteBuffer.allocate(4).order(ByteOrder.BIG_ENDIAN).putInt(message.size).array())
             // write data
-            stream.write(json.toByteArray())
+            stream.write(message)
             stream.flush()
         }
     }
