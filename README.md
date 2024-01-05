@@ -76,79 +76,9 @@ The common shortcuts are:
 
 Your cursor should be inside the function (or field in supported platforms) you want to add to the graph.
 
-You can build all the backends using `make backends`.
+You can build all the backends using `make VERSION=1.0.0`, or build specific instruction by running its task.
 
-### JEB
-#### Installation
-* Copy the scripts from `backend/jeb` into `$JEB_INSTALLATION/scripts/graffiti`
-* Restart JEB
-#### Usage
-Press F2 and then double click `graffiti` to connect the graffiti server. Now, you can use the shortcuts.
-* Ctrl+Shift+Z - Add line node to the graph
-* Ctrl+Shift+Q - Add all of the xrefs of a node to the graph.
-* Ctrl+Shift+Alt+Q - Add all of the line xrefs of a node to the graph.
-
-A Rename will be reflected in the opened graphs.
-
-### Intellij/CLion
-#### Build
-* Run `gradle jar` inside `backends/intellij` or `backends/clion`.
-* The generated plugin will be in `build/libs/`
-#### Installation
-* In Intellij/CLion settings, go to plugins, then choose the setting icon and "Install plugin from Disk..."
-* In Intellij/CLion settings, go to keymap. Press the find actions by shortcut (on the right) and search for Ctrl+Shift+A. Remove the non-Graffiti shortcut.
-#### Usage
-Go to Menu->Tools->"Graffiti: Connect to server". Now, you can use the shortcuts.
-Right click inside the editor to see all the possible shortcuts
-
-### Visual Studio Code
-#### Build
-* `npm install -g @vscode/vsce`
-* Run `vsce package` inside `backends/vscode`
-* A vsix file will be generated on the same folder
-#### Installation
-* In the extensions section in the side menu, click the menu icon, then "Install from VSIX..."
-* Install language servers for the languages you want to support
-    * Anycode is a language server based on treesitter, which supports: C#, CPP (C), Go, Java, Kotlin, PHP, Python, Rust, Typescript (Javascript)
-#### Usage
-* Go to the command palate (Ctrl+Shift+P). Choose "Graffiti: Connect to server". Now, you can use the shortcuts.
-* Additional shortcut is (Ctrl+Shift+Q) for adding the current line as a node to the graph.
-
-### OpenGrok
-#### Build
-* Go to chrome://extensions
-* Enable developer mode
-* Select "Pack extension", and use `backends/opengrok` as the folder.
-* You will be informed where the crx is saved
-#### Installation
-* Go to chrome://extensions
-* Enable developer mode
-* Try drag and droping the Crx
-* If it doesn't work, choose load unpacked, and select `backends/opengrok` as the folder.
-* Pin the graffiti extension to the toolbar
-* Go to chrome://extensions/shortcuts and set "Ctrl+Shift+A" for "Add to graph", and "Ctrl+Shift+X" for "Add to graph with edge info"
-#### Usage
-* Press The graffiti icon in the toolbar, and then connect the server. Now you can use the shortcuts.
-* In the previous popup window, you can change the settings of the plugin.
-
-### IDA
-#### Installation
-Inside a project, run `file->execute script`, choose the `graffiti.py` script.
-#### Usage
-Go to Options->"Graffiti: Connect to server". Now, you can use the shortcuts.
-Also, you can see the shortcus by right clicking on function/address, selecting graffiti.
-
-A Rename will be reflected in the opened graphs.
-
-### Jadx
-**Note:** Currently requires building Jadx from source to run the script.
-
-#### Installation
-Inside a project, Right click `scripts` and choose `Add scripts`. Select `graffiti.py` script.
-#### Usage
-Go to Plguins->"Graffiti: Connect to server". Now, you can use the shortcut **A** to add to the graph. **Q** Will add all the xrefs to the graph.
-
-A Rename will be reflected in the opened graphs.  
+Check [here](docs/platforms) for instructions for using graffiti on each supported platform
 
 ## Patches
 ### Mermaid
