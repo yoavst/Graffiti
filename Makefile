@@ -1,3 +1,12 @@
+# Load version
+FILE := version.txt
+ifeq ($(wildcard $(FILE)),)
+$(error File $(FILE) does not exist)
+else
+VERSION := $(shell cat $(FILE))
+export VERSION
+endif
+
 .PHONY: *
 
 all: pre-package web-collect
@@ -13,22 +22,22 @@ init:
 backends: jeb intellij clion ida vscode opengrok jadx
 frontends: web visio
 
-ida: check-env
+ida:
 	@echo "Building Graffiti for IDA"
 	echo "# Graffiti for IDA, Version: $(VERSION)" | cat - backends/ida/graffiti.py > out/graffiti_v$(VERSION)_for_ida.py
 
-jadx: check-env
+jadx:
 	@echo "Building Graffiti for Jadx"
 	cp backends/jadx/graffiti.jadx.kts out/graffiti_v$(VERSION).jadx.kts
 
-jeb: check-env
+jeb:
 	@echo "Building Graffiti for JEB"
 	# We cannot add the beginning of the files, as JEB parses them.
 	echo $(VERSION) > .graffiti_version
 	zip -j out/graffiti_v$(VERSION)_for_jeb.zip backends/jeb/*.py .graffiti_version
 	rm .graffiti_version
 
-vscode: check-env
+vscode:
 	@echo "Building Graffiti for VSCode"
 
 	@echo "Updating the version in package.json"
@@ -40,7 +49,7 @@ vscode: check-env
 	@echo "Moving the file"
 	mv backends/vscode/graffiti-$(VERSION).vsix out/graffiti_v$(VERSION)_for_vscode.vsix
 
-intellij: check-env
+intellij:
 	@echo "Building Graffiti for Intellij"
 	
 	@echo "Updating the version in build.gradle.kts"
@@ -52,7 +61,7 @@ intellij: check-env
 	@echo "Copying the file"
 	cp backends/intellij/build/libs/intellij-$(VERSION).jar out/graffiti_v$(VERSION)_for_intellij.jar
 
-clion: check-env
+clion:
 	@echo "Building Graffiti for CLion"
 	
 	@echo "Updating the version in build.gradle.kts"
@@ -64,7 +73,7 @@ clion: check-env
 	@echo "Copying the file"
 	cp backends/clion/build/libs/clion-$(VERSION).jar out/graffiti_v$(VERSION)_for_clion.jar
 
-opengrok: check-env
+opengrok:
 	@echo "Building Graffiti for OpenGrok"
 
 	@echo "Updating the version in manifest.json"
@@ -73,26 +82,21 @@ opengrok: check-env
 	@echo "Since chrome dropped support for CRXs not from store, just zipping the folder"
 	cd backends/opengrok && zip -r ../../out/graffiti_v$(VERSION)_for_opengrok.zip *
 
-web: check-env
+web:
 	@echo "Building Graffiti for Web"
 	sed -i.bak "s/_VERSION_/$(VERSION)/g" frontends/web/index.html
 	cd frontends/web; find -L . -type f ! -name '*.bak' ! -path './out/*' -exec zip --symlinks ../../out/graffiti_v$(VERSION)_frontend_web.zip {} +
 	mv frontends/web/index.html.bak frontends/web/index.html
 
-web-collect: check-env
+web-collect:
 	@echo "Building Graffiti for Web again"
 	sed -i.bak "s/_VERSION_/$(VERSION)/g" frontends/web/index.html
 	cd frontends/web; find -L . -type f ! -name '*.bak' -exec zip ../../out/graffiti_v$(VERSION)_frontend_web_with_deps.zip {} +
 	mv frontends/web/index.html.bak frontends/web/index.html
 
-visio: check-env
+visio:
 	@echo "Building visio via makefile is not yet supported"
 
-server: check-env
+server:
 	@echo "Building the graffiti Server"
 	cp server/main.py out/graffiti_v$(VERSION)_server.py
-
-check-env:
-ifndef VERSION
-	$(error VERSION environment variable is undefined)
-endif

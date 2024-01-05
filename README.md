@@ -76,7 +76,7 @@ The common shortcuts are:
 
 Your cursor should be inside the function (or field in supported platforms) you want to add to the graph.
 
-You can build all the backends using `make VERSION=1.0.0`, or build specific instruction by running its task.
+You can build all the backends using `make`, or build specific backend by running its own task.
 
 Check [here](docs/platforms) for instructions for using graffiti on each supported platform
 
