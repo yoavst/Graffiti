@@ -66,7 +66,7 @@ python3 -m http.server 80
 | Intellij | Java, Kotlin                         | ✅           | ✅            | ❌            | ✅            | ✅                |    ✅    | TCP        |
 | CLion    | C, C++                               | ✅           | ✅            | ❌            | ✅            | ✅                |    ❌    | TCP        |
 | VSCode   | Depends on available language server | ✅           | ✅            | ❌            | ❌            | ✅                |    ❌    | TCP        |
-| OpenGrok | *                                    | ✅           | ✅            | ❌            | ❌            | ❌                |    ❌    | Websocket  |
+| OpenGrok | *                                    | ✅           | ✅            | ❌            | ❌            | ✅                |    ❌    | Websocket  |
 | IDA      | *                                    | ✅           | ✅            | ✅            | -             | ✅                |    ✅    | TCP        |
 | Jadx     | Java                                 | ✅           | ✅            | ✅            | ✅            | ❌                |    ✅    | TCP        |
 
