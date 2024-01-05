@@ -120,7 +120,41 @@ function event_export() {
 }
 
 function event_exportAll() {
-    tabsController.onEach(exportController)
+    function asUniqueNames(files) {
+        const names = new Set();
+        const transformedArray = [];
+      
+        files.forEach(file => {
+          let { name, content } = file;
+          let suffix = 1;
+      
+          while (names.has(name)) {
+            name = `${file.name}_${suffix}`;
+            suffix++;
+          }
+      
+          names.add(name);
+          transformedArray.push({ name, content });
+        });
+      
+        return transformedArray;
+      }
+
+    const tar = tarts(asUniqueNames(tabsController.map((name, tabController) => ({
+        name: `${name}`,
+        content: tabController.export()
+    }))).map(({name, content}) => ({name: `${name}.json`, content})))
+
+    const blob = new Blob([tar], { type: 'application/tar' })
+    const url = window.URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.style.display = 'none'
+    a.href = url
+    a.download = 'exported_graffitis.tar'
+    document.body.appendChild(a)
+    a.click()
+    window.URL.revokeObjectURL(url)
+    document.body.removeChild(a)
     return false
 }
 
@@ -360,7 +394,7 @@ function event_searchAll() {
             return result
         })
     }).flatMap(l => l)
-    
+
     if (searchResults.length != 0) {
         const ninja = document.querySelector('ninja-keys')
         ninja.setAttribute("placeholder", "Search node in all graphs")
