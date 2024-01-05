@@ -1,3 +1,12 @@
+## 1.9.0
+### Web
+* [Feature] Add documentations and downloads to the web frontend. Now you can use `?` to download all backends.
+* [Feautre] Add changelog to the web frontend. Available from command palette
+* [Feature] Check for graffiti frontend on server every 3 hours.
+### General
+* [Build] Move version info to version.txt file
+* [Docs] Add changelog.md
+
 ## 1.8.4
 ### Opengrok
 * [Feature] Line nodes are supported (note: you must be over an element, not an empty space)

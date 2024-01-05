@@ -652,7 +652,7 @@ function checkForUpdates() {
         return r.text()
     }).then(version => {
         version = version.trim()
-        if (version != window.versionStr) {
+        if (version != window.versionStr && !window.versionStr.includes('VERSION')) {
             // new version
             Swal.fire({
                 title: `New graffiti version is available: ${version}. Refresh for new goodies 😊`,

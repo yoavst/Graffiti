@@ -20,4 +20,5 @@ Right click the button on the top right of the screen to connect to the local py
 * Middle clicking a node will swap a node with the selected node (same parent). ctrl for same son, shift for id swap
 * You can drag and drop tabs to reorder them
 ## Deploy
-If you want to locally deploy, download the WEB UI zip, and put all the other downloads (including itself) inside the `out/` folder
+* If you want to locally deploy, download the WEB UI zip, and put all the other downloads (including itself) inside the `out/` folder
+* Then serve it using http server (as feature like docs wouldn't work from direct file access)
