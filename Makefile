@@ -64,8 +64,11 @@ clion: check-env
 
 opengrok: check-env
 	@echo "Building Graffiti for OpenGrok"
-	@echo "Since chrome dropped support for CRXs not from store, just zipping the folder"
 
+	@echo "Updating the version in manifest.json"
+	sed -i 's/"version": "[^"]*",/"version": "$(VERSION)",/' backends/opengrok/manifest.json
+
+	@echo "Since chrome dropped support for CRXs not from store, just zipping the folder"
 	cd backends/opengrok && zip -r ../../out/graffiti_v$(VERSION)_for_opengrok.zip *
 
 web: check-env
