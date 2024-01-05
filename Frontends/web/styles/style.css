@@ -385,5 +385,10 @@ footer {
   }
 
 .swal2-container * {
-    user-select: auto;
+    user-select: text;
+    list-style-position: inside;
+}
+
+.swal2-container .left * {
+    text-align: left;
 }

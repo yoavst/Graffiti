@@ -210,6 +210,13 @@ class CommandPalette {
                 handler: () => { event_toggleRenderer(); },
             },
             {
+                id: 'ShowChangelog',
+                title: 'Show Changelog for graffiti',
+                icon: iconFor('update'),
+                section: 'General',
+                handler: () => { event_showChangelog(); }
+            },
+            {
                 id: 'Settings',
                 title: 'Modify Settings',
                 icon: iconFor('settings'),

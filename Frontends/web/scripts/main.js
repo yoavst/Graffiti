@@ -6,17 +6,17 @@ const LOCAL_STORAGE_BACKUP_KEY = "__OLD_BACKUP"
 const LOCAL_STORAGE_DEFAULT = { isKeymapReversed: false, hoverDoc: false, darkMode: true, isCurvedEdges: false, isFirstTime: true }
 
 const GRAFFITI_PLATFORMS = [
-    {name: 'JEB', filename: 'graffiti_v{}_for_jeb.zip', icon: 'images/platforms/JEB.png', color: '#6ca41b'},
-    {name: 'Jadx', filename: 'graffiti_v{}.jadx.kts', icon: 'images/platforms/Jadx.svg', color: '#ec6038'},
-    {name: 'Intellij IDEA', filename: 'graffiti_v{}_for_intellij.jar', icon: 'images/platforms/Intellij_IDEA.svg', color: '#fe315d'},
-    {name: 'Clion', filename: 'graffiti_v{}_for_clion.jar', icon: 'images/platforms/Clion.svg', color: '#16c0ab'},
-    {name: 'Visual Studio Code', filename: 'graffiti_v{}_for_vscode.vsix', icon: 'images/platforms/Visual_Studio_Code.svg', color: '#007ACC'},
-    {name: 'IDA', filename: 'graffiti_v{}_for_ida.py', icon: 'images/platforms/IDA.png', color: '#c0a58f'},
-    {name: 'OpenGrok', filename: 'graffiti_v{}_for_opengrok.zip', icon: 'images/platforms/Opengrok.png', color: '#5484a4'},
+    { name: 'JEB', filename: 'graffiti_v{}_for_jeb.zip', icon: 'images/platforms/JEB.png', color: '#6ca41b' },
+    { name: 'Jadx', filename: 'graffiti_v{}.jadx.kts', icon: 'images/platforms/Jadx.svg', color: '#ec6038' },
+    { name: 'Intellij IDEA', filename: 'graffiti_v{}_for_intellij.jar', icon: 'images/platforms/Intellij_IDEA.svg', color: '#fe315d' },
+    { name: 'Clion', filename: 'graffiti_v{}_for_clion.jar', icon: 'images/platforms/Clion.svg', color: '#16c0ab' },
+    { name: 'Visual Studio Code', filename: 'graffiti_v{}_for_vscode.vsix', icon: 'images/platforms/Visual_Studio_Code.svg', color: '#007ACC' },
+    { name: 'IDA', filename: 'graffiti_v{}_for_ida.py', icon: 'images/platforms/IDA.png', color: '#c0a58f' },
+    { name: 'OpenGrok', filename: 'graffiti_v{}_for_opengrok.zip', icon: 'images/platforms/Opengrok.png', color: '#5484a4' },
 ]
 const GRAFFITI_UTILS = [
-    {name: 'Web UI', filename: 'graffiti_v{}_frontend_web.zip', icon: 'images/icon.png', color: '#1e1f22'},
-    {name: 'Server', filename: 'graffiti_v1.8.4_server.py', icon: 'images/platforms/python.svg', color: '#C9B44C'},
+    { name: 'Web UI', filename: 'graffiti_v{}_frontend_web.zip', icon: 'images/icon.png', color: '#1e1f22' },
+    { name: 'Server', filename: 'graffiti_v1.8.4_server.py', icon: 'images/platforms/python.svg', color: '#C9B44C' },
 ]
 
 
@@ -159,7 +159,7 @@ function event_exportAll() {
         content: tabController.export()
     })))
 
-    files.forEach(({name, content}) => tarWriter.addTextFile(`${name}.json`, content))
+    files.forEach(({ name, content }) => tarWriter.addTextFile(`${name}.json`, content))
     tarWriter.download('graffiti_export.tar')
     return false
 }
@@ -205,7 +205,7 @@ function event_import_onFile(file) {
             tabsController.tabs[0].tabController.nodes.size() == 0) {
             tabsController.removeTab(0)
         }
-        
+
         const contents = e.target.result
         if (isTARFile(contents)) {
             let tar = new tarball.TarReader();
@@ -221,7 +221,7 @@ function event_import_onFile(file) {
             if (name.endsWith(".json")) {
                 name = name.substring(0, name.length - 5);
             }
-            
+
             const addedTab = tabsController.addTab(name)
             tabsController.selectTab(addedTab)
             tabsController.onCurrent((_, controller) => {
@@ -428,7 +428,7 @@ function event_commandPalette() {
 }
 
 function event_help() {
-    const toHtml = function({name, icon, color, filename}) {
+    const toHtml = function ({ name, icon, color, filename }) {
         return `<li class="material-item">
             <img src="${icon}" class="material-icon"></img>
             <span class="material-title">${name}</span>
@@ -454,11 +454,11 @@ function event_help() {
         html: html,
         width: '50em',
         confirmButtonText: 'Close',
-      });
+    });
 }
 
 function event_downloadPlatform(filename) {
-    filename = filename.replace('{}', window.version)
+    filename = filename.replace('{}', window.versionStr)
     const link = document.createElement('a')
     link.href = `out/${filename}`
     link.setAttribute('download', '')
@@ -475,10 +475,24 @@ function event_showDocs(platform) {
         .then(html => {
             Swal.fire({
                 title: platform,
-                html: `<div style="user-select: text;">${html}</div>`,
+                html: `<div class="left">${html}</div>`,
                 confirmButtonText: 'Close',
                 width: '48em',
-              });
+            });
+        })
+}
+
+function event_showChangelog() {
+    fetch(`CHANGELOG.md`)
+        .then(r => r.text())
+        .then(text => new showdown.Converter().makeHtml(text))
+        .then(html => {
+            Swal.fire({
+                html: `<div class="left" style="max-height: 75vh; overflow-y: auto;">${html}</div>`,
+                title: 'Changelog',
+                confirmButtonText: 'Close',
+                width: '48em',
+            });
         })
 }
 
@@ -487,6 +501,7 @@ function main() {
     initiateDependencies();
     initiateHotkeys();
     initializeDragAndDrop();
+    initiateCheckForUpdates();
     setHelpBarAppearance();
     handleDarkMode();
 
@@ -616,7 +631,6 @@ function initializeDragAndDrop() {
 }
 
 function initiateLocalStorage() {
-    backupOnUpdate();
     for (const key of Object.keys(LOCAL_STORAGE_DEFAULT)) {
         if (localStorage.getItem(key) == null) {
             localStorage.setItem(key, LOCAL_STORAGE_DEFAULT[key])
@@ -624,14 +638,36 @@ function initiateLocalStorage() {
     }
 }
 
-function backupOnUpdate() {
-    if (window.version) {
-        const oldVersion = parseFloat(localStorage.getItem(LOCAL_STORAGE_OLD_VERSION))
-        if (oldVersion != window.version) {
-            localStorage.setItem(LOCAL_STORAGE_BACKUP_KEY, localStorage.getItem("__SAVED_DATA"))
-            localStorage.setItem(LOCAL_STORAGE_OLD_VERSION, window.version)
+function initiateCheckForUpdates() {
+    checkForUpdates();
+    // Check every 3 hours
+    setInterval(checkForUpdates, 1000 * 60 * 60 * 3)
+}
+
+function checkForUpdates() {
+    fetch('version.txt').then(r => {
+        if (!r.ok) {
+            throw new Error('Network response was not ok')
         }
-    }
+        return r.text()
+    }).then(version => {
+        version = version.trim()
+        if (version != window.versionStr) {
+            // new version
+            Swal.fire({
+                title: `New graffiti version is available: ${version}. Refresh for new goodies 😊`,
+                position: 'bottom-end',
+                showCancelButton: true,
+                cancelButtonText: "Show changelog",
+                toast: true,
+            }).then((result) => {
+                console.log(result)
+                if (result.dismiss === "cancel") {
+                    event_showChangelog();
+                }
+            });
+        }
+    })
 }
 
 
