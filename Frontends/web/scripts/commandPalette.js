@@ -321,5 +321,5 @@ class CommandPalette {
 
 function iconFor(name) {
     const theme = isDarkMode() ? 'filter: invert(100%);' : ''
-    return `<img src="images/icon_${name}.svg" style="width: 24px; height: 24px; margin-right: 1em; ${theme}" />`
+    return `<img src="images/icons/icon_${name}.svg" style="width: 24px; height: 24px; margin-right: 1em; ${theme}" />`
 }

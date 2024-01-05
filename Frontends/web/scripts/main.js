@@ -3,8 +3,21 @@ const MSG_ADD_NODES_AND_EDGES = "addDataBulk"
 const MSG_UPDATE_NODES = "updateNodes"
 const LOCAL_STORAGE_OLD_VERSION = "__OLD_VERSION"
 const LOCAL_STORAGE_BACKUP_KEY = "__OLD_BACKUP"
-const LOCAL_STORAGE_DEFAULT = { isKeymapReversed: false, hoverDoc: false, darkMode: true, isCurvedEdges: false }
+const LOCAL_STORAGE_DEFAULT = { isKeymapReversed: false, hoverDoc: false, darkMode: true, isCurvedEdges: false, isFirstTime: true }
 
+const GRAFFITI_PLATFORMS = [
+    {name: 'JEB', filename: 'graffiti_v{}_for_jeb.zip', icon: 'images/platforms/JEB.png', color: '#6ca41b'},
+    {name: 'Jadx', filename: 'graffiti_v{}.jadx.kts', icon: 'images/platforms/Jadx.svg', color: '#ec6038'},
+    {name: 'Intellij IDEA', filename: 'graffiti_v{}_for_intellij.jar', icon: 'images/platforms/Intellij_IDEA.svg', color: '#fe315d'},
+    {name: 'Clion', filename: 'graffiti_v{}_for_clion.jar', icon: 'images/platforms/Clion.svg', color: '#16c0ab'},
+    {name: 'Visual Studio Code', filename: 'graffiti_v{}_for_vscode.vsix', icon: 'images/platforms/Visual_Studio_Code.svg', color: '#007ACC'},
+    {name: 'IDA', filename: 'graffiti_v{}_for_ida.py', icon: 'images/platforms/IDA.png', color: '#c0a58f'},
+    {name: 'OpenGrok', filename: 'graffiti_v{}_for_opengrok.zip', icon: 'images/platforms/Opengrok.png', color: '#5484a4'},
+]
+const GRAFFITI_UTILS = [
+    {name: 'Web UI', filename: 'graffiti_v{}_frontend_web.zip', icon: 'images/icon.png', color: '#1e1f22'},
+    {name: 'Server', filename: 'graffiti_v1.8.4_server.py', icon: 'images/platforms/python.svg', color: '#C9B44C'},
+]
 
 
 function event_connect() {
@@ -274,37 +287,6 @@ function handleDarkMode() {
     }
 }
 
-function event_help() {
-    Swal.fire({
-        title: 'Graffiti',
-        html: `Create customized callgraph directly from your favorite editor.
-                <br /><br />
-                <strong>Server</strong> - To run graffiti, Run the python server. 
-                <br />
-                <strong>Editor</strong> - Install graffiti in your editor. Then, connect it to the server. 
-                <ul>
-                <li>&lt;Ctrl+Shift+A&gt; - Add a new node to the graph.</li>
-                <li>&lt;Ctrl+Shift+X&gt; - Add a new node to the graph with a custom text on the edge.</li>
-                </ul>
-                <strong>Web</strong> - click the top right button to connect to server.
-                <ul>
-                <li>A new node will be linked to the currently selected element.</li>
-                <li>The new node will be automatically selected, unless the setting changed</li>
-                <li>Right clicking a node will open it in the editor</li>
-                <li>To find the matching keyboard shortcut, hover over the buttons.</li>
-                <li>Double click an edge allows you to change its text or delete the edge</li>
-                <li>Middle click to swap a node with the selected node (same parent). ctrl for same son, shift for id swap</li>
-                <li>To rename or remove a graph, right click the tab's name.</li>
-                <li>A list of the linked projects is also available under the tab</li>
-                <li>When node is selected, use 1-7 to theme it.</li>
-                <li>Right click the center button to toggle the renderer between default and elk</li>
-                </ul>
-        `,
-        icon: 'question',
-        width: '48em',
-        footer: 'To toggle the help bar, press Ctrl+?'
-    })
-}
 
 function event_setTheme(themeIndex) {
     window.tabsController.onCurrent((_, controller) => {
@@ -445,6 +427,61 @@ function event_commandPalette() {
     window.commandPalette.open();
 }
 
+function event_help() {
+    const toHtml = function({name, icon, color, filename}) {
+        return `<li class="material-item">
+            <img src="${icon}" class="material-icon"></img>
+            <span class="material-title">${name}</span>
+            <button class="material-btn" style="background-color: ${color};" onclick="event_showDocs('${name}')">Docs</button>
+            <button class="material-btn" style="background-color: ${color};" onclick="event_downloadPlatform('${filename}')">Download</button>
+        </li>`;
+    }
+    const platformsHtml = GRAFFITI_PLATFORMS.map(toHtml)
+    const utilsHtml = GRAFFITI_UTILS.map((toHtml))
+
+    const html = `<div class="platforms">
+        <p><i>Create customized callgraph directly from your favorite editor.</i></p>
+        <br>
+        <p>To run graffiti, you have to run the python server, and activate the graffiti plugin on your IDE</p>
+        ${utilsHtml.join('')}
+        <hr class="material-divider">
+        <h2>Supported Platforms</h2>
+        ${platformsHtml.join('')}
+    </div>`
+
+    Swal.fire({
+        title: 'Graffiti v' + window.versionStr,
+        html: html,
+        width: '50em',
+        confirmButtonText: 'Close',
+      });
+}
+
+function event_downloadPlatform(filename) {
+    filename = filename.replace('{}', window.version)
+    const link = document.createElement('a')
+    link.href = `out/${filename}`
+    link.setAttribute('download', '')
+    link.style.display = 'none'
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+}
+
+function event_showDocs(platform) {
+    fetch(`docs/platforms/${platform}.md`)
+        .then(r => r.text())
+        .then(text => new showdown.Converter().makeHtml(text))
+        .then(html => {
+            Swal.fire({
+                title: platform,
+                html: `<div style="user-select: text;">${html}</div>`,
+                confirmButtonText: 'Close',
+                width: '48em',
+              });
+        })
+}
+
 function main() {
     initiateLocalStorage();
     initiateDependencies();
@@ -461,6 +498,11 @@ function main() {
 
     // initiate command palatte
     window.commandPalette = new CommandPalette(tabsController, document.querySelector('ninja-keys'))
+
+    if (strToBool(localStorage.getItem('isFirstTime'))) {
+        event_help()
+        localStorage.setItem('isFirstTime', false)
+    }
 }
 
 function initiateDependencies() {

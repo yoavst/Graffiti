@@ -313,3 +313,77 @@ footer {
 .graph {
     color: var(--text-color);
 }
+
+/* Style for the list container */
+.material-list {
+    list-style-type: none;
+    padding: 0;
+  }
+
+.material-list * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;      
+}
+
+/* Style for each list item */
+.material-item {
+    display: flex;
+    align-items: center;
+    background-color: #fff;
+    padding: 12px 20px;
+    margin-bottom: 5px;
+    border-radius: 4px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: background-color 0.3s ease;
+  }
+  
+  /* Icon style */
+  .material-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    overflow: hidden;
+    margin-right: 20px;
+  }
+  
+  .material-icon svg {
+    width: 100%;
+    height: 100%;
+  }
+  
+  /* Title style */
+  .material-title {
+    flex: 1;
+    text-align: left;
+    /* Adjust font size, color, etc. as needed */
+  }
+  
+  /* Button style */
+  .material-btn {
+    padding: 8px 16px;
+    border: none;
+    color: white;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    margin-left: 10px;
+  }
+  
+  /* Button hover effect */
+  .material-btn:hover {
+    filter: brightness(90%);
+  }
+  /* Divider style */
+.material-divider {
+    border: none;
+    border-top: 3px solid #999; /* Divider line color */
+    margin: 20px 0;
+  }
+
+.swal2-container * {
+    user-select: auto;
+}

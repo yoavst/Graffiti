@@ -1,6 +1,8 @@
 .PHONY: *
 
-all: init backends frontends server
+all: pre-package web-collect
+
+pre-package: init server backends frontends web
 
 clean:
 	rm -rf out
@@ -74,7 +76,13 @@ opengrok: check-env
 web: check-env
 	@echo "Building Graffiti for Web"
 	sed -i.bak "s/_VERSION_/$(VERSION)/g" frontends/web/index.html
-	cd frontends/web; find . -type f ! -name '*.bak' -exec zip ../../out/graffiti_v$(VERSION)_frontend_web.zip {} +
+	cd frontends/web; find -L . -type f ! -name '*.bak' ! -path './out/*' -exec zip --symlinks ../../out/graffiti_v$(VERSION)_frontend_web.zip {} +
+	mv frontends/web/index.html.bak frontends/web/index.html
+
+web-collect: check-env
+	@echo "Building Graffiti for Web again"
+	sed -i.bak "s/_VERSION_/$(VERSION)/g" frontends/web/index.html
+	cd frontends/web; find -L . -type f ! -name '*.bak' -exec zip ../../out/graffiti_v$(VERSION)_frontend_web_with_deps.zip {} +
 	mv frontends/web/index.html.bak frontends/web/index.html
 
 visio: check-env

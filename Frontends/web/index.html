@@ -1,4 +1,5 @@
 <html>
+
 <head>
     <title>Graffiti</title>
     <link href="styles/style.css" rel="stylesheet">
@@ -10,29 +11,33 @@
         <img src="images/icon.png" class="icon" />
         <h1>Graffiti</h1>
         <div class="buttons right">
-            <button onclick="event_import()" title="Import (Ctrl+O)"><img src="images/icon_import.svg" class="action_icon"
-                    alt="Import" /></button>
-            <button onclick="event_export()" oncontextmenu="return event_exportAll()" title="Export (Ctrl+S); Export All (Ctrl+Alt+S)"><img src="images/icon_export.svg"
-                    class="action_icon" alt="Export" /></button>
-            <button onclick="event_shareGraph()" title="Share graph"><img src="images/icon_mermaid.svg" class="action_icon"
-                    alt="Share graph" /></button>
-            <button onclick="event_addTextNode()" title="Add text node (Ctrl+Shift+Q)"><img src="images/icon_add.svg" class="action_icon"
-                alt="Add text node" /></button>
-            <button onclick="event_addComment()" title="Add comment to node (ctrl+Q)"><img src="images/icon_comment.svg" class="action_icon"
-                alt="Add comment to node" /></button>
-            <button onclick="event_reset()" title="Reset"><img src="images/icon_reset.svg" class="action_icon"
+            <button onclick="event_import()" title="Import (Ctrl+O)"><img src="images/icons/icon_import.svg"
+                    class="action_icon" alt="Import" /></button>
+            <button onclick="event_export()" oncontextmenu="return event_exportAll()"
+                title="Export (Ctrl+S); Export All (Ctrl+Alt+S)"><img src="images/icons/icon_export.svg" class="action_icon"
+                    alt="Export" /></button>
+            <button onclick="event_shareGraph()" title="Share graph"><img src="images/icons/icon_mermaid.svg"
+                    class="action_icon" alt="Share graph" /></button>
+            <button onclick="event_addTextNode()" title="Add text node (Ctrl+Shift+Q)"><img src="images/icons/icon_add.svg"
+                    class="action_icon" alt="Add text node" /></button>
+            <button onclick="event_addComment()" title="Add comment to node (ctrl+Q)"><img src="images/icons/icon_comment.svg"
+                    class="action_icon" alt="Add comment to node" /></button>
+            <button onclick="event_reset()" title="Reset"><img src="images/icons/icon_reset.svg" class="action_icon"
                     alt="Reset" /></button>
-            <button onclick="event_undo()" title="Undo (Ctrl+Z)"><img src="images/icon_undo.svg" class="action_icon"
+            <button onclick="event_undo()" title="Undo (Ctrl+Z)"><img src="images/icons/icon_undo.svg" class="action_icon"
                     alt="Undo" /></button>
-            <button onclick="event_redo()" title="Redo (Ctrl+Y)"><img src="images/icon_redo.svg" class="action_icon"
+            <button onclick="event_redo()" title="Redo (Ctrl+Y)"><img src="images/icons/icon_redo.svg" class="action_icon"
                     alt="Redo" /></button>
-            <button onclick="event_delete()" title="Delete (Delete)"><img src="images/icon_delete.svg"
+            <button onclick="event_delete()" title="Delete (Delete)"><img src="images/icons/icon_delete.svg"
                     class="action_icon" alt="Delete" /></button>
-            <button onclick="event_focusOnSelected()" oncontextmenu="return event_center()" title="Focus selecred node (Home)&#10;&#13;Right click to reset zoom (Ctrl+Home)"><img src="images/icon_layout.svg" class="action_icon"
-                    alt="Focus" /></button>
-            <button onclick="event_search()" oncontextmenu="return event_searchAll()" title="Search (Ctrl+F); Search all (Ctrl+Shift+F)"><img src="images/icon_search.svg" class="action_icon"
-                alt="Search" /></button>
-            <div class="arrowToggle" title="Arrow direction (Ctrl+I)&#10;&#13;Focus (Ctrl+Alt+Shift+I)" oncontextmenu="return event_toggleFocusTarget()">
+            <button onclick="event_focusOnSelected()" oncontextmenu="return event_center()"
+                title="Focus selecred node (Home)&#10;&#13;Right click to reset zoom (Ctrl+Home)"><img
+                    src="images/icons/icon_layout.svg" class="action_icon" alt="Focus" /></button>
+            <button onclick="event_search()" oncontextmenu="return event_searchAll()"
+                title="Search (Ctrl+F); Search all (Ctrl+Shift+F)"><img src="images/icons/icon_search.svg" class="action_icon"
+                    alt="Search" /></button>
+            <div class="arrowToggle" title="Arrow direction (Ctrl+I)&#10;&#13;Focus (Ctrl+Alt+Shift+I)"
+                oncontextmenu="return event_toggleFocusTarget()">
                 <label for="isExistingToNew">
                     <input class="input" type="checkbox" id="isExistingToNew" checked="true"></input>
                     <input class="input" type="checkbox" id="isNewWillBeSelected" checked="true"></input>
@@ -47,7 +52,7 @@
                 </label>
             </div>
             <input type="url" value="ws://localhost:8503" id="socketUrl"></input>
-            <button onclick="event_connect()" id="connectBtn" title="Connect"><img src="images/icon_connect.svg"
+            <button onclick="event_connect()" id="connectBtn" title="Connect"><img src="images/icons/icon_connect.svg"
                     class="action_icon" alt="Connect" /></button>
         </div>
         <div class="clearfix">&nbsp;</div>
@@ -66,7 +71,7 @@
     <footer style="display: none;">
         <span class="subtitle">yoavst (2023) - Version _VERSION_</span>
         <div class="right">
-            <span>Press ? for help, Ctrl+Shift+P for command palette</span>
+            <span>Press ? for help and downloads, Ctrl+Shift+P for command palette</span>
         </div>
         <div class="clearfix">&nbsp;</div>
     </footer>
@@ -76,6 +81,7 @@
 
     <!-- Dependencies -->
     <script>
+        window.versionStr = "_VERSION_"
         window.version = parseFloat("_VERSION_")
     </script>
     <script src='scripts/third_party/panzoom.min.js'></script>
