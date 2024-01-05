@@ -39,6 +39,12 @@
                 "default": "Ctrl+Shift+X"
             },
             "description": "Graffiti: add to graph with edge info"
+        },
+        "add_line_to_graffiti": {
+            "suggested_key": {
+                "default": "Ctrl+Shift+Q"
+            },
+            "description": "Graffiti: add current line to graph"
         }
     },
     "web_accessible_resources": [

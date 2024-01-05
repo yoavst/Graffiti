@@ -24,6 +24,12 @@ function main() {
         title: 'Add to Graph with edge comment',
         contexts: ['page']
     })
+
+    chrome.contextMenus.create({
+        id: 'add_line_to_graffiti',
+        title: 'Add current line to Graph',
+        contexts: ['page']
+    })
     chrome.contextMenus.onClicked.addListener(contextClick)
 
     // Handle connection commands
@@ -48,6 +54,8 @@ function main() {
                 tabs.forEach(tab => chrome.tabs.sendMessage(tab.id, { action: 'getCurrentSymbol' }, onSymbol))
             } else if (command == 'add_to_graffiti_with_custom_edge') {
                 tabs.forEach(tab => chrome.tabs.sendMessage(tab.id, { action: 'getCurrentSymbolAndEdgeInfo' }, onSymbol))
+            }  else if (command == 'add_line_to_graffiti') {
+                tabs.forEach(tab => chrome.tabs.sendMessage(tab.id, { action: 'getCurrentLineSymbol' }, onLineSymbol))
             }
         })
 
@@ -139,6 +147,8 @@ function contextClick(info, tab) {
         chrome.tabs.sendMessage(tab.id, { action: 'getCurrentSymbolContextMenu' }, onSymbol);
     } else if (menuItemId == 'add_to_graffiti_with_custom_edge') {
         chrome.tabs.sendMessage(tab.id, { action: 'getCurrentSymbolContextMenuAndEdgeInfo' }, onSymbol);
+    } else if (menuItemId == 'add_line_to_graffiti') {
+        chrome.tabs.sendMessage(tab.id, { action: 'getCurrentLineSymbolContextMenu' }, onLineSymbol);
     }
 }
 
@@ -177,6 +187,55 @@ function onSymbol(symbolInfo) {
             "project": "OpenGrok: " + symbolInfo.site, 
             "address": symbolInfo.address,
             "label": symbolInfo.fileName + "::\n" + symbolInfo.sig,
+            "computedProperties": []
+        }
+    }
+    if (symbolInfo.edgeInfo) {
+        data.edge = { label: symbolInfo.edgeInfo }
+    }
+    websocket.send(JSON.stringify(data));
+}
+
+function onLineSymbol(symbolInfo) {
+    console.log(symbolInfo)
+
+    if (symbolInfo == null) {
+        chrome.notifications.create(
+            "noLine",
+            {
+              type: "basic",
+              iconUrl: "images/icon.png",
+              title: 'Graffiti',
+              message: 'Could not find a line'
+            }
+          );
+        return
+    }
+
+    const websocket = graffitiWebSocket
+    if (websocket == null) {
+        chrome.notifications.create(
+            "notConnected",
+            {
+              type: "basic",
+              iconUrl: "images/icon.png",
+              title: 'Graffiti',
+              message: 'Not connected to server'
+            }
+          )
+        return
+    }
+    
+    const label = symbolInfo.sig ? 
+                    (symbolInfo.fileName + "::\n" + symbolInfo.sig + ":" + symbolInfo.line) :
+                    (symbolInfo.fileName + ":" + symbolInfo.line)
+
+    const data = {
+        "type": "addData", "node": {
+            "project": "OpenGrok: " + symbolInfo.site, 
+            "address": symbolInfo.address,
+            "label": label,
+            "line": symbolInfo.line,
             "computedProperties": []
         }
     }
