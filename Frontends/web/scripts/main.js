@@ -123,38 +123,31 @@ function event_exportAll() {
     function asUniqueNames(files) {
         const names = new Set();
         const transformedArray = [];
-      
+
         files.forEach(file => {
-          let { name, content } = file;
-          let suffix = 1;
-      
-          while (names.has(name)) {
-            name = `${file.name}_${suffix}`;
-            suffix++;
-          }
-      
-          names.add(name);
-          transformedArray.push({ name, content });
+            let { name, content } = file;
+            let suffix = 1;
+
+            while (names.has(name)) {
+                name = `${file.name}_${suffix}`;
+                suffix++;
+            }
+
+            names.add(name);
+            transformedArray.push({ name, content });
         });
-      
+
         return transformedArray;
-      }
+    }
 
-    const tar = tarts(asUniqueNames(tabsController.map((name, tabController) => ({
-        name: `${name}`,
+    const tarWriter = new tarball.TarWriter();
+    const files = asUniqueNames(tabsController.map((name, tabController) => ({
+        name,
         content: tabController.export()
-    }))).map(({name, content}) => ({name: `${name}.json`, content})))
+    })))
 
-    const blob = new Blob([tar], { type: 'application/tar' })
-    const url = window.URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.style.display = 'none'
-    a.href = url
-    a.download = 'exported_graffitis.tar'
-    document.body.appendChild(a)
-    a.click()
-    window.URL.revokeObjectURL(url)
-    document.body.removeChild(a)
+    files.forEach(({name, content}) => tarWriter.addTextFile(`${name}.json`, content))
+    tarWriter.download('graffiti_export.tar')
     return false
 }
 
@@ -193,30 +186,37 @@ function event_import_onFile(file) {
     }
     const reader = new FileReader()
     reader.onload = function (e) {
-        // Create new tab with the filename as name
-        const contents = e.target.result
-        let name = file.name
-        if (name.endsWith(".json")) {
-            name = name.substring(0, name.length - 5);
-        }
-
-        const tabsController = window.tabsController
-
         // If we have only empty untitled tab, remove it
+        const tabsController = window.tabsController
         if (tabsController.count() == 1 && tabsController.tabs[0].name == "untitled" &&
-            tabsController.tabs[0].tabController.nodes.length == 0) {
+            tabsController.tabs[0].tabController.nodes.size() == 0) {
             tabsController.removeTab(0)
         }
-
-
-        const addedTab = tabsController.addTab(name)
-        tabsController.selectTab(addedTab)
-        tabsController.onCurrent((_, controller) => {
-            controller.import(contents)
-        })
-
+        
+        const contents = e.target.result
+        if (isTARFile(contents)) {
+            let tar = new tarball.TarReader();
+            tar.readArrayBuffer(contents).forEach(fileInfo => {
+                const addedTab = tabsController.addTab(fileInfo.name)
+                tabsController.selectTab(addedTab)
+                tabsController.onCurrent((_, controller) => {
+                    controller.import(tar.getTextFile(fileInfo.name))
+                })
+            })
+        } else {
+            let name = file.name
+            if (name.endsWith(".json")) {
+                name = name.substring(0, name.length - 5);
+            }
+            
+            const addedTab = tabsController.addTab(name)
+            tabsController.selectTab(addedTab)
+            tabsController.onCurrent((_, controller) => {
+                controller.import(new TextDecoder('utf-8').decode(contents))
+            })
+        }
     }
-    reader.readAsText(file)
+    reader.readAsArrayBuffer(file)
 }
 
 function event_addTab() {

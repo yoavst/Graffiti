@@ -1361,3 +1361,17 @@ const darkModeCached = _isDarkMode()
 function isDarkMode() {
     return darkModeCached;
 }
+
+function isTARFile(arrayBuffer) {
+    if (arrayBuffer.byteLength < 263) {
+      return false;
+    }
+  
+    const dataView = new DataView(arrayBuffer)
+    const bytes = []
+    for (let i = 257; i < 262; i++) {
+      bytes.push(dataView.getUint8(i))
+    }
+    const headerString = String.fromCharCode.apply(null, bytes)
+    return headerString == 'ustar'
+  }
