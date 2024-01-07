@@ -7,8 +7,8 @@ const LOCAL_STORAGE_DEFAULT = { isKeymapReversed: false, hoverDoc: false, darkMo
 
 const GRAFFITI_PLATFORMS = [
     { name: 'JEB', filename: 'graffiti_v{}_for_jeb.zip', icon: 'images/platforms/JEB.png', color: '#6ca41b' },
-    { name: 'Jadx', filename: 'graffiti_v{}.jadx.kts', icon: 'images/platforms/Jadx.svg', color: '#ec6038' },
-    { name: 'Intellij IDEA', filename: 'graffiti_v{}_for_intellij.jar', icon: 'images/platforms/Intellij_IDEA.svg', color: '#fe315d' },
+    { name: 'JADX', filename: 'graffiti_v{}.jadx.kts', icon: 'images/platforms/Jadx.svg', color: '#ec6038' },
+    { name: 'Intellij IDEA', filename: 'graffiti_v{}_for_intellij.jar', icon: 'images/platforms/IntelliJ_IDEA.svg', color: '#fe315d' },
     { name: 'Clion', filename: 'graffiti_v{}_for_clion.jar', icon: 'images/platforms/Clion.svg', color: '#16c0ab' },
     { name: 'Visual Studio Code', filename: 'graffiti_v{}_for_vscode.vsix', icon: 'images/platforms/Visual_Studio_Code.svg', color: '#007ACC' },
     { name: 'IDA', filename: 'graffiti_v{}_for_ida.py', icon: 'images/platforms/IDA.png', color: '#c0a58f' },
@@ -16,7 +16,7 @@ const GRAFFITI_PLATFORMS = [
 ]
 const GRAFFITI_UTILS = [
     { name: 'Web UI', filename: 'graffiti_v{}_frontend_web.zip', icon: 'images/icon.png', color: '#1e1f22' },
-    { name: 'Server', filename: 'graffiti_v1.8.4_server.py', icon: 'images/platforms/python.svg', color: '#C9B44C' },
+    { name: 'Server', filename: 'graffiti_v{}_server.py', icon: 'images/platforms/python.svg', color: '#C9B44C' },
 ]
 
 
