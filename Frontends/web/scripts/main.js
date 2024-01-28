@@ -259,9 +259,7 @@ function event_addTabFromNode() {
                 timer: 3000
             })
             return
-        }
-        console.log("node address:" + controller.selectedNode.extra);
-        
+        }        
         let nodeName = controller.selectedNode.label;
         Swal.fire({
             title: 'Add graph from Node',
