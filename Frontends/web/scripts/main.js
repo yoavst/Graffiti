@@ -1,6 +1,8 @@
 const MSG_ADD_NODE_AND_EDGE = "addData"
 const MSG_ADD_NODES_AND_EDGES = "addDataBulk"
 const MSG_UPDATE_NODES = "updateNodes"
+const NODE_LABEL = 'label'
+const NODE_EXTRA = 'extra'
 const LOCAL_STORAGE_OLD_VERSION = "__OLD_VERSION"
 const LOCAL_STORAGE_BACKUP_KEY = "__OLD_BACKUP"
 const LOCAL_STORAGE_DEFAULT = { isKeymapReversed: false, hoverDoc: false, darkMode: true, isCurvedEdges: false, isFirstTime: true }
@@ -244,6 +246,37 @@ function event_addTab() {
             window.tabsController.selectTab(tab)
         }
     })
+}
+
+function event_addTabFromNode() {
+    window.tabsController.onCurrent((_, controller) => {
+        if (controller.selectedNode == null) {
+            Swal.fire({
+                title: 'No selected node to create new graph from',
+                position: 'bottom-end',
+                toast: true,
+                showConfirmButton: false,
+                timer: 3000
+            })
+            return
+        }
+        console.log("node address:" + controller.selectedNode.extra);
+        
+        let nodeName = controller.selectedNode.label;
+        Swal.fire({
+            title: 'Add graph from Node',
+            input: 'text',
+            inputValue: nodeName,
+            showCancelButton: true
+        }).then(({ value = null }) => {
+            if (value != null && value != '') {
+                const tab = window.tabsController.addTab(value)
+                window.tabsController.selectTab(tab)
+                tab.tabController.addNode(controller.selectedNode[NODE_LABEL,NODE_EXTRA])
+            }
+        })
+    })
+
 }
 
 function event_toggleRenderer() {
@@ -538,7 +571,7 @@ function elk_beforeCallback(id, graph) {
 }
 
 function initiateHotkeys() {
-    hotkeys('esc,ctrl+z,ctrl+shift+z,ctrl+y,ctrl+s,ctrl+alt+s,ctrl+o,ctrl+i,ctrl+alt+shift+i,ctrl+q,ctrl+f,ctrl+shift+f,ctrl+shift+q,ctrl+shift+p,delete,home,ctrl+home,shift+`,shift+/,ctrl+shift+/,1,2,3,4,5,6,7,8,9', function (event, handler) {
+    hotkeys('esc,ctrl+z,ctrl+shift+z,ctrl+y,ctrl+s,ctrl+alt+s,ctrl+o,ctrl+i,ctrl+alt+shift+i,ctrl+q,ctrl+f,ctrl+shift+f,ctrl+shift+q,ctrl+shift+p,delete,home,ctrl+home,shift+`,shift+/,ctrl+shift+/,ctrl+a,1,2,3,4,5,6,7,8,9', function (event, handler) {
         window.commandPalette.close()
         switch (handler.key) {
             case 'esc':
@@ -598,6 +631,9 @@ function initiateHotkeys() {
                 return false;
             case 'ctrl+shift+p':
                 event_commandPalette();
+                return false;
+            case 'ctrl+a':
+                event_addTabFromNode();
                 return false;
             case '1':
             case '2':
