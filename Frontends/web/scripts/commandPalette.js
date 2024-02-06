@@ -279,6 +279,15 @@ class CommandPalette {
                 handler: () => { event_addTab(); },
             },
             {
+                id: 'NewTabFromNode',
+                title: 'Create new tab from selected node',
+                keywords: 'add tab from selected node',
+                hotkey: 'Ctrl+A',
+                icon: iconFor('add'),
+                section: 'Tabs',
+                handler: () => { event_addTabFromNode(); },
+            },
+            {
                 id: 'RenameTab',
                 title: 'Rename the current tab',
                 icon: iconFor('rename'),
