@@ -181,7 +181,7 @@ def raw_node_from_ea(ea, db_filename):
     else:
         seg_name = ""
     
-    name = idc.get_name(ea)
+    name = idc.get_name(ea, idc.GN_DEMANGLED)
     if not name or name == idc.BADADDR:
         name = '{0:x}'.format(ea)
 
