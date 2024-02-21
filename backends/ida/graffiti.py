@@ -282,71 +282,6 @@ def sync_read_thread(db_filename):
         print("Socket is closed")
         sock = None
 
-
-# 2) Describe the actions
-add_to_graph_action_desc = idaapi.action_desc_t(
-    'graffiti:addToGraph', 
-    'Graffiti: Add to graph',  # The action text.
-    AddToGraphHandler(),   # The action handler.
-    'Ctrl+Shift+A',      # Optional: the action shortcut
-    'Add to graph'
-    )
-add_to_graph_with_edge_info_action_desc = idaapi.action_desc_t(
-    'graffiti:addToGraphWithEdgeInfo', 
-    'Graffiti: Add to graph with edge comment',  # The action text.
-    AddToGraphWithEdgeInfoHandler(),   # The action handler.
-    'Ctrl+Shift+X',      # Optional: the action shortcut
-    'Add to graph with edge comment'
-    )
-add_line_to_graph_action_desc = idaapi.action_desc_t(
-    'graffiti:addLineToGraph', 
-    'Graffiti: Add current line to graph',  # The action text.
-    AddToGraphLineHandler(),   # The action handler.
-    'Ctrl+Alt+A',      # Optional: the action shortcut
-    'Add line to graph'
-    )
-add_xrefs_to_graph_action_desc = idaapi.action_desc_t(
-    'graffiti:addXrefsToGraph', 
-    'Graffiti: Add function xrefs to graph',  # The action text.
-    AddXrefsHandler(),   # The action handler.
-    'Ctrl+Shift+Q',      # Optional: the action shortcut
-    'Add function xrefs to graph'
-    )
-add_xrefs_lines_to_graph_action_desc = idaapi.action_desc_t(
-    'graffiti:addXrefLinesToGraph', 
-    'Graffiti: Add line xrefs to graph',  # The action text.
-    AddXrefLinesHandler(),   # The action handler.
-    'Ctrl+Alt+Shift+Q',      # Optional: the action shortcut
-    'Add line xrefs to graph'
-    )
-
-enable_graffiti_sync_action_desc = idaapi.action_desc_t(
-    'graffiti:ConnectToServer', 
-    'Graffiti: Connect to server',  # The action text.
-    EnableSyncHandler(),   # The action handler.
-    None,      # Optional: the action shortcut
-    'Connect To Server'
-    )          
-
-# 3) Register the action
-idaapi.unregister_action('graffiti:addToGraph')
-idaapi.register_action(add_to_graph_action_desc)
-idaapi.unregister_action('graffiti:addToGraphWithEdgeInfo')
-idaapi.register_action(add_to_graph_with_edge_info_action_desc)
-idaapi.unregister_action('graffiti:addLineToGraph')
-idaapi.register_action(add_line_to_graph_action_desc)
-idaapi.unregister_action('graffiti:addXrefsToGraph')
-idaapi.register_action(add_xrefs_to_graph_action_desc)
-idaapi.unregister_action('graffiti:addXrefLinesToGraph')
-idaapi.register_action(add_xrefs_lines_to_graph_action_desc)
-idaapi.unregister_action('graffiti:ConnectToServer')
-idaapi.register_action(enable_graffiti_sync_action_desc)
-
-idaapi.attach_action_to_menu(
-        'Options/Source paths...', 
-        'graffiti:ConnectToServer',                    
-        idaapi.SETMENU_APP)          
-
 # 4) Register hooks
 class GraffitiUIHooks(idaapi.UI_Hooks):
     def finish_populating_widget_popup(self, form, popup):
@@ -356,6 +291,7 @@ class GraffitiUIHooks(idaapi.UI_Hooks):
             idaapi.attach_action_to_popup(form, popup, "graffiti:addLineToGraph", "Graffiti/")
             idaapi.attach_action_to_popup(form, popup, "graffiti:addXrefsToGraph", "Graffiti/")
             idaapi.attach_action_to_popup(form, popup, "graffiti:addXrefLinesToGraph", "Graffiti/")            
+
 
 class GrafitiIDBHooks(idaapi.IDB_Hooks):
     def renamed(self, ea, new_name, is_local):
@@ -370,6 +306,100 @@ class GrafitiIDBHooks(idaapi.IDB_Hooks):
             }
             lengthy_send(sock, to_bytes(json.dumps(payload)))
 
-hooks = [GraffitiUIHooks(), GrafitiIDBHooks()]
-for hook in hooks:
-    hook.hook()
+
+class GraffitiPlugin(idaapi.plugin_t, idaapi.UI_Hooks):
+    flags = idaapi.PLUGIN_MOD | idaapi.PLUGIN_HIDE
+    comment = "Add support for CPP navigating on top of ida_kernelcache"
+    help = ""
+    wanted_name = "Graffiti"
+    wanted_hotkey = ""
+
+    def __init__(self):
+        super().__init__()
+        self.hooks = []
+
+    def init(self):
+        """plugin_t init() function"""
+        self.hooks = [GraffitiUIHooks(), GrafitiIDBHooks()]
+        for hook in self.hooks:
+            hook.hook()
+
+        # 2) Describe the actions
+        add_to_graph_action_desc = idaapi.action_desc_t(
+            'graffiti:addToGraph',
+            'Graffiti: Add to graph',  # The action text.
+            AddToGraphHandler(),  # The action handler.
+            'Ctrl+Shift+A',  # Optional: the action shortcut
+            'Add to graph'
+        )
+        add_to_graph_with_edge_info_action_desc = idaapi.action_desc_t(
+            'graffiti:addToGraphWithEdgeInfo',
+            'Graffiti: Add to graph with edge comment',  # The action text.
+            AddToGraphWithEdgeInfoHandler(),  # The action handler.
+            'Ctrl+Shift+X',  # Optional: the action shortcut
+            'Add to graph with edge comment'
+        )
+        add_line_to_graph_action_desc = idaapi.action_desc_t(
+            'graffiti:addLineToGraph',
+            'Graffiti: Add current line to graph',  # The action text.
+            AddToGraphLineHandler(),  # The action handler.
+            'Ctrl+Alt+A',  # Optional: the action shortcut
+            'Add line to graph'
+        )
+        add_xrefs_to_graph_action_desc = idaapi.action_desc_t(
+            'graffiti:addXrefsToGraph',
+            'Graffiti: Add function xrefs to graph',  # The action text.
+            AddXrefsHandler(),  # The action handler.
+            'Ctrl+Shift+Q',  # Optional: the action shortcut
+            'Add function xrefs to graph'
+        )
+        add_xrefs_lines_to_graph_action_desc = idaapi.action_desc_t(
+            'graffiti:addXrefLinesToGraph',
+            'Graffiti: Add line xrefs to graph',  # The action text.
+            AddXrefLinesHandler(),  # The action handler.
+            'Ctrl+Alt+Shift+Q',  # Optional: the action shortcut
+            'Add line xrefs to graph'
+        )
+
+        enable_graffiti_sync_action_desc = idaapi.action_desc_t(
+            'graffiti:ConnectToServer',
+            'Graffiti: Connect to server',  # The action text.
+            EnableSyncHandler(),  # The action handler.
+            None,  # Optional: the action shortcut
+            'Connect To Server'
+        )
+
+        # 3) Register the action
+        idaapi.unregister_action('graffiti:addToGraph')
+        idaapi.register_action(add_to_graph_action_desc)
+        idaapi.unregister_action('graffiti:addToGraphWithEdgeInfo')
+        idaapi.register_action(add_to_graph_with_edge_info_action_desc)
+        idaapi.unregister_action('graffiti:addLineToGraph')
+        idaapi.register_action(add_line_to_graph_action_desc)
+        idaapi.unregister_action('graffiti:addXrefsToGraph')
+        idaapi.register_action(add_xrefs_to_graph_action_desc)
+        idaapi.unregister_action('graffiti:addXrefLinesToGraph')
+        idaapi.register_action(add_xrefs_lines_to_graph_action_desc)
+        idaapi.unregister_action('graffiti:ConnectToServer')
+        idaapi.register_action(enable_graffiti_sync_action_desc)
+
+        idaapi.attach_action_to_menu(
+            'Options/Source paths...',
+            'graffiti:ConnectToServer',
+            idaapi.SETMENU_APP)
+        return idaapi.PLUGIN_KEEP
+
+    def run(self, arg=0):
+        """plugin_t run() implementation"""
+        return
+
+    def term(self):
+        """plugin_t term() implementation"""
+        for hook in self.hooks:
+            hook.unhook()
+        return
+
+
+def PLUGIN_ENTRY():
+    return GraffitiPlugin()
+
