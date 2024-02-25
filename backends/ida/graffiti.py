@@ -271,7 +271,7 @@ def sync_read_thread(db_filename):
             data = json.loads(readexactly(sock, length))
                    
             if 'project' in data:
-                if data['project'] != f'IDA: {db_filename}':
+                if data['project'] != 'IDA: {}'.format(db_filename):
                     continue
 
             addr = int(data['address'])
