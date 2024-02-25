@@ -242,7 +242,7 @@ class EnableSyncHandler(idaapi.action_handler_t):
 def bring_ida_to_foreground():
     # according to https://hex-rays.com/blog/plugin-focus-heimdallr/
     # Tested only on macos, should be adapted easily to Linux/Windows
-    if sys.platform == 'darwin':
+    if sys.platform in ['darwin', 'win32]:
     # https://www.riverbankcomputing.com/static/Docs/PyQt5/
         qtwidget = ida_kernwin.PluginForm.TWidgetToPyQtWidget(ida_kernwin.get_current_viewer())
         window = qtwidget.window()
