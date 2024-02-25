@@ -225,7 +225,10 @@ class EnableSyncHandler(idaapi.action_handler_t):
         sock = socket.socket()
         sock.connect((addr, int(port)))
 
-        thread = threading.Thread(target=sync_read_thread)
+        db_path = ida_nalt.get_input_file_path()
+        db_filename = os.path.basename(db_path)
+
+        thread = threading.Thread(target=sync_read_thread, args=(db_filename,))
         thread.daemon = True
         thread.start()
 
@@ -235,7 +238,31 @@ class EnableSyncHandler(idaapi.action_handler_t):
     def update(self, ctx):
         return idaapi.AST_ENABLE_ALWAYS
 
-def sync_read_thread():
+
+def bring_ida_to_foreground():
+    # according to https://hex-rays.com/blog/plugin-focus-heimdallr/
+    # Tested only on macos, should be adapted easily to Linux/Windows
+    if sys.platform in ['darwin', 'win32]:
+    # https://www.riverbankcomputing.com/static/Docs/PyQt5/
+        qtwidget = ida_kernwin.PluginForm.TWidgetToPyQtWidget(ida_kernwin.get_current_viewer())
+        window = qtwidget.window()
+
+        # UnMinimize
+        WindowMinimized = 0x00000001  # https://www.riverbankcomputing.com/static/Docs/PyQt5/api/qtcore/qt.html#WindowState
+        cur_state = window.windowState()
+        new_state = cur_state & (~WindowMinimized)
+        window.setWindowState(new_state)
+
+        # Switch desktop / give keyboard control
+        window.show()
+        if sys.platform == 'darwin':
+            window.raise_()
+        elif sys.platform == 'win32':
+            window.activateWindow()
+        # Apparently can replace the last line with window.activateWindow() for Windows
+
+
+def sync_read_thread(db_filename):
     global sock
     print("Background thread running")
     try:
@@ -244,11 +271,12 @@ def sync_read_thread():
             data = json.loads(readexactly(sock, length))
                    
             if 'project' in data:
-                if not data['project'].startswith('IDA:'):
+                if data['project'] != 'IDA: {}'.format(db_filename):
                     continue
-                
+
             addr = int(data['address'])
             def on_ui():
+                bring_ida_to_foreground()
                 ida_kernwin.jumpto(addr)
                 return False
 
