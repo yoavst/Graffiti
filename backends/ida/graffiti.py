@@ -309,7 +309,7 @@ class GrafitiIDBHooks(idaapi.IDB_Hooks):
 
 class GraffitiPlugin(idaapi.plugin_t, idaapi.UI_Hooks):
     flags = idaapi.PLUGIN_MOD | idaapi.PLUGIN_HIDE
-    comment = "Add support for CPP navigating on top of ida_kernelcache"
+    comment = "Create customized callgraph directly from IDA"
     help = ""
     wanted_name = "Graffiti"
     wanted_hotkey = ""
