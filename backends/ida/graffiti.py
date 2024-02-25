@@ -315,7 +315,7 @@ class GraffitiPlugin(idaapi.plugin_t, idaapi.UI_Hooks):
     wanted_hotkey = ""
 
     def __init__(self):
-        super().__init__()
+        super(idaapi.plugin_t, self).__init__()
         self.hooks = []
 
     def init(self):
