@@ -255,7 +255,10 @@ def bring_ida_to_foreground():
 
         # Switch desktop / give keyboard control
         window.show()
-        window.raise_()  # Bring to front (MacOS)
+        if sys.platform == 'darwin':
+            window.raise_()
+        elif sys.platform == 'win32':
+            window.activateWindow()
         # Apparently can replace the last line with window.activateWindow() for Windows
 
 
