@@ -1,5 +1,7 @@
 ## Installation
-* Inside a project, run `file->execute script`, choose the `graffiti.py` script.
+* Copy `backends/ida/graffiti.py` to ida plugins directory (default for MacOS is `~/.idapro/plugins/`)
+  * Also can clone the repository and add a symlink.
+
 
 ## Usage
 * Go to Options->"Graffiti: Connect to server".
@@ -9,4 +11,5 @@
 * *Ctrl+Shift+Q* - Add all of the xrefs of a node to the graph.
 * *Ctrl+Shift+Alt+Q* - Add all of the line xrefs of a node to the graph.
   
+
 **Note:** A Rename will be reflected in the opened graphs.
