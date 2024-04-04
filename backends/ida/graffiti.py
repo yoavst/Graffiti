@@ -225,7 +225,10 @@ class EnableSyncHandler(idaapi.action_handler_t):
         sock = socket.socket()
         sock.connect((addr, int(port)))
 
-        thread = threading.Thread(target=sync_read_thread)
+        db_path = ida_nalt.get_input_file_path()
+        db_filename = os.path.basename(db_path)
+
+        thread = threading.Thread(target=sync_read_thread, args=(db_filename,))
         thread.daemon = True
         thread.start()
 
@@ -235,7 +238,31 @@ class EnableSyncHandler(idaapi.action_handler_t):
     def update(self, ctx):
         return idaapi.AST_ENABLE_ALWAYS
 
-def sync_read_thread():
+
+def bring_ida_to_foreground():
+    # according to https://hex-rays.com/blog/plugin-focus-heimdallr/
+    # Tested only on macos, should be adapted easily to Linux/Windows
+    if sys.platform in ['darwin', 'win32']:
+    # https://www.riverbankcomputing.com/static/Docs/PyQt5/
+        qtwidget = ida_kernwin.PluginForm.TWidgetToPyQtWidget(ida_kernwin.get_current_viewer())
+        window = qtwidget.window()
+
+        # UnMinimize
+        WindowMinimized = 0x00000001  # https://www.riverbankcomputing.com/static/Docs/PyQt5/api/qtcore/qt.html#WindowState
+        cur_state = window.windowState()
+        new_state = cur_state & (~WindowMinimized)
+        window.setWindowState(new_state)
+
+        # Switch desktop / give keyboard control
+        window.show()
+        if sys.platform == 'darwin':
+            window.raise_()
+        elif sys.platform == 'win32':
+            window.activateWindow()
+        # Apparently can replace the last line with window.activateWindow() for Windows
+
+
+def sync_read_thread(db_filename):
     global sock
     print("Background thread running")
     try:
@@ -244,11 +271,12 @@ def sync_read_thread():
             data = json.loads(readexactly(sock, length))
                    
             if 'project' in data:
-                if not data['project'].startswith('IDA:'):
+                if data['project'] != 'IDA: {}'.format(db_filename):
                     continue
-                
+
             addr = int(data['address'])
             def on_ui():
+                bring_ida_to_foreground()
                 ida_kernwin.jumpto(addr)
                 return False
 
@@ -256,71 +284,6 @@ def sync_read_thread():
     except socket.error:
         print("Socket is closed")
         sock = None
-
-
-# 2) Describe the actions
-add_to_graph_action_desc = idaapi.action_desc_t(
-    'graffiti:addToGraph', 
-    'Graffiti: Add to graph',  # The action text.
-    AddToGraphHandler(),   # The action handler.
-    'Ctrl+Shift+A',      # Optional: the action shortcut
-    'Add to graph'
-    )
-add_to_graph_with_edge_info_action_desc = idaapi.action_desc_t(
-    'graffiti:addToGraphWithEdgeInfo', 
-    'Graffiti: Add to graph with edge comment',  # The action text.
-    AddToGraphWithEdgeInfoHandler(),   # The action handler.
-    'Ctrl+Shift+X',      # Optional: the action shortcut
-    'Add to graph with edge comment'
-    )
-add_line_to_graph_action_desc = idaapi.action_desc_t(
-    'graffiti:addLineToGraph', 
-    'Graffiti: Add current line to graph',  # The action text.
-    AddToGraphLineHandler(),   # The action handler.
-    'Ctrl+Alt+A',      # Optional: the action shortcut
-    'Add line to graph'
-    )
-add_xrefs_to_graph_action_desc = idaapi.action_desc_t(
-    'graffiti:addXrefsToGraph', 
-    'Graffiti: Add function xrefs to graph',  # The action text.
-    AddXrefsHandler(),   # The action handler.
-    'Ctrl+Shift+Q',      # Optional: the action shortcut
-    'Add function xrefs to graph'
-    )
-add_xrefs_lines_to_graph_action_desc = idaapi.action_desc_t(
-    'graffiti:addXrefLinesToGraph', 
-    'Graffiti: Add line xrefs to graph',  # The action text.
-    AddXrefLinesHandler(),   # The action handler.
-    'Ctrl+Alt+Shift+Q',      # Optional: the action shortcut
-    'Add line xrefs to graph'
-    )
-
-enable_graffiti_sync_action_desc = idaapi.action_desc_t(
-    'graffiti:ConnectToServer', 
-    'Graffiti: Connect to server',  # The action text.
-    EnableSyncHandler(),   # The action handler.
-    None,      # Optional: the action shortcut
-    'Connect To Server'
-    )          
-
-# 3) Register the action
-idaapi.unregister_action('graffiti:addToGraph')
-idaapi.register_action(add_to_graph_action_desc)
-idaapi.unregister_action('graffiti:addToGraphWithEdgeInfo')
-idaapi.register_action(add_to_graph_with_edge_info_action_desc)
-idaapi.unregister_action('graffiti:addLineToGraph')
-idaapi.register_action(add_line_to_graph_action_desc)
-idaapi.unregister_action('graffiti:addXrefsToGraph')
-idaapi.register_action(add_xrefs_to_graph_action_desc)
-idaapi.unregister_action('graffiti:addXrefLinesToGraph')
-idaapi.register_action(add_xrefs_lines_to_graph_action_desc)
-idaapi.unregister_action('graffiti:ConnectToServer')
-idaapi.register_action(enable_graffiti_sync_action_desc)
-
-idaapi.attach_action_to_menu(
-        'Options/Source paths...', 
-        'graffiti:ConnectToServer',                    
-        idaapi.SETMENU_APP)          
 
 # 4) Register hooks
 class GraffitiUIHooks(idaapi.UI_Hooks):
@@ -331,6 +294,7 @@ class GraffitiUIHooks(idaapi.UI_Hooks):
             idaapi.attach_action_to_popup(form, popup, "graffiti:addLineToGraph", "Graffiti/")
             idaapi.attach_action_to_popup(form, popup, "graffiti:addXrefsToGraph", "Graffiti/")
             idaapi.attach_action_to_popup(form, popup, "graffiti:addXrefLinesToGraph", "Graffiti/")            
+
 
 class GrafitiIDBHooks(idaapi.IDB_Hooks):
     def renamed(self, ea, new_name, is_local):
@@ -345,6 +309,100 @@ class GrafitiIDBHooks(idaapi.IDB_Hooks):
             }
             lengthy_send(sock, to_bytes(json.dumps(payload)))
 
-hooks = [GraffitiUIHooks(), GrafitiIDBHooks()]
-for hook in hooks:
-    hook.hook()
+
+class GraffitiPlugin(idaapi.plugin_t, idaapi.UI_Hooks):
+    flags = idaapi.PLUGIN_MOD | idaapi.PLUGIN_HIDE
+    comment = "Create customized callgraph directly from IDA"
+    help = ""
+    wanted_name = "Graffiti"
+    wanted_hotkey = ""
+
+    def __init__(self):
+        super(idaapi.plugin_t, self).__init__()
+        self.hooks = []
+
+    def init(self):
+        """plugin_t init() function"""
+        self.hooks = [GraffitiUIHooks(), GrafitiIDBHooks()]
+        for hook in self.hooks:
+            hook.hook()
+
+        # 2) Describe the actions
+        add_to_graph_action_desc = idaapi.action_desc_t(
+            'graffiti:addToGraph',
+            'Graffiti: Add to graph',  # The action text.
+            AddToGraphHandler(),  # The action handler.
+            'Ctrl+Shift+A',  # Optional: the action shortcut
+            'Add to graph'
+        )
+        add_to_graph_with_edge_info_action_desc = idaapi.action_desc_t(
+            'graffiti:addToGraphWithEdgeInfo',
+            'Graffiti: Add to graph with edge comment',  # The action text.
+            AddToGraphWithEdgeInfoHandler(),  # The action handler.
+            'Ctrl+Shift+X',  # Optional: the action shortcut
+            'Add to graph with edge comment'
+        )
+        add_line_to_graph_action_desc = idaapi.action_desc_t(
+            'graffiti:addLineToGraph',
+            'Graffiti: Add current line to graph',  # The action text.
+            AddToGraphLineHandler(),  # The action handler.
+            'Ctrl+Alt+A',  # Optional: the action shortcut
+            'Add line to graph'
+        )
+        add_xrefs_to_graph_action_desc = idaapi.action_desc_t(
+            'graffiti:addXrefsToGraph',
+            'Graffiti: Add function xrefs to graph',  # The action text.
+            AddXrefsHandler(),  # The action handler.
+            'Ctrl+Shift+Q',  # Optional: the action shortcut
+            'Add function xrefs to graph'
+        )
+        add_xrefs_lines_to_graph_action_desc = idaapi.action_desc_t(
+            'graffiti:addXrefLinesToGraph',
+            'Graffiti: Add line xrefs to graph',  # The action text.
+            AddXrefLinesHandler(),  # The action handler.
+            'Ctrl+Alt+Shift+Q',  # Optional: the action shortcut
+            'Add line xrefs to graph'
+        )
+
+        enable_graffiti_sync_action_desc = idaapi.action_desc_t(
+            'graffiti:ConnectToServer',
+            'Graffiti: Connect to server',  # The action text.
+            EnableSyncHandler(),  # The action handler.
+            None,  # Optional: the action shortcut
+            'Connect To Server'
+        )
+
+        # 3) Register the action
+        idaapi.unregister_action('graffiti:addToGraph')
+        idaapi.register_action(add_to_graph_action_desc)
+        idaapi.unregister_action('graffiti:addToGraphWithEdgeInfo')
+        idaapi.register_action(add_to_graph_with_edge_info_action_desc)
+        idaapi.unregister_action('graffiti:addLineToGraph')
+        idaapi.register_action(add_line_to_graph_action_desc)
+        idaapi.unregister_action('graffiti:addXrefsToGraph')
+        idaapi.register_action(add_xrefs_to_graph_action_desc)
+        idaapi.unregister_action('graffiti:addXrefLinesToGraph')
+        idaapi.register_action(add_xrefs_lines_to_graph_action_desc)
+        idaapi.unregister_action('graffiti:ConnectToServer')
+        idaapi.register_action(enable_graffiti_sync_action_desc)
+
+        idaapi.attach_action_to_menu(
+            'Options/Source paths...',
+            'graffiti:ConnectToServer',
+            idaapi.SETMENU_APP)
+        return idaapi.PLUGIN_KEEP
+
+    def run(self, arg=0):
+        """plugin_t run() implementation"""
+        return
+
+    def term(self):
+        """plugin_t term() implementation"""
+        for hook in self.hooks:
+            hook.unhook()
+        return
+
+
+def PLUGIN_ENTRY():
+    return GraffitiPlugin()
+
