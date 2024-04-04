@@ -327,6 +327,7 @@ class CommandPalette {
             {
                 id: 'OverrideLabel',
                 title: 'Override the label of the selected node in the current graph',
+                hotkey: 'Ctrl+e',
                 icon: iconFor('edit'),
                 section: 'Graph',
                 handler: () => { event_overrideLabel(); },
