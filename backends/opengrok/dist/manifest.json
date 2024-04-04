@@ -1,29 +1,23 @@
 {
-    "manifest_version": 2,
-    "name": "Graffiti for OpenGrok",
+    "name": "Graffiti for SourceGraph",
     "description": "Graffiti support for opengrok",
-    "version": "1.9.0",
+    "version": "1.9",
+    "manifest_version": 3,
     "icons": {
         "512": "images/icon.png"
     },
-    "browser_action": {
-        "default_popup": "popup/popup.html",
-        "default_icon": "images/icon.png"
+    "permissions": ["contextMenus", "activeTab", "tabs", "storage", "notifications", "scripting", "background"],
+    "host_permissions": ["http://*/*", "https://*/*"],
+    "action": {
+        "default_popup": "popup/popup.html"
     },
     "background": {
-        "scripts": [
-            "scripts/background.js"
-        ],
-        "persistent": true
+        "service_worker": "background.js"
     },
     "content_scripts": [
         {
-            "matches": [
-                "*://*/*"
-            ],
-            "js": [
-                "scripts/content.js"
-            ],
+            "matches": ["http://*/*", "https://*/*"],
+            "js": ["content.js"],
             "run_at": "document_idle"
         }
     ],
@@ -48,14 +42,9 @@
         }
     },
     "web_accessible_resources": [
-        "scripts/injected_to_page.js"
-    ],
-    "permissions": [
-        "contextMenus",
-        "activeTab",
-        "tabs",
-        "storage",
-        "notifications",
-        "<all_urls>"
+        {
+            "resources": ["js/injected_to_page.js"],
+            "matches": ["http://*/*", "https://*/*"]
+        }
     ]
 }

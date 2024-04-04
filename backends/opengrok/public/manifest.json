@@ -1,0 +1,50 @@
+{
+    "name": "Graffiti for OpenGrok and SourceGraph",
+    "description": "Graffiti support for opengrok and sourcegraph",
+    "version": "1.9",
+    "manifest_version": 3,
+    "icons": {
+        "512": "images/icon.png"
+    },
+    "permissions": ["contextMenus", "activeTab", "tabs", "storage", "notifications", "scripting", "background"],
+    "host_permissions": ["http://*/*", "https://*/*"],
+    "action": {
+        "default_popup": "popup/popup.html"
+    },
+    "background": {
+        "service_worker": "background.js"
+    },
+    "content_scripts": [
+        {
+            "matches": ["http://*/*", "https://*/*"],
+            "js": ["content.js"],
+            "run_at": "document_idle"
+        }
+    ],
+    "commands": {
+        "add_to_graffiti": {
+            "suggested_key": {
+                "default": "Ctrl+Shift+A"
+            },
+            "description": "Graffiti: add to graph"
+        },
+        "add_to_graffiti_with_custom_edge": {
+            "suggested_key": {
+                "default": "Ctrl+Shift+X"
+            },
+            "description": "Graffiti: add to graph with edge info"
+        },
+        "add_line_to_graffiti": {
+            "suggested_key": {
+                "default": "Ctrl+Shift+Q"
+            },
+            "description": "Graffiti: add current line to graph"
+        }
+    },
+    "web_accessible_resources": [
+        {
+            "resources": ["js/injected_to_page.js"],
+            "matches": ["http://*/*", "https://*/*"]
+        }
+    ]
+}

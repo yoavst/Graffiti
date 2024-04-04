@@ -1,0 +1,33 @@
+<html>
+    <head>
+        <link href="style.css" rel="stylesheet" />
+    </head>
+
+    <body>
+        <header>
+            <h1>Graffiti</h1>
+            <div style="display: flex; align-items: center; justify-content: center">
+                <div>
+                    <input type="url" value="ws://localhost:8502" id="socketUrl" />
+                    <button id="connectBtn" title="Connect">
+                        <img src="/images/icon_connect.svg" class="action_icon" alt="Connect" />
+                    </button>
+                </div>
+            </div>
+        </header>
+        <div class="push">
+            <h2>Settings</h2>
+            <div class="push">
+                <h3>Open in Chrome behavior</h3>
+                <form class="push">
+                    <input type="radio" id="sameIfExists" name="open_in_chrome_behavior" value="sameIfExists" />
+                    <label for="sameIfExists">Open in new tab, unless the file is already opened</label><br />
+                    <input type="radio" id="alwaysNew" name="open_in_chrome_behavior" value="alwaysNew" />
+                    <label for="alwaysNew">Always open in new tab</label>
+                </form>
+            </div>
+        </div>
+
+        <script src="../popup.js"></script>
+    </body>
+</html>
