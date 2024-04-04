@@ -78,6 +78,7 @@ export interface SymbolProvider {
 }
 
 export interface SymbolInfo {
+    sourceType: "OpenGrok" | "SourceGraph";
     site: string;
     address: string;
     fileName: string;

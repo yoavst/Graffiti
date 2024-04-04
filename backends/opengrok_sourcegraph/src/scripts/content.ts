@@ -1,7 +1,8 @@
 import { SymbolProvider, onExtMessageEx } from "./shared";
 import OpenGrokProvider from "./opengrok";
+import SourceGraphProvider from "./sourcegraph";
 
-const SYMBOL_PROVIDERS: Array<SymbolProvider> = [new OpenGrokProvider()];
+const SYMBOL_PROVIDERS: Array<SymbolProvider> = [new OpenGrokProvider(), new SourceGraphProvider()];
 
 function main() {
     const s = document.createElement("script");

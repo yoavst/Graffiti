@@ -39,6 +39,7 @@ export default class OpenGrokProvider implements SymbolProvider {
         // TODO: support xc, xn to get class or namespace
 
         return {
+            sourceType: "OpenGrok",
             sig: sigMinimal,
             fileName: fileName.textContent!,
             site: url.host,
@@ -83,6 +84,7 @@ export default class OpenGrokProvider implements SymbolProvider {
         }
 
         return {
+            sourceType: "OpenGrok",
             sig: sigMinimal,
             fileName: fileName!.textContent!,
             site: url.host,

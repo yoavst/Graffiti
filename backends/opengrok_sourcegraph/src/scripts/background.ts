@@ -100,7 +100,7 @@ function connectPullWebSocket(addr: string) {
     graffitiWebSocket.onmessage = function (event) {
         const data = JSON.parse(event.data);
         if ("project" in data) {
-            if (!data["project"].startsWith("OpenGrok:")) {
+            if (!data["project"].startsWith("OpenGrok:") && !data["project"].startsWith("SourceGraph:")) {
                 return;
             }
         }
@@ -189,7 +189,7 @@ function onSymbol(symbolResponse: SymbolResponse) {
     const data: any = {
         type: "addData",
         node: {
-            project: "OpenGrok: " + symbolInfo.site,
+            project: symbolInfo.sourceType + ": " + symbolInfo.site,
             address: symbolInfo.address,
             label: symbolInfo.fileName + "::\n" + symbolInfo.sig,
             computedProperties: [],
@@ -236,7 +236,7 @@ function onLineSymbol(symbolResponse: SymbolResponse) {
     const data: any = {
         type: "addData",
         node: {
-            project: "OpenGrok: " + symbolInfo.site,
+            project: symbolInfo.sourceType + ": " + symbolInfo.site,
             address: symbolInfo.address,
             label: label,
             line: symbolInfo.line,
