@@ -67,7 +67,7 @@ python3 -m http.server 80
 | CLion       | C, C++                               | ✅           | ✅            | ❌            | ✅            | ✅                |    ❌    | TCP        |
 | VSCode      | Depends on available language server | ✅           | ✅            | ❌            | ❌            | ✅                |    ❌    | TCP        |
 | OpenGrok    | *                                    | ✅           | ✅            | ❌            | ❌            | ✅                |    ❌    | Websocket  |
-| Sourcegraph | *                                    | ✅           | ✅            | ❌            | ❌            | ✅                |    ❌    | Websocket  |
+| Sourcegraph | Java, C, C++                         | ✅           | ✅            | ❌            | ❌            | ✅                |    ❌    | Websocket  |
 | IDA         | *                                    | ✅           | ✅            | ✅            | -             | ✅                |    ✅    | TCP        |
 | Jadx        | Java                                 | ✅           | ✅            | ✅            | ✅            | ❌                |    ✅    | TCP        |
 
