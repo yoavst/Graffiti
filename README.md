@@ -60,15 +60,16 @@ python3 -m http.server 80
 4. Follow the usage instructions for the specific backend below.
 
 ## Backends
-| Editor   | Languages                            | add to graph | open in editor | Rename support | Field support | Add line to graph | Add xrefs |Socket type |
-| -------- | ------------------------------------ | ------------ | -------------- | -------------- | ------------- | ----------------- | --------- | ---------- |
-| JEB      | Java                                 | ✅           | ✅            | ✅            | ✅            | ✅                |    ✅    | TCP        |
-| Intellij | Java, Kotlin                         | ✅           | ✅            | ❌            | ✅            | ✅                |    ✅    | TCP        |
-| CLion    | C, C++                               | ✅           | ✅            | ❌            | ✅            | ✅                |    ❌    | TCP        |
-| VSCode   | Depends on available language server | ✅           | ✅            | ❌            | ❌            | ✅                |    ❌    | TCP        |
-| OpenGrok | *                                    | ✅           | ✅            | ❌            | ❌            | ✅                |    ❌    | Websocket  |
-| IDA      | *                                    | ✅           | ✅            | ✅            | -             | ✅                |    ✅    | TCP        |
-| Jadx     | Java                                 | ✅           | ✅            | ✅            | ✅            | ❌                |    ✅    | TCP        |
+| Editor      | Languages                            | add to graph | open in editor | Rename support | Field support | Add line to graph | Add xrefs |Socket type |
+| ----------- | ------------------------------------ | ------------ | -------------- | -------------- | ------------- | ----------------- | --------- | ---------- |
+| JEB         | Java                                 | ✅           | ✅            | ✅            | ✅            | ✅                |    ✅    | TCP        |
+| Intellij    | Java, Kotlin                         | ✅           | ✅            | ❌            | ✅            | ✅                |    ✅    | TCP        |
+| CLion       | C, C++                               | ✅           | ✅            | ❌            | ✅            | ✅                |    ❌    | TCP        |
+| VSCode      | Depends on available language server | ✅           | ✅            | ❌            | ❌            | ✅                |    ❌    | TCP        |
+| OpenGrok    | *                                    | ✅           | ✅            | ❌            | ❌            | ✅                |    ❌    | Websocket  |
+| Sourcegraph | *                                    | ✅           | ✅            | ❌            | ❌            | ✅                |    ❌    | Websocket  |
+| IDA         | *                                    | ✅           | ✅            | ✅            | -             | ✅                |    ✅    | TCP        |
+| Jadx        | Java                                 | ✅           | ✅            | ✅            | ✅            | ❌                |    ✅    | TCP        |
 
 The common shortcuts are:
 * Ctrl+Shift+A - Add a new node to the graph.

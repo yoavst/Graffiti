@@ -14,7 +14,7 @@ const GRAFFITI_PLATFORMS = [
     { name: 'Clion', filename: 'graffiti_v{}_for_clion.jar', icon: 'images/platforms/Clion.svg', color: '#16c0ab' },
     { name: 'Visual Studio Code', filename: 'graffiti_v{}_for_vscode.vsix', icon: 'images/platforms/Visual_Studio_Code.svg', color: '#007ACC' },
     { name: 'IDA', filename: 'graffiti_v{}_for_ida.py', icon: 'images/platforms/IDA.png', color: '#c0a58f' },
-    { name: 'OpenGrok', filename: 'graffiti_v{}_for_opengrok.zip', icon: 'images/platforms/Opengrok.png', color: '#5484a4' },
+    { name: 'OpenGrok & SourceGraph', filename: 'graffiti_v{}_for_opengrok_sourcegraph.zip', icon: 'images/platforms/Opengrok_Sourcegraph.png', color: '#5484a4' },
 ]
 const GRAFFITI_UTILS = [
     { name: 'Web UI', filename: 'graffiti_v{}_frontend_web.zip', icon: 'images/icon.png', color: '#1e1f22' },
