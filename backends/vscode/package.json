@@ -2,7 +2,7 @@
     "name": "graffiti",
     "displayName": "Graffiti",
     "description": "Add nodes to call graph directly from VSCode",
-    "version": "1.9.0",
+    "version": "1.10.0",
     "publisher": "yoavst",
     "icon": "icon.png",
     "author": {

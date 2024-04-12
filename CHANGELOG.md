@@ -1,3 +1,16 @@
+## 1.10.0
+### Web
+* [Feature] Create new tab from existing node (thanks @YanirLA)
+* [Feature] Now "override text node" has a shortcut - ctrl+e
+### IDA
+* [Feature] Use demangled name instead of original name
+* [Feature] Now it's plugin instead of script. See new installation's instructions.
+* [Feature] Now clicking a node will make IDA focused.
+### Opengrok
+* [Rewrite] Rewrite opengrok plugin in typescript
+### Sourcegraph
+* [Feautre] Support for Java and C/C++!
+
 ## 1.9.0
 ### Web
 * [Feature] Add documentations and downloads to the web frontend. Now you can use `?` to download all backends.

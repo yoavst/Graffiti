@@ -1,5 +1,5 @@
 ## Installation
-* Copy `backends/ida/graffiti.py` to ida plugins directory (default for MacOS is `~/.idapro/plugins/`)
+* Copy `backends/ida/graffiti.py` to ida plugins directory (default for MacOS/Linux is `~/.idapro/plugins/`, and for windows is `%APPDATA%\Hex-Rays\IDA Pro\plugins`).
   * Also can clone the repository and add a symlink.
 
 
