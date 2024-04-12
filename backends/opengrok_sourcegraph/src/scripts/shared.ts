@@ -66,15 +66,16 @@ export function onExtMessage(callback: (msg: ExtMessage) => void) {
 
 export function onExtMessageEx(callback: (msg: ExtMessage, sendResponse: (response: any) => void) => void) {
     chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
-        return callback(msg as ExtMessage, sendResponse);
+        callback(msg as ExtMessage, sendResponse);
+        return true;
     });
 }
 
 /* Symbol related types */
 export interface SymbolProvider {
     isSupported(): boolean;
-    getCurrentSymbol(x: number, y: number): SymbolInfo | null;
-    getCurrentLineSymbol(x: number, y: number): SymbolInfo | null;
+    getCurrentSymbol(x: number, y: number): Promise<SymbolInfo>;
+    getCurrentLineSymbol(x: number, y: number): Promise<SymbolInfo>;
 }
 
 export interface SymbolInfo {
@@ -90,4 +91,13 @@ export interface SymbolInfo {
 export interface SymbolResponse {
     isCorrectWebsite: boolean;
     info: SymbolInfo | null;
+}
+
+/* Utils */
+export function timeout<T>(prom: Promise<T>, time: number): Promise<T> {
+    return Promise.race<T>([prom, new Promise((_r, rej) => setTimeout(rej, time))]);
+}
+
+export function reject<T>(): Promise<T> {
+    return Promise.reject(new Error());
 }

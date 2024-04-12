@@ -1,4 +1,4 @@
-import { SymbolProvider, onExtMessageEx } from "./shared";
+import { SymbolProvider, onExtMessageEx, reject } from "./shared";
 import OpenGrokProvider from "./opengrok";
 import SourceGraphProvider from "./sourcegraph";
 
@@ -23,25 +23,38 @@ function main() {
             const [x, y] =
                 msg.source == "contextMenu" ? [xLocationContextMenu, yLocationContextMenu] : [xLocation, yLocation];
 
-            for (const provider of SYMBOL_PROVIDERS) {
-                if (!provider.isSupported()) continue;
-
-                const currentSymbol = (msg.isLine ? provider.getCurrentLineSymbol : provider.getCurrentSymbol)(x, y);
-                if (currentSymbol != null && msg.askForEdgeText) {
-                    const edgeText = prompt("Enter edge text", "");
-                    if (edgeText != null) {
-                        currentSymbol.edgeLabel = edgeText;
+            Promise.any<SymbolProvider>(
+                SYMBOL_PROVIDERS.map((provider) => (provider.isSupported() ? provider : reject())),
+            )
+                .catch(() => {
+                    // report error but still reject
+                    sendResponse({ isCorrectWebsite: false, info: null });
+                    return reject<SymbolProvider>();
+                })
+                .then((provider) => {
+                    return msg.isLine ? provider.getCurrentLineSymbol(x, y) : provider.getCurrentSymbol(x, y);
+                })
+                .then((currentSymbol) => {
+                    if (msg.askForEdgeText) {
+                        const edgeText = prompt("Enter edge text", "");
+                        if (edgeText != null) {
+                            currentSymbol.edgeLabel = edgeText;
+                        }
                     }
-                }
 
-                sendResponse({
-                    isCorrectWebsite: true,
-                    info: currentSymbol,
+                    sendResponse({
+                        isCorrectWebsite: true,
+                        info: currentSymbol,
+                    });
+                })
+                .catch(() => {
+                    // For mattching site but not matching symbol
+                    sendResponse({
+                        isCorrectWebsite: true,
+                        info: null,
+                    });
                 });
-                return;
-            }
 
-            sendResponse({ isCorrectWebsite: false, info: null });
             return;
         }
 

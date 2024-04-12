@@ -142,6 +142,7 @@ function createNewTab(url: string) {
 function changeSameTabIfExists(url: string) {
     const urlWithoutHashBuilder = new URL(url);
     urlWithoutHashBuilder.hash = "";
+    urlWithoutHashBuilder.search = "";
     const urlWithoutHash = urlWithoutHashBuilder.toString();
 
     chrome.tabs.query({}, function (tabs) {
@@ -191,7 +192,7 @@ function onSymbol(symbolResponse: SymbolResponse) {
         node: {
             project: symbolInfo.sourceType + ": " + symbolInfo.site,
             address: symbolInfo.address,
-            label: symbolInfo.fileName + "::\n" + symbolInfo.sig,
+            label: symbolInfo.sig,
             computedProperties: [],
         },
     };
@@ -229,16 +230,12 @@ function onLineSymbol(symbolResponse: SymbolResponse) {
         return;
     }
 
-    const label = symbolInfo.sig
-        ? symbolInfo.fileName + "::\n" + symbolInfo.sig + ":" + symbolInfo.line
-        : symbolInfo.fileName + ":" + symbolInfo.line;
-
     const data: any = {
         type: "addData",
         node: {
             project: symbolInfo.sourceType + ": " + symbolInfo.site,
             address: symbolInfo.address,
-            label: label,
+            label: symbolInfo.sig,
             line: symbolInfo.line,
             computedProperties: [],
         },
