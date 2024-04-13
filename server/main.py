@@ -5,14 +5,14 @@ from typing import List, Tuple
 import websockets
 from websockets.server import WebSocketServerProtocol
 import struct
-import sys
+import argparse
 
 logging.basicConfig()
 logging.root.setLevel(logging.INFO)
 
-IDE_TCP_PORT = 8501
-IDE_WEBSOCKET_PORT = 8502
-FRONTEND_WEBSOCKET_PORT = 8503
+DEFAULT_IDE_TCP_PORT = 8501
+DEFAULT_IDE_WEBSOCKET_PORT = 8502
+DEFAULT_FRONTEND_WEBSOCKET_PORT = 8503
 
 frontend_wss: List[WebSocketServerProtocol] = []
 ide_wss: List[WebSocketServerProtocol] = []
@@ -119,16 +119,38 @@ async def handle_frontend(websocket: WebSocketServerProtocol):
         frontend_wss.remove(websocket)
 
 
-async def main(args):
+def port_type(astr, min=1, max=65536):
+    value = int(astr)
+    if min <= value <= max:
+        return value
+    else:
+        raise argparse.ArgumentTypeError(f'value not in range [{min}-{max}]')
+
+def handle_args(args):
     global dump_messages
-    if len(args) == 2 and args[1] == "--dump":
+
+    if len(set([args.frontend_port, args.backend_tcp_port, args.backend_websocket_port])) != 3:
+        print("Each provided port must be unique")
+        exit(1)
+    
+    if args.dump:
         dump_messages = True
 
-    async with websockets.serve(handle_frontend, "0.0.0.0", FRONTEND_WEBSOCKET_PORT):
-        async with await asyncio.start_server(handle_ide_tcp, '0.0.0.0', IDE_TCP_PORT):
-            async with websockets.serve(handle_ide_websocket, "0.0.0.0", IDE_WEBSOCKET_PORT):
+async def main():
+    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser.add_argument("--dump", help="Dump the network traffic to output", action="store_true")
+    parser.add_argument("--frontend-port", help="The port for communication with the frontend", default=DEFAULT_FRONTEND_WEBSOCKET_PORT, type=port_type, metavar="[1-65535]")
+    parser.add_argument("--backend-tcp-port", help="The port for communication with TCP backends", default=DEFAULT_IDE_TCP_PORT, type=port_type, metavar="[1-65535]")
+    parser.add_argument("--backend-websocket-port", help="The port for communication with Websocket backends", default=DEFAULT_IDE_WEBSOCKET_PORT, type=port_type, metavar="[1-65535]")
+    args = parser.parse_args()
+    handle_args(args)
+
+    print(f"Serving - frontend at {args.frontend_port} , TCP backend at {args.backend_tcp_port} , Websocket backend at {args.backend_websocket_port}")
+    async with websockets.serve(handle_frontend, "0.0.0.0", args.frontend_port):
+        async with await asyncio.start_server(handle_ide_tcp, '0.0.0.0', args.backend_tcp_port):
+            async with websockets.serve(handle_ide_websocket, "0.0.0.0", args.backend_websocket_port):
                 # run forever
                 await asyncio.Future()  
 
 
-asyncio.run(main(sys.argv))
+asyncio.run(main())
