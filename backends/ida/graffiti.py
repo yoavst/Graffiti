@@ -13,6 +13,19 @@ import idautils
 import ida_funcs
 import ida_segment
 
+
+HAVE_WIN32_LIBS = False
+if sys.platform == 'win32':
+    try:
+        import win32gui, win32con
+        HAVE_WIN32_LIBS = True
+    except:
+        print(("********************************************\n"
+               "*   Install the following for better GUI   *\n"
+               "*          pip install pywin32             *\n"
+               "********************************************"))
+
+
 def to_bytes(s):
     if sys.version_info.major == 3:
         return s.encode('utf-8')
@@ -254,12 +267,18 @@ def bring_ida_to_foreground():
         window.setWindowState(new_state)
 
         # Switch desktop / give keyboard control
-        window.show()
+        
         if sys.platform == 'darwin':
+            window.show()
             window.raise_()
         elif sys.platform == 'win32':
+            # https://stackoverflow.com/a/25970104
+            if HAVE_WIN32_LIBS:
+                win32gui.SetWindowPos(window.winId(), win32con.HWND_TOPMOST, 0, 0, 0, 0, win32con.SWP_NOMOVE | win32con.SWP_NOSIZE | win32con.SWP_SHOWWINDOW)
+                win32gui.SetWindowPos(window.winId(), win32con.HWND_NOTOPMOST,  0, 0, 0, 0, win32con.SWP_NOMOVE | win32con.SWP_NOSIZE | win32con.SWP_SHOWWINDOW)
+            window.raise_()
+            window.show()
             window.activateWindow()
-        # Apparently can replace the last line with window.activateWindow() for Windows
 
 
 def sync_read_thread(db_filename):
