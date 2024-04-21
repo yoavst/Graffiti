@@ -22,7 +22,7 @@ init:
 backends: jeb intellij clion ida vscode opengrok_sourcegraph jadx
 frontends: web visio
 
-ida:
+ida: 
 	@echo "Building Graffiti for IDA"
 	echo "# Graffiti for IDA, Version: $(VERSION)" | cat - backends/ida/graffiti.py > out/graffiti_v$(VERSION)_for_ida.py
 
@@ -43,8 +43,11 @@ vscode:
 	@echo "Updating the version in package.json"
 	cd backends/vscode && npm pkg set version=$(VERSION)
 
+	@echo "npm install"
+	cd backends/vscode && npm install
+
 	@echo "Compiling the extension"
-	cd backends/vscode && vsce package
+	cd backends/vscode && npx @vscode/vsce package
 
 	@echo "Moving the file"
 	mv backends/vscode/graffiti-$(VERSION).vsix out/graffiti_v$(VERSION)_for_vscode.vsix
@@ -95,8 +98,10 @@ web:
 web-collect:
 	@echo "Building Graffiti for Web again"
 	sed -i.bak "s/_VERSION_/$(VERSION)/g" frontends/web/index.html
+	ln -s `realpath out` frontends/web/out
 	cd frontends/web; find -L . -type f ! -name '*.bak' -exec zip ../../out/graffiti_v$(VERSION)_frontend_web_with_deps.zip {} +
 	mv frontends/web/index.html.bak frontends/web/index.html
+	rm frontends/web/out
 
 visio:
 	@echo "Building visio via makefile is not yet supported"
