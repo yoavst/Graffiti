@@ -16,6 +16,20 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        target:
+          [
+            jeb,
+            intellij,
+            clion,
+            ida,
+            vscode,
+            opengrok_sourcegraph,
+            jadx,
+            web,
+            visio,
+          ]
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -37,28 +51,19 @@ jobs:
       - name: Configure
         run: make init
 
-      - name: Build server
-        run: make server
+      - name: Build ${{ matrix.target }}
+        run: make ${{ matrix.target }}
 
-      - name: Build frontends
-        run: make frontends
-
-      - name: Build backends
-        run: make backends
-
-      - name: Collect Web frontend
-        run: make web-collect
-
-      - name: Upload Artifacts
+      - name: Upload Artifact
         uses: actions/upload-artifact@v4.3.2
         with:
-          name: Graffiti artifacts
+          name: Graffiti for ${{ matrix.target }}
           path: out/*
-      - name: Upload web
-        uses: actions/upload-artifact@v4.3.2
-        with:
-          name: Graffiti frontend
-          path: out/*_frontend_web_with_deps.zip
+      # - name: Upload web
+      #   uses: actions/upload-artifact@v4.3.2
+      #   with:
+      #     name: Graffiti frontend
+      #     path: out/*_frontend_web_with_deps.zip
 
   publish_web:
     runs-on: ubuntu-latest
