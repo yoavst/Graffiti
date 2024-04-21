@@ -14,35 +14,7 @@ permissions:
   id-token: write
 
 jobs:
-  build-server:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - run: make server
-
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v4.3.2
-        with:
-          name: graffiti_server.py
-          path: out/*
-
-  build-jeb:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - run: make jeb
-
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v4.3.2
-        with:
-          name: graffiti_for_jeb.zip
-          path: out/*
-
-  build-vscode:
+  build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -51,58 +23,65 @@ jobs:
       - name: Setup NodeJS
         uses: actions/setup-node@v4
 
-      - run: make vscode
+      - name: Setup JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"
+          java-version: "19"
 
-      - name: Upload Artifact
+      - name: Setup Gradle
+        uses: gradle/gradle-build-action@v3
+        with:
+          gradle-version: 7.6
+
+      - name: Configure
+        run: make init
+
+      - name: Build server
+        run: make server
+
+      - name: Build frontends
+        run: make frontends
+
+      - name: Build backends
+        run: make backends
+
+      - name: Collect Web frontend
+        run: make web-collect
+
+      - name: Upload Artifacts
         uses: actions/upload-artifact@v4.3.2
         with:
-          name: graffiti_server.py
+          name: Graffiti artifacts
           path: out/*
 
-  build-opengrok-sourcegraph:
+  publish_web:
     runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+    needs: build
+    env:
+      VERSION: $(cat version.txt)
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v2
 
-      - name: Setup NodeJS
-        uses: actions/setup-node@v4
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
 
-      - run: make opengrok_sourcegraph
-
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v4.3.2
+      - name: Download web frontend
+        uses: actions/download-artifact@v4
         with:
-          name: graffiti_for_opengrok_sourcegraph.zip
-          path: out/*
+          path: /tmp
+          name: graffiti_v${{ env.VERSION }}_frontend_web_with_deps.zip
 
-  # publish_web:
-  #   runs-on: ubuntu-latest
-  #   if: github.ref == 'refs/heads/master' && github.event_name == 'push'
-  #   needs: build
-  #   env:
-  #     VERSION: $(cat version.txt)
-  #   steps:
-  #     - name: Checkout repository
-  #       uses: actions/checkout@v2
+      - name: Unzip web frotnend
+        run: unzip /tmp/graffiti_v${{ env.VERSION }}_frontend_web_with_deps.zip
 
-  #     - name: Setup Pages
-  #       uses: actions/configure-pages@v5
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: /tmp/graffiti_v${{ env.VERSION }}_frontend_web_with_deps/
 
-  #     - name: Download web frontend
-  #       uses: actions/download-artifact@v4
-  #       with:
-  #         path: /tmp
-  #         name: graffiti_v${{ env.VERSION }}_frontend_web_with_deps.zip
-
-  #     - name: Unzip web frotnend
-  #       run: unzip /tmp/graffiti_v${{ env.VERSION }}_frontend_web_with_deps.zip
-
-  #     - name: Upload artifact
-  #       uses: actions/upload-pages-artifact@v3
-  #       with:
-  #         path: /tmp/graffiti_v${{ env.VERSION }}_frontend_web_with_deps/
-
-  #     - name: Deploy to GitHub Pages
-  #       id: deployment
-  #       uses: actions/deploy-pages@v4
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

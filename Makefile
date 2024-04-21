@@ -22,34 +22,34 @@ init:
 backends: jeb intellij clion ida vscode opengrok_sourcegraph jadx
 frontends: web visio
 
-ida: init
+ida: 
 	@echo "Building Graffiti for IDA"
 	echo "# Graffiti for IDA, Version: $(VERSION)" | cat - backends/ida/graffiti.py > out/graffiti_v$(VERSION)_for_ida.py
 
-jadx: init
+jadx:
 	@echo "Building Graffiti for Jadx"
 	cp backends/jadx/graffiti.jadx.kts out/graffiti_v$(VERSION).jadx.kts
 
-jeb: init
+jeb:
 	@echo "Building Graffiti for JEB"
 	# We cannot add the beginning of the files, as JEB parses them.
 	echo $(VERSION) > .graffiti_version
 	zip -j out/graffiti_v$(VERSION)_for_jeb.zip backends/jeb/*.py .graffiti_version
 	rm .graffiti_version
 
-vscode: init
+vscode:
 	@echo "Building Graffiti for VSCode"
 
 	@echo "Updating the version in package.json"
 	cd backends/vscode && npm pkg set version=$(VERSION)
 
 	@echo "Compiling the extension"
-	cd backends/vscode && vsce package
+	cd backends/vscode && npx vsce package
 
 	@echo "Moving the file"
 	mv backends/vscode/graffiti-$(VERSION).vsix out/graffiti_v$(VERSION)_for_vscode.vsix
 
-intellij: init
+intellij:
 	@echo "Building Graffiti for Intellij"
 	
 	@echo "Updating the version in build.gradle.kts"
@@ -61,7 +61,7 @@ intellij: init
 	@echo "Copying the file"
 	cp backends/intellij/build/libs/intellij-$(VERSION).jar out/graffiti_v$(VERSION)_for_intellij.jar
 
-clion: init
+clion:
 	@echo "Building Graffiti for CLion"
 	
 	@echo "Updating the version in build.gradle.kts"
@@ -73,7 +73,7 @@ clion: init
 	@echo "Copying the file"
 	cp backends/clion/build/libs/clion-$(VERSION).jar out/graffiti_v$(VERSION)_for_clion.jar
 
-opengrok_sourcegraph: init
+opengrok_sourcegraph:
 	@echo "Building Graffiti for OpenGrok & Sourcegraph"
 
 	@echo "Updating the version in manifest.json and package.json"
@@ -86,21 +86,21 @@ opengrok_sourcegraph: init
 	@echo "Since chrome dropped support for CRXs not from store, just zipping the folder"
 	cd backends/opengrok_sourcegraph/dist && zip -r ../../../out/graffiti_v$(VERSION)_for_opengrok_sourcegraph.zip *
 
-web: init
+web:
 	@echo "Building Graffiti for Web"
 	sed -i.bak "s/_VERSION_/$(VERSION)/g" frontends/web/index.html
 	cd frontends/web; find -L . -type f ! -name '*.bak' ! -path './out/*' -exec zip --symlinks ../../out/graffiti_v$(VERSION)_frontend_web.zip {} +
 	mv frontends/web/index.html.bak frontends/web/index.html
 
-web-collect: init
+web-collect:
 	@echo "Building Graffiti for Web again"
 	sed -i.bak "s/_VERSION_/$(VERSION)/g" frontends/web/index.html
 	cd frontends/web; find -L . -type f ! -name '*.bak' -exec zip ../../out/graffiti_v$(VERSION)_frontend_web_with_deps.zip {} +
 	mv frontends/web/index.html.bak frontends/web/index.html
 
-visio: init
+visio:
 	@echo "Building visio via makefile is not yet supported"
 
-server: init
+server:
 	@echo "Building the graffiti Server"
 	cp server/main.py out/graffiti_v$(VERSION)_server.py
