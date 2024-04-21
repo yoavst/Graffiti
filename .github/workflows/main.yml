@@ -57,7 +57,7 @@ jobs:
       - name: Upload web
         uses: actions/upload-artifact@v4.3.2
         with:
-          name: graffiti_frontend_web_with_deps.zip
+          name: Graffiti frontend
           path: out/*_frontend_web_with_deps.zip
 
   publish_web:
@@ -77,17 +77,15 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           path: /tmp
-          name: graffiti_frontend_web_with_deps.zip
-
-      - run: ls -la /tmp
+          name: Graffiti frontend
 
       - name: Unzip web frotnend
-        run: unzip /tmp/graffiti_frontend_web_with_deps.zip
+        run: mkdir /tmp/web && unzip /tmp/*_frontend_web_with_deps.zip -d /tmp/web
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: /tmp/graffiti_frontend_web_with_deps/
+          path: /tmp/web
 
       - name: Deploy to GitHub Pages
         id: deployment
