@@ -43,8 +43,11 @@ vscode:
 	@echo "Updating the version in package.json"
 	cd backends/vscode && npm pkg set version=$(VERSION)
 
+	@echo "npm install"
+	cd backends/vscode && npm install
+
 	@echo "Compiling the extension"
-	cd backends/vscode && npx vsce package
+	cd backends/vscode && npx @vscode/vsce package
 
 	@echo "Moving the file"
 	mv backends/vscode/graffiti-$(VERSION).vsix out/graffiti_v$(VERSION)_for_vscode.vsix
