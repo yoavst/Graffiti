@@ -54,10 +54,15 @@ jobs:
         with:
           name: Graffiti artifacts
           path: out/*
+      - name: Upload web
+        uses: actions/upload-artifact@v4.3.2
+        with:
+          name: graffiti_frontend_web_with_deps.zip
+          path: out/*_frontend_web_with_deps.zip
 
   publish_web:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+    # if: github.ref == 'refs/heads/master' && github.event_name == 'push'
     needs: build
     env:
       VERSION: $(cat version.txt)
@@ -72,15 +77,15 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           path: /tmp
-          name: graffiti_v${{ env.VERSION }}_frontend_web_with_deps.zip
+          name: graffiti_frontend_web_with_deps.zip
 
       - name: Unzip web frotnend
-        run: unzip /tmp/graffiti_v${{ env.VERSION }}_frontend_web_with_deps.zip
+        run: unzip /tmp/graffiti_frontend_web_with_deps.zip
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: /tmp/graffiti_v${{ env.VERSION }}_frontend_web_with_deps/
+          path: /tmp/graffiti_frontend_web_with_deps/
 
       - name: Deploy to GitHub Pages
         id: deployment
