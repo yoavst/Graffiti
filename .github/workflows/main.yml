@@ -45,7 +45,7 @@ jobs:
         uses: gradle/actions/setup-gradle@v3
         with:
           gradle-version: 7.6
-          if: matrix.target.type == 'java'
+        if: matrix.target.type == 'java'
 
       - name: Configure
         run: make init
@@ -96,7 +96,7 @@ jobs:
 
   publish:
     runs-on: ubuntu-latest
-    # if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+    if: github.ref == 'refs/heads/master' && github.event_name == 'push'
     needs: frontend
     steps:
       - name: Setup Pages
