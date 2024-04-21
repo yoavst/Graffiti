@@ -25,17 +25,20 @@ jobs:
 
       - name: Setup NodeJS
         uses: actions/setup-node@v4
+        if: matrix.target == 'vscode' || matrix.target == 'opengrok_sourcegraph'
 
       - name: Setup JDK
         uses: actions/setup-java@v4
         with:
           distribution: "temurin"
           java-version: "19"
+        if: matrix.target == 'clion' || matrix.target == 'intellij'
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
         with:
           gradle-version: 7.6
+        if: matrix.target == 'clion' || matrix.target == 'intellij'
 
       - name: Configure
         run: make init
@@ -71,6 +74,8 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           path: out/
+
+      - run: find .
 
       - name: Pack web frontend with backends
         run: make web-collect
