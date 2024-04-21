@@ -14,22 +14,11 @@ permissions:
   id-token: write
 
 jobs:
-  build:
+  backend:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        target:
-          [
-            jeb,
-            intellij,
-            clion,
-            ida,
-            vscode,
-            opengrok_sourcegraph,
-            jadx,
-            web,
-            visio,
-          ]
+        target: [jeb, intellij, clion, ida, vscode, opengrok_sourcegraph, jadx]
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -59,22 +48,44 @@ jobs:
         with:
           name: Graffiti for ${{ matrix.target }}
           path: out/*
-      # - name: Upload web
-      #   uses: actions/upload-artifact@v4.3.2
-      #   with:
-      #     name: Graffiti frontend
-      #     path: out/*_frontend_web_with_deps.zip
-
-  publish_web:
+  frontend:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master' && github.event_name == 'push'
-    needs: build
-    env:
-      VERSION: $(cat version.txt)
+    needs: backend
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
+      - name: Configure
+        run: make init
+
+      - name: Build web frontend
+        run: make web
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4.3.2
+        with:
+          name: Graffiti web frontend
+          path: out/*
+
+      - name: Download backends
+        uses: actions/download-artifact@v4
+        with:
+          path: out/
+
+      - name: Pack web frontend with backends
+        run: make web-collect
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4.3.2
+        with:
+          name: Graffiti Web frontend with backends
+          path: out/*_frontend_web_with_deps.zip
+
+  publish:
+    runs-on: ubuntu-latest
+    # if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+    needs: frontend
+    steps:
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
@@ -82,7 +93,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           path: /tmp
-          name: Graffiti frontend
+          name: Graffiti Web frontend with backends
 
       - name: Unzip web frotnend
         run: mkdir /tmp/web && unzip /tmp/*_frontend_web_with_deps.zip -d /tmp/web
