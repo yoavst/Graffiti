@@ -30,7 +30,7 @@ jobs:
           java-version: "19"
 
       - name: Setup Gradle
-        uses: gradle/gradle-build-action@v3
+        uses: gradle/actions/setup-gradle@v3
         with:
           gradle-version: 7.6
 
@@ -78,6 +78,8 @@ jobs:
         with:
           path: /tmp
           name: graffiti_frontend_web_with_deps.zip
+
+      - run: ls -la /tmp
 
       - name: Unzip web frotnend
         run: unzip /tmp/graffiti_frontend_web_with_deps.zip
