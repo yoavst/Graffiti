@@ -14,22 +14,29 @@ permissions:
   id-token: write
 
 jobs:
-  setup:
+  build:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: Setup NodeJS
         uses: actions/setup-node@v4
+
       - name: Setup JDK
         uses: actions/setup-java@v4
         with:
           distribution: "temurin"
           java-version: "21"
-      - name: Checkout code
-        uses: actions/checkout@v4
-  build:
-    runs-on: ubuntu-latest
-    needs: setup
-    steps:
+
+      - name: Setup Gradle
+        uses: gradle/gradle-build-action@v3
+        with:
+          gradle-version: 7.6
+
+      - name: Configure
+        run: make init
+
       - name: Build server
         run: make server
 
@@ -47,3 +54,33 @@ jobs:
         with:
           name: Graffiti artifacts
           path: out/*
+
+  publish_web:
+    runs-on: ubuntu-latest
+    needs: build
+    env:
+      VERSION: $(cat version.txt)
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Download web frontend
+        uses: actions/download-artifact@v4
+        with:
+          path: /tmp
+          name: graffiti_v${{ env.VERSION }}_frontend_web_with_deps.zip
+
+      - name: Unzip web frotnend
+        run: unzip /tmp/graffiti_v${{ env.VERSION }}_frontend_web_with_deps.zip
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: /tmp/graffiti_v${{ env.VERSION }}_frontend_web_with_deps/
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
