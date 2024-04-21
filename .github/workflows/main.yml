@@ -73,9 +73,12 @@ jobs:
       - name: Download backends
         uses: actions/download-artifact@v4
         with:
-          path: out/
+          path: /tmp/artifacts
 
-      - run: find .
+      - name: Copy backends
+        run: find /tmp/artifacts -type f -exec cp -v {} out/ \;
+
+      - run: find out/
 
       - name: Pack web frontend with backends
         run: make web-collect
