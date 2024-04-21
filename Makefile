@@ -98,8 +98,10 @@ web:
 web-collect:
 	@echo "Building Graffiti for Web again"
 	sed -i.bak "s/_VERSION_/$(VERSION)/g" frontends/web/index.html
+	ln -s `realpath out` frontends/web/out
 	cd frontends/web; find -L . -type f ! -name '*.bak' -exec zip ../../out/graffiti_v$(VERSION)_frontend_web_with_deps.zip {} +
 	mv frontends/web/index.html.bak frontends/web/index.html
+	rm frontends/web/out
 
 visio:
 	@echo "Building visio via makefile is not yet supported"

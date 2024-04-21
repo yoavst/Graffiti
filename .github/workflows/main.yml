@@ -18,38 +18,45 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        target: [jeb, intellij, clion, ida, vscode, opengrok_sourcegraph, jadx]
+        target:
+          - { name: jeb, type: pack }
+          - { name: intellij, type: java }
+          - { name: clion, type: java }
+          - { name: ida, type: pack }
+          - { name: vscode, type: typescript }
+          - { name: opengrok_sourcegraph, type: typescript }
+          - { name: jadx, type: pack }
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Setup NodeJS
         uses: actions/setup-node@v4
-        if: matrix.target == 'vscode' || matrix.target == 'opengrok_sourcegraph'
+        if: matrix.target.type == 'typescript'
 
       - name: Setup JDK
         uses: actions/setup-java@v4
         with:
           distribution: "temurin"
           java-version: "19"
-        if: matrix.target == 'clion' || matrix.target == 'intellij'
+        if: matrix.target.type == 'java'
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
         with:
           gradle-version: 7.6
-        if: matrix.target == 'clion' || matrix.target == 'intellij'
+          if: matrix.target.type == 'java'
 
       - name: Configure
         run: make init
 
-      - name: Build ${{ matrix.target }}
-        run: make ${{ matrix.target }}
+      - name: Build ${{ matrix.target.name }}
+        run: make ${{ matrix.target.name }}
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4.3.2
         with:
-          name: Graffiti for ${{ matrix.target }}
+          name: Graffiti for ${{ matrix.target.name }}
           path: out/*
   frontend:
     runs-on: ubuntu-latest
@@ -77,8 +84,6 @@ jobs:
 
       - name: Copy backends
         run: find /tmp/artifacts -type f -exec cp -v {} out/ \;
-
-      - run: find out/
 
       - name: Pack web frontend with backends
         run: make web-collect
