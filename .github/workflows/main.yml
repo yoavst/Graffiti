@@ -21,6 +21,9 @@ jobs:
         uses: actions/setup-node@v4
       - name: Setup JDK
         uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"
+          java-version: "21"
       - name: Checkout code
         uses: actions/checkout@v4
   build:
