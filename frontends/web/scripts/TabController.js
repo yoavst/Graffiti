@@ -1110,6 +1110,7 @@ config:
 
         const ctx = canvas.getContext('2d');
         const img = new Image();
+        img.crossOrigin = 'anonymous';
 
         const svgBlob = new Blob([combinedSVG], { type: 'image/svg+xml;charset=utf-8' });
         const url = URL.createObjectURL(svgBlob);
