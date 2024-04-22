@@ -1357,8 +1357,11 @@ function _isDarkMode() {
 
     return (localStorage.getItem("darkMode") || "false") === "true"
 }
-const darkModeCached = _isDarkMode()
+let darkModeCached = null;
 function isDarkMode() {
+    if (darkModeCached == null) {
+        darkModeCached = _isDarkMode();
+    }
     return darkModeCached;
 }
 
