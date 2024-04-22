@@ -481,7 +481,7 @@ function event_help() {
     </div>`
 
     Swal.fire({
-        title: 'Graffiti v' + window.versionStr,
+        title: 'Graffiti V' + window.versionStr,
         html: html,
         width: '50em',
         confirmButtonText: 'Close',
@@ -509,6 +509,9 @@ function event_showDocs(platform) {
                 html: `<div class="left">${html}</div>`,
                 confirmButtonText: 'Close',
                 width: '48em',
+            }).then(_ => {
+                // Go back to the help section
+                event_help();
             });
         })
 }
