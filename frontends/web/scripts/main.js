@@ -13,7 +13,7 @@ const GRAFFITI_PLATFORMS = [
     { name: 'Intellij IDEA', filename: 'graffiti_v{}_for_intellij.jar', icon: 'images/platforms/IntelliJ_IDEA.svg', color: '#fe315d' },
     { name: 'Clion', filename: 'graffiti_v{}_for_clion.jar', icon: 'images/platforms/Clion.svg', color: '#16c0ab' },
     { name: 'Visual Studio Code', filename: 'graffiti_v{}_for_vscode.vsix', icon: 'images/platforms/Visual_Studio_Code.svg', color: '#007ACC' },
-    { name: 'IDA', filename: 'graffiti_v{}_for_ida.py', icon: 'images/platforms/IDA.png', color: '#c0a58f' },
+    { name: 'IDA', filename: 'graffiti_v{}_for_ida.zip', icon: 'images/platforms/IDA.png', color: '#c0a58f' },
     { name: 'OpenGrok & SourceGraph', filename: 'graffiti_v{}_for_opengrok_sourcegraph.zip', icon: 'images/platforms/Opengrok_Sourcegraph.png', color: '#5484a4' },
 ]
 const GRAFFITI_UTILS = [
