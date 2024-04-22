@@ -218,6 +218,27 @@ footer {
     background-color: var(--primary-color);
     color: #fff;
     padding: 1rem;
+    display: flex;
+}
+
+footer > * {
+    width: 33%;
+    flex-grow: 1;
+}
+
+.github_link {
+    color: white;
+    text-decoration: none;
+}
+
+.github_link > span {
+    padding-right: 0.75rem;  
+}
+
+.center {
+    display: inline-flex; 
+    align-items: center;
+    justify-content: center;
 }
 
 .arrowToggle {

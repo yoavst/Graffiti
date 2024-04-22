@@ -305,7 +305,7 @@ function setHelpBarAppearance() {
     if (currentHideHelpBar) {
         document.getElementsByTagName("footer")[0].style.display = "none";
     } else {
-        document.getElementsByTagName("footer")[0].style.display = "block";
+        document.getElementsByTagName("footer")[0].style.removeProperty("display");
     }
 }
 
