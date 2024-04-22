@@ -1109,22 +1109,27 @@ config:
         canvas.height = height;
 
         const ctx = canvas.getContext('2d');
-        const img = new Image();
-        img.crossOrigin = 'anonymous';
-
+        
         const svgBlob = new Blob([combinedSVG], { type: 'image/svg+xml;charset=utf-8' });
-        const url = URL.createObjectURL(svgBlob);
 
-        img.onload = function () {
-            ctx.drawImage(img, 0, 0, width, height);
+        const reader = new FileReader();
+        reader.readAsDataURL(svgBlob);
 
-            const link = document.createElement('a');
-            link.download = `${name}.jpg`;
-            link.href = canvas.toDataURL('image/jpeg');
-            link.click();
-        };
+        reader.onload = e => {
+            const svgDataURL = e.target.result;
+            const img = new Image();
+            img.crossOrigin = 'anonymous';
+            img.onload = function () {
+                ctx.drawImage(img, 0, 0, width, height);
+    
+                const link = document.createElement('a');
+                link.download = `${name}.jpg`;
+                link.href = canvas.toDataURL('image/jpeg');
+                link.click();
+            };
 
-        img.src = url;
+            img.src = svgDataURL;    
+        }
     }
 
     getSearchResults() {
