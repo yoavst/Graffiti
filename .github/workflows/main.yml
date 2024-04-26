@@ -7,6 +7,7 @@ on:
   pull_request:
     branches:
       - "master"
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -49,6 +50,14 @@ jobs:
 
       - name: Configure
         run: make init
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.x"
+      
+      - name: Install pybunch
+        run: python -m pip install pybunch
 
       - name: Build ${{ matrix.target.name }}
         run: make ${{ matrix.target.name }}
