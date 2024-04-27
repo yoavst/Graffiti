@@ -39,7 +39,7 @@ jeb_packed_%:
 	   echo && echo &&\
 	   python -m pybunch -r backends/jeb -e $* -so ) | cat > backends/jeb/packed/$*.py
 
-JEB_SCRIPTS := graffiti graffitiSyncSymbols graphMe graphMeLine graphMeWithEdgeInfo graphMeXrefs graphMeXrefsLine
+JEB_SCRIPTS := $(shell grep -rlP '^#\?' backends/jeb | sed 's/.*\///;s/\.[^.]*$$//')
 
 jeb: $(addprefix jeb_packed_, $(JEB_SCRIPTS))
 	@echo "Building Graffiti for JEB"
