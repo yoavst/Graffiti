@@ -37,7 +37,7 @@ jeb_packed_%:
 	mkdir -p backends/jeb/packed && \
 	( (cat backends/jeb/$*.py | awk '/^#/ {print} !/^#/ {exit}') &&\
 	   echo && echo &&\
-	   python -m pybunch -r backends/jeb -e $* -so ) | cat > backends/jeb/packed/$*.py
+	   python3 -m pybunch -r backends/jeb -e $* -so ) | cat > backends/jeb/packed/$*.py
 
 JEB_SCRIPTS := $(shell grep -rlP '^#\?' backends/jeb | sed 's/.*\///;s/\.[^.]*$$//')
 
