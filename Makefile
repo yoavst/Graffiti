@@ -32,12 +32,22 @@ jadx:
 	@echo "Building Graffiti for Jadx"
 	cp backends/jadx/graffiti.jadx.kts out/graffiti_v$(VERSION).jadx.kts
 
-jeb:
+jeb_packed_%:
+	@echo Packing $*
+	mkdir -p backends/jeb/packed && \
+	( (cat backends/jeb/$*.py | awk '/^#/ {print} !/^#/ {exit}') &&\
+	   echo && echo &&\
+	   python3 -m pybunch -r backends/jeb -e $* -so ) | cat > backends/jeb/packed/$*.py
+
+JEB_SCRIPTS := $(shell grep -rlP '^#\?' backends/jeb | sed 's/.*\///;s/\.[^.]*$$//')
+
+jeb: $(addprefix jeb_packed_, $(JEB_SCRIPTS))
 	@echo "Building Graffiti for JEB"
 	# We cannot add the beginning of the files, as JEB parses them.
 	echo $(VERSION) > .graffiti_version
-	zip -j out/graffiti_v$(VERSION)_for_jeb.zip backends/jeb/*.py .graffiti_version
+	zip -j out/graffiti_v$(VERSION)_for_jeb.zip backends/jeb/packed/*.py .graffiti_version
 	rm .graffiti_version
+	rm -rf backends/jeb/packed
 
 vscode:
 	@echo "Building Graffiti for VSCode"
