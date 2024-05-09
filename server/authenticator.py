@@ -33,6 +33,8 @@ class Authenticator(NetworkHandler):
                 if not self._validate_token(token):
                     logging.warning(f"{sock.peername} sent invalid token: ${token}")
                     raise ConnectionError("invalid token")
+                
+                logging.info(f"Successfully authenticated {sock.peername} with token: {token}")
             except ConnectionError:
                 await sock.close()
                 logging.info(f"{sock.peername} failed the authentication step.")
@@ -66,7 +68,7 @@ class Authenticator(NetworkHandler):
             logging.exception(f"Received invalid json as authentication response from {sock.peername}")
             raise ConnectionError from e
     
-    async def _validate_token(self, token: str) -> bool:
+    def _validate_token(self, token: str) -> bool:
         try:
             UUID(token, version=4)
             return True

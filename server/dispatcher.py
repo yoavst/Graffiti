@@ -50,7 +50,7 @@ class Dispatcher:
         while True:
             try:
                 msg = await sock.recv_msg()
-                logging.info(f"Received backend message from {sock.peername}")
+                logging.info(f"Received backend message from {sock.peername} on route: {token}")
                 if self.should_dump_messages:
                     logging.info(f"Backend Message: {msg}")
                 
@@ -74,7 +74,7 @@ class Dispatcher:
             try:
                 msg = await sock.recv_msg()
                 if self.should_dump_messages:
-                    logging.info(f"Received frontend message from {sock.peername}")
+                    logging.info(f"Received frontend message from {sock.peername} on route: {token}")
                     logging.info(f"Frontend Message: {msg}")
                 
                 await self.send_to_all(msg, route.backends)
@@ -101,4 +101,5 @@ class Dispatcher:
     
     def _gc_route(self, route: RouteState):
         if route.can_dispose():
+            logging.info(f"GCing route {route.token}")
             del self.routes[route.token]

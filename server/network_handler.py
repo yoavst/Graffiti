@@ -76,8 +76,9 @@ class WebSocketSocketWraper(SocketWrapper):
     async def recv_msg(self) -> str:
         try:
             msg = await self.websocket.recv()
-        except websockets.exceptions.ConnectionClosed:
+        except websockets.exceptions.ConnectionClosed as e:
             logging.info(f"[WS] Connection from {self.peername} is closed")
+            raise ConnectionResetError from e
 
         if isinstance(msg, str):
             return msg
@@ -92,7 +93,7 @@ class WebSocketSocketWraper(SocketWrapper):
             await self.websocket.send(msg)
         except websockets.exceptions.ConnectionClosed as e:
             logging.info(f"[WS] Connection from {self.peername} is closed")    
-            raise ConnectionResetError() from e
+            raise ConnectionResetError from e
         
     async def close(self):
         try:
