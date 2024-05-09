@@ -26,7 +26,7 @@ class RouteState:
         try:
             self.backends.remove(sock)
         except ValueError:
-            logging.warning("Removing a backend from RouterState, but the backend was already removed")
+            logging.exception("Removing a backend from RouterState, but the backend was already removed")
 
     @staticmethod
     def from_token(token: str) -> "RouteState":
@@ -79,7 +79,7 @@ class Dispatcher:
                 
                 await self.send_to_all(msg, route.backends)
             except ConnectionError:
-                route.del_backend(sock)
+                route.del_frontend(sock)
                 self._gc_route(route)
                 break
 
