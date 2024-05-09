@@ -1,6 +1,8 @@
 import asyncio
 import socket
 import logging
+import sys
+from typing import AsyncIterable
 import websockets
 from websockets.server import WebSocketServerProtocol
 import struct
@@ -17,6 +19,15 @@ logging.root.setLevel(logging.INFO)
 DEFAULT_IDE_TCP_PORT = 8501
 DEFAULT_IDE_WEBSOCKET_PORT = 8502
 DEFAULT_FRONTEND_WEBSOCKET_PORT = 8503
+
+
+async def get_stdin_lines() -> AsyncIterable[str]:
+    loop = asyncio.get_event_loop()
+    while True:
+        line = await loop.run_in_executor(None, sys.stdin.readline)
+        if not line:
+            break
+        yield line
 
 
 def port_type(astr, min=1, max=65536):
@@ -56,8 +67,9 @@ async def main():
     async with websockets.serve(adapter.handle_frontend_ws, "0.0.0.0", args.frontend_port):
         async with await asyncio.start_server(adapter.handle_backend_tcp, '0.0.0.0', args.backend_tcp_port):
             async with websockets.serve(adapter.handle_backend_ws, "0.0.0.0", args.backend_websocket_port):
-                # run forever
-                await asyncio.Future()  
+                async for _ in get_stdin_lines():  
+                    print("Current status:")                  
+                    print(repr(dispatcher))
 
 
 asyncio.run(main())

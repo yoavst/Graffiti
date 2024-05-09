@@ -33,7 +33,7 @@ class RouteState:
         return RouteState(token, [], [])
 
     def __str__(self) -> str:
-        return f"UserState(token: {self.token}) {{ frontends: {len(self.frontends)}, backends: {len(self.backends)} }}"
+        return f"Route(token: {self.token}) {{ frontends: {len(self.frontends)}, backends: {len(self.backends)} }}"
 
     def can_dispose(self) -> bool:
         return not self.frontends and not self.backends
@@ -103,3 +103,6 @@ class Dispatcher:
         if route.can_dispose():
             logging.info(f"GCing route {route.token}")
             del self.routes[route.token]
+
+    def __repr__(self) -> str:
+        return '\n'.join('\t' + str(x) for x in self.routes.values())
