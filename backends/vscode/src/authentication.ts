@@ -23,7 +23,7 @@ function getTokenFromFile(): string | null {
         if (!token || token.length == 0) {
             debugChannel.appendLine('Token file is empty!');
             return null;
-        } else if (!isValidUUIDv4(token)) {
+        } else if (!validateToken(token)) {
             debugChannel.appendLine(`Token is not valid uuid v4: ${token}`);
             return null;
         } else {
@@ -69,6 +69,6 @@ function mkdirsSync(dirPath: string): void {
 
   function isValidUUIDv4(uuid: string): boolean {
     const uuidv4Regex =
-      /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+      /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$/i;
     return uuidv4Regex.test(uuid);
   }

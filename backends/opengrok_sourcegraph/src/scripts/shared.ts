@@ -6,10 +6,12 @@ export type TabBehavior = "alwaysNew" | "sameIfExists";
 
 export interface Prefs {
     tabBehavior: TabBehavior;
+    token: string;
 }
 
 const PREFS_DEFAULTS: Prefs = {
     tabBehavior: "alwaysNew",
+    token: "",
 };
 
 export function getPrefs(onPrefs: (prefs: Prefs) => void) {
@@ -100,4 +102,9 @@ export function timeout<T>(prom: Promise<T>, time: number): Promise<T> {
 
 export function reject<T>(): Promise<T> {
     return Promise.reject(new Error());
+}
+
+export function isValidUUIDv4(uuid: string): boolean {
+    const uuidv4Regex = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$/i;
+    return uuidv4Regex.test(uuid);
 }

@@ -1,4 +1,12 @@
-import { GetSymbolRequestMessage, Prefs, SymbolResponse, getPrefs, onExtMessage, sendExtMessage } from "./shared";
+import {
+    GetSymbolRequestMessage,
+    Prefs,
+    SymbolResponse,
+    getPrefs,
+    isValidUUIDv4,
+    onExtMessage,
+    sendExtMessage,
+} from "./shared";
 
 let graffitiWebSocket: WebSocket | null;
 let cachedPrefs: Prefs;
@@ -70,11 +78,15 @@ function main() {
     });
 }
 
-function connectPullWebSocket(addr: string) {
+function closeWebSocket() {
     if (graffitiWebSocket != null) {
         if (graffitiWebSocket.readyState !== WebSocket.CLOSED) graffitiWebSocket.close();
         graffitiWebSocket = null;
     }
+}
+
+function connectPullWebSocket(addr: string) {
+    closeWebSocket();
     const tmpSocket = new WebSocket(addr);
     graffitiWebSocket = tmpSocket;
 
@@ -99,6 +111,38 @@ function connectPullWebSocket(addr: string) {
     };
     graffitiWebSocket.onmessage = function (event) {
         const data = JSON.parse(event.data);
+        if ("type" in data && data["type"] == "auth_req_v1") {
+            getPrefs((prefs) => {
+                const token = prefs.token.trim();
+                if (token.length == 0) {
+                    chrome.notifications.create("noAuthToken", {
+                        type: "basic",
+                        iconUrl: "images/icon.png",
+                        title: "Graffiti",
+                        message:
+                            "Not authenticated. Copy the token from graffiti to the input on the bottom of the connection dialog.",
+                    });
+                    closeWebSocket();
+                } else if (!isValidUUIDv4(token)) {
+                    chrome.notifications.create("invalidAuthToken", {
+                        type: "basic",
+                        iconUrl: "images/icon.png",
+                        title: "Graffiti",
+                        message:
+                            "The token is not a valid one. Copy the token from graffiti to the input on the bottom of the connection dialog.",
+                    });
+                    closeWebSocket();
+                } else {
+                    graffitiWebSocket?.send(
+                        JSON.stringify({
+                            type: "auth_resp_v1",
+                            token: token,
+                        }),
+                    );
+                }
+            });
+            return;
+        }
         if ("project" in data) {
             if (!data["project"].startsWith("OpenGrok:") && !data["project"].startsWith("SourceGraph:")) {
                 return;

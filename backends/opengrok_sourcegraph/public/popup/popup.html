@@ -25,6 +25,18 @@
                     <input type="radio" id="alwaysNew" name="open_in_chrome_behavior" value="alwaysNew" />
                     <label for="alwaysNew">Always open in new tab</label>
                 </form>
+                <br />
+                <h3>Graffiti authentication token</h3>
+                <div class="push">
+                    <p>Note: Relevant only for multi-user server setup.</p>
+                    <input
+                        type="text"
+                        value=""
+                        id="token"
+                        placeholder="Token"
+                        pattern="[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}"
+                    />
+                </div>
             </div>
         </div>
 
