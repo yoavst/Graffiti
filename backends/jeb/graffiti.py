@@ -19,6 +19,7 @@ from org.python.core.util import StringUtil
 import jarray
 
 from graphUtils import send_update, create_rename
+from authentication import get_token_or_else
 
 
 class graffiti(IScript):
@@ -89,6 +90,28 @@ class GraffitiReadOnBackgroundRunnable(Runnable):
                 if not line:
                     break
                 data = json.loads(line)
+
+                if 'type' in data and data['type'] == 'auth_req_v1':
+                    # Handle authentication request
+                    token_storage = []
+                    class AskForTokenRunnable(Runnable):
+                        def run(x):
+                            token = self.ctx.displayQuestionBox('Authentication', 'Enter the UUID token from graffiti website', '')
+                            if token:
+                                token_storage.append(token.strip())
+                    
+                    def ask_for_token():
+                        Display.getDefault().syncExec(AskForTokenRunnable())
+                        return token_storage[0] if token_storage else None
+
+                    token = get_token_or_else(ask_for_token)
+                    if token is not None:
+                        send_update(self.ctx, {'type': 'auth_resp_v1', 'token': token})
+                        continue
+                    else:
+                        break
+
+
                 if 'project' in data:
                     # Support every JEB project for now, as I don't want complains from people who renamed the file
                     if not data['project'].startswith('Jeb:'):
