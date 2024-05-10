@@ -74,8 +74,8 @@ class Dispatcher:
         while True:
             try:
                 msg = await sock.recv_msg()
+                logging.info(f"Received frontend message from {sock.peername} on route: {token}")
                 if self.should_dump_messages:
-                    logging.info(f"Received frontend message from {sock.peername} on route: {token}")
                     logging.info(f"Frontend Message: {msg}")
                 
                 await self.send_to_all(msg, route.backends)
