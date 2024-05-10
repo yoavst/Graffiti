@@ -24,7 +24,8 @@ frontends: web visio
 
 ida: 
 	@echo "Building Graffiti for IDA"
-	echo "# Graffiti for IDA, Version: $(VERSION)" | cat - backends/ida/graffiti.py > graffiti.py
+	echo "# Graffiti for IDA, Version: $(VERSION)" > graffiti.py
+	python3 -m pybunch -r backends/ida -e graffiti -so  | cat >> graffiti.py
 	zip -j out/graffiti_v$(VERSION)_for_ida.zip graffiti.py
 	rm graffiti.py
 
