@@ -121,4 +121,4 @@ visio:
 
 server:
 	@echo "Building the graffiti Server"
-	cp server/main.py out/graffiti_v$(VERSION)_server.py
+	python3 -m pybunch -r server -e main -so  | cat > out/graffiti_v$(VERSION)_server.py
