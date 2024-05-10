@@ -56,7 +56,8 @@ class Dispatcher:
                 
                 await self.send_to_all(msg, route.frontends)
             except ConnectionError:
-                route.del_frontend(sock)
+                logging.info(f"Removing disconnected {sock.peername} from backends")
+                route.del_backend(sock)
                 self._gc_route(route)
                 break
 
@@ -79,6 +80,7 @@ class Dispatcher:
                 
                 await self.send_to_all(msg, route.backends)
             except ConnectionError:
+                logging.info(f"Removing disconnected {sock.peername} from frontends")
                 route.del_frontend(sock)
                 self._gc_route(route)
                 break
