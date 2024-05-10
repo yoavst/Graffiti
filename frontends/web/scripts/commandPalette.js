@@ -217,6 +217,14 @@ class CommandPalette {
                 handler: () => { event_showChangelog(); }
             },
             {
+                id: 'ManageToken',
+                title: 'Manage token for multi-user mode',
+                hotkey: 'Ctrl+K',
+                icon: iconFor('key'),
+                section: 'General',
+                handler: () => { event_showManageTokenDialog(); }
+            },
+            {
                 id: 'Settings',
                 title: 'Modify Settings',
                 icon: iconFor('settings'),
