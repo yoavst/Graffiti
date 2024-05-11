@@ -1,3 +1,4 @@
+import asyncio
 import json
 import logging
 from typing import Optional
@@ -6,6 +7,7 @@ from dispatcher import Dispatcher
 from network_handler import NetworkHandler, SocketWrapper
 
 SINGLE_USER_TOKEN = "00000000-0000-0000-0000-000000000000"
+AUTHENTICATION_TIMEOUT = float(300) # 5 minutes
 
 
 class Authenticator(NetworkHandler):
@@ -39,6 +41,10 @@ class Authenticator(NetworkHandler):
                 await sock.close()
                 logging.info(f"{sock.peername} failed the authentication step.")
                 return
+            except TimeoutError:
+                await sock.close()
+                logging.info(f"{sock.peername} timeout during the authentication step.")
+                return
         else:
             token = SINGLE_USER_TOKEN
         
@@ -53,7 +59,7 @@ class Authenticator(NetworkHandler):
         await sock.send_msg(json.dumps(auth_req))
 
     async def _recv_auth_response(self, sock: SocketWrapper) -> str:
-        response = await sock.recv_msg()
+        response = await asyncio.wait_for(sock.recv_msg(), timeout=AUTHENTICATION_TIMEOUT)
         try:
             response_json = json.loads(response)
             if 'type' not in response_json or response_json['type'] != 'auth_resp_v1':
