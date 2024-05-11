@@ -1,16 +1,13 @@
 import asyncio
-import socket
 import logging
 import sys
 from typing import AsyncIterable
 import websockets
-from websockets.server import WebSocketServerProtocol
-import struct
 import argparse
 
-from authenticator import Authenticator
-from dispatcher import Dispatcher
-from network_handler import NetworkHandlerAdapter
+from graffiti.authenticator import Authenticator
+from graffiti.dispatcher import Dispatcher
+from graffiti.network_handler import NetworkHandlerAdapter
 
 logging.basicConfig()
 logging.root.setLevel(logging.INFO)
@@ -71,5 +68,8 @@ async def main():
                     print("Current status:")                  
                     print(repr(dispatcher))
 
-
-asyncio.run(main())
+def main_cli():
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        print("Closing the server.")

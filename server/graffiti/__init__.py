@@ -1,0 +1,1 @@
+from graffiti.main import main_cli
