@@ -10,6 +10,8 @@ import jadx.core.dex.nodes.MethodNode
 import java.io.DataInputStream
 import java.lang.IllegalArgumentException
 import java.net.Socket
+import java.util.UUID
+import java.io.File
 import javax.swing.JOptionPane
 import kotlin.concurrent.thread
 
@@ -93,7 +95,7 @@ fun threadCode() {
 		socket?.use { sock ->
 			val dataInputStream = DataInputStream(sock.getInputStream())
 
-			while (true) {
+			while (socket != null) {
 				// readInt is bigEndian
 				val length = dataInputStream.readInt()
 				val rawData = String(ByteArray(length).also(dataInputStream::readFully))
@@ -102,6 +104,21 @@ fun threadCode() {
 				if (rawData.isEmpty())
 					break
 				val data = JsonParser.parseString(rawData).asJsonObject
+				if (data.has("type") && data["type"].asString == "auth_req_v1") {
+					log.info { "Received auth request" }
+					jadx.gui.ui {
+						val token = getTokenOrElse {
+                                 val userToken = JOptionPane.showInputDialog("Enter the UUID token from graffiti website", "")
+	                            if (userToken.isNullOrEmpty()) null else userToken
+						}
+						if (token != null) {
+							sendUpdate(mapOf("type" to "auth_resp_v1", "token" to token))
+						} else {
+							socket = null
+						}
+					}
+					continue
+				}
 				if (data.has("project")) {
 					if (!data["project"].asString.startsWith("Jadx:")) {
 						continue
@@ -312,3 +329,56 @@ fun sendUpdate(data: Any) {
 		writer.flush()
 	}
 }
+
+// region authentication
+fun getTokenBaseDir() = File(System.getProperty("user.home"), ".graffiti")
+
+fun getTokenPath(): File {
+	val baseDir = getTokenBaseDir()
+	baseDir.mkdirs()
+	return File(baseDir, "token")
+}
+fun validateToken(token: String): Boolean {
+    try {
+        return UUID.fromString(token).version() == 4
+    } catch (ignored: IllegalArgumentException){
+       return false
+    }
+}
+
+fun getTokenFromFile(): String? {
+	val tokenFile = getTokenPath()
+	if (!tokenFile.exists()) return null
+	val token = tokenFile.readText().trim()
+	if (token.length == 0) {
+		log.info { "token file is empty!" }
+		return null
+	} else if (!validateToken(token)) {
+		log.info { "Token is not valid uuid v4: $token" }
+		return null
+	} else {
+		return token
+	}
+}
+
+fun saveTokenToFile(token: String) {
+	getTokenPath().writeText(token)
+}
+
+fun getTokenOrElse(ask_for_token: () -> String?): String? {
+	val fileToken = getTokenFromFile()
+	if (fileToken != null) return fileToken
+
+	val inputToken = ask_for_token()
+	if (inputToken == null) {
+		log.info("Authentication canceled")
+		return null
+	} else if (!validateToken(inputToken)) {
+		log.info { "Token is not valid uuid v4: $inputToken" }
+		return null
+	} else {
+		saveTokenToFile(inputToken)
+		return inputToken
+	}
+}
+//endregion

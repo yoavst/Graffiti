@@ -1,7 +1,11 @@
-Graffiti requires a Python proxy server that runs on your computer. The server proxies between the various IDE you use and the web UI.
+Graffiti requires a Python server to proxy between the various IDE you use and the web UI. It can either run in a single-user mode on your computer, or in a multi-user mode on a server.
 
-## Setup
-* Python 3.7+
-* `websockets==10.3`
-* Run the server: `python3 graffiti_v{version}_server.py`
+## Single user setup
 
+- Python 3.7+
+- `websockets==10.3`
+- Run the server: `python3 graffiti_v{version}_server.py`
+
+## Multi user setup
+
+- Same as single user setup, but run with `--multi-user-mode` flag.

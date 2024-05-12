@@ -25,7 +25,7 @@ class EnableGraffitiSyncAction : AnAction() {
         val (address, port) = getAddressAndPort(e.project!!)
 
         if (SocketHolder.connect(address, port)) {
-            e.project!!.notify("Connected to graffiti at $address:$port", NotificationType.INFORMATION)
+            e.project!!.notify("Connected to graffiti at $address:$port (might require authentication if enabled on server)", NotificationType.INFORMATION)
             thread(start = true, isDaemon = true) {
                 threadCode(e.project!!)
             }
@@ -49,6 +49,27 @@ class EnableGraffitiSyncAction : AnAction() {
                     if (rawData.isEmpty())
                         break
                     val data = JsonParser.parseString(rawData).asJsonObject
+
+                    if (data.has("type") && data["type"].asString == "auth_req_v1") {
+                        logger.info("Received auth request")
+                        ApplicationManager.getApplication().invokeLater {
+                            val token = getTokenOrElse {
+                                val userToken = Messages.showInputDialog(
+                                    project, "Enter the UUID token from graffiti website",
+                                    "Graffiti Authentication", Messages.getQuestionIcon(), "", null
+                                )
+                                if (userToken.isNullOrEmpty()) null else userToken
+                            }
+                            if (token != null) {
+                                SocketHolder.sendJson(project, mapOf("type" to "auth_resp_v1", "token" to token))
+                            } else {
+                                SocketHolder.socket?.close()
+                                SocketHolder.socket = null
+                            }
+                        }
+                        continue
+                    }
+
                     if (data.has("project")) {
                         if (!data["project"].asString.startsWith("Intellij:")) {
                             continue

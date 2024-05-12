@@ -4,6 +4,7 @@ import { SymbolKind } from 'vscode';
 import { join, basename } from 'path';
 import { SymbolNode, ScopeFinder } from './scope';
 import { debugChannel } from './extension';
+import { getTokenOrElse } from './authentication';
 
 let currentServerConnection: net.Socket | null = null
 
@@ -211,13 +212,31 @@ export function connectServer(host: string, port: number) {
 
     currentServerConnection = new net.Socket();
     currentServerConnection.connect(port, host, () => {
-        vscode.window.showInformationMessage("Connected to graffiti!")
+        vscode.window.showInformationMessage("Connected to graffiti! (might require authentication if enabled on server)")
         debugChannel.appendLine(`Connected to graffiti at ${host}:${port}`)
     });
 
     currentServerConnection.on('data', (rawData) => {
         receive(currentServerConnection, rawData, (_, msg) => {
             const data = JSON.parse(msg.toString())
+            if ('type' in data && data['type'] == 'auth_req_v1') {
+                getTokenOrElse(() => {
+                    return vscode.window.showInputBox({
+                        prompt: 'Enter the UUID token from graffiti website',
+                        value: ""
+                    })
+                }).then(token => {
+                    if (token != null) {
+                        sendUpdate({
+                            type: 'auth_resp_v1',
+                            token
+                        })
+                    } else {
+                        disconnectServer();
+                    }
+                })
+                return
+            }
             if ('project' in data) {
                 if (!data['project'].startsWith('VSCode:')) {
                     return

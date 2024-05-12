@@ -1,7 +1,9 @@
 class NetworkController {
-    constructor(url, tabsController) {
+    constructor(url, tabsController, token, on_token_missing) {
         this.webSocket = new WebSocket(url)
         this.tabsController = tabsController
+        this.token = token
+        this.on_token_missing = on_token_missing;
         const _this = this
 
         const isExistingToNewSwitch = document.getElementById('isExistingToNew')
@@ -18,6 +20,19 @@ class NetworkController {
 
         this.webSocket.onmessage = function (event) {
             const msg = JSON.parse(event.data);
+            if (msg.type === 'auth_req_v1') {
+                if (_this.token != null) {
+                    _this.webSocket.send(JSON.stringify({
+                        type: 'auth_resp_v1',
+                        token: _this.token
+                    }))
+                } else {
+                    // Disconnect and let the user generate a token.
+                    _this.close();
+                    _this.on_token_missing();
+                }
+                return;
+            }
             _this.handleMessage(msg)
         }
 

@@ -5,6 +5,8 @@ const NODE_LABEL = 'label'
 const NODE_EXTRA = 'extra'
 const LOCAL_STORAGE_OLD_VERSION = "__OLD_VERSION"
 const LOCAL_STORAGE_BACKUP_KEY = "__OLD_BACKUP"
+const LOCAL_STORAGE_TOKEN_KEY = "authToken"
+
 const LOCAL_STORAGE_DEFAULT = { isKeymapReversed: false, hoverDoc: false, darkMode: true, isCurvedEdges: false, isFirstTime: true }
 
 const GRAFFITI_PLATFORMS = [
@@ -29,11 +31,12 @@ function event_connect() {
     if (window.networkController)
         window.networkController.close()
 
-    window.networkController = new NetworkController(url, window.tabsController)
+    window.networkController = new NetworkController(url, window.tabsController, 
+        localStorage.getItem(LOCAL_STORAGE_TOKEN_KEY), () => event_showManageTokenDialog(true))
 }
 
 function event_disconnect() {
-    window.networkController.close()
+    window.networkController?.close()
 }
 
 function event_reset() {
@@ -474,6 +477,8 @@ function event_help() {
         <p><i>Create customized callgraph directly from your favorite editor.</i></p>
         <br>
         <p>To run graffiti, you have to run the python server, and activate the graffiti plugin on your IDE</p>
+        <p>If you use a multi-user server, you can get the auth token from the key button on the top right of the screen. 
+           The key is cached for the backends at <code>~/.graffiti/token</code></p>
         ${utilsHtml.join('')}
         <hr class="material-divider">
         <h2>Supported Platforms</h2>
@@ -530,6 +535,56 @@ function event_showChangelog() {
         })
 }
 
+function event_showManageTokenDialog(isFromAuthEvent = false) {
+    const currentToken = localStorage.getItem(LOCAL_STORAGE_TOKEN_KEY);
+    const isWindows = navigator.userAgent.includes("Windows NT");
+    const tokenPath = isWindows ? '%USER_PROFILE%/.graffiti/token' : '~/.graffiti/token';
+    let msg = 
+        "Graffiti uses a token to authenticate you in a connection to a multi-user server. " +
+        "The token is a random UUID V4, which should be shared between the frontend and the backend. " + 
+        `It is saved locally at <code>${tokenPath}</code> after connecting a backend for the first time. The frontend also caches its token on localstorage.<br /><br />`;
+
+    if (currentToken == null || currentToken.length == 0) { 
+        msg += "<b>You have not generated token yet! Copy it from your computer, or use 'Generate new token'.</b>" 
+    } else {
+        msg += "If you already connected a backends and the token is not the same to the one here, you can replace the key here to the one you have.";
+    }
+
+    Swal.fire({
+        title: "Multi-User Token",
+        input: "text",
+        inputValue: currentToken || "",
+        html: msg,
+        footer: "<p>You can ignore this if <code>--multi-user-mode</code> not enabled</p>",
+        showDenyButton: true,
+        showCloseButton: true,
+        denyButtonText: "Generate new token",
+        confirmButtonText: "Save",
+        inputValidator: (value) => {
+            if (!value || !isValidUUIDv4(value.trim())) {
+              return "The token must be a valid UUID v4";
+            }
+          },
+        preDeny: () => {
+            Swal.getInput().value = generateUuidv4();
+            return false;
+        },
+    }).then((res) => {
+        if (res.isConfirmed) {
+            const oldKey = localStorage.getItem(LOCAL_STORAGE_TOKEN_KEY)
+            localStorage.setItem(LOCAL_STORAGE_TOKEN_KEY, res.value)
+            if (isFromAuthEvent) {
+                // Just reconnect and now it will be with token
+                event_connect();
+            } else if (oldKey != res.value) {
+                event_disconnect();
+            }
+        } else if (res.isDismissed && isFromAuthEvent) {
+            event_disconnect();
+        }
+    })
+}
+
 function main() {
     initiateLocalStorage();
     initiateDependencies();
@@ -572,7 +627,7 @@ function elk_beforeCallback(id, graph) {
 }
 
 function initiateHotkeys() {
-    hotkeys('esc,ctrl+z,ctrl+shift+z,ctrl+y,ctrl+s,ctrl+alt+s,ctrl+o,ctrl+i,ctrl+alt+shift+i,ctrl+q,ctrl+f,ctrl+shift+f,ctrl+e,ctrl+shift+q,ctrl+shift+p,delete,home,ctrl+home,shift+`,shift+/,ctrl+shift+/,ctrl+a,1,2,3,4,5,6,7,8,9', function (event, handler) {
+    hotkeys('esc,ctrl+z,ctrl+shift+z,ctrl+y,ctrl+s,ctrl+alt+s,ctrl+o,ctrl+i,ctrl+alt+shift+i,ctrl+q,ctrl+f,ctrl+shift+f,ctrl+k,ctrl+e,ctrl+shift+q,ctrl+shift+p,delete,home,ctrl+home,shift+`,shift+/,ctrl+shift+/,ctrl+a,1,2,3,4,5,6,7,8,9', function (event, handler) {
         window.commandPalette.close()
         switch (handler.key) {
             case 'esc':
@@ -599,6 +654,9 @@ function initiateHotkeys() {
                 return false;
             case 'ctrl+alt+shift+i':
                 event_toggleFocusTarget()
+                return false;
+            case 'ctrl+k':
+                event_showManageTokenDialog();
                 return false;
             case 'ctrl+q':
                 event_addComment()
@@ -709,6 +767,17 @@ function checkForUpdates() {
         }
     })
 }
+
+function isValidUUIDv4(uuid) {
+    const uuidv4Regex = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$/i;
+    return uuidv4Regex.test(uuid);
+}
+
+function generateUuidv4() {
+    return "10000000-1000-4000-8000-100000000000".replace(/[018]/g, c =>
+      (+c ^ crypto.getRandomValues(new Uint8Array(1))[0] & 15 >> +c / 4).toString(16)
+    );
+  }
 
 
 main()

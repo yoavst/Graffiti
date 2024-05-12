@@ -13,6 +13,8 @@ import idautils
 import ida_funcs
 import ida_segment
 
+from authentication import get_token_or_else
+
 
 HAVE_WIN32_LIBS = False
 if sys.platform == 'win32':
@@ -288,6 +290,24 @@ def sync_read_thread(db_filename):
         while True:
             length = struct.unpack('>i', readexactly(sock, 4))[0]
             data = json.loads(readexactly(sock, length))
+
+            if 'type' in data and data['type'] == 'auth_req_v1':
+                token_storage = []
+                def ask_for_token():
+                    def ui_ask_for_token():
+                        token = ida_kernwin.ask_str('', 2, 'Enter the UUID token from graffiti website')
+                        if token and token.strip():
+                            token_storage.append(token)
+                    
+                    idaapi.execute_sync(ui_ask_for_token, idaapi.MFF_FAST)
+                    return token_storage[0] if token_storage else None
+                
+                token = get_token_or_else(ask_for_token)
+                if token is not None:
+                    lengthy_send(sock, to_bytes(json.dumps({'type': 'auth_resp_v1', 'token': token})))
+                    continue
+                else:
+                    break
                    
             if 'project' in data:
                 if data['project'] != 'IDA: {}'.format(db_filename):
@@ -300,6 +320,9 @@ def sync_read_thread(db_filename):
                 return False
 
             ida_kernwin.execute_ui_requests([on_ui])
+
+        if sock is not None:
+            sock.close()
     except socket.error:
         print("Socket is closed")
         sock = None
