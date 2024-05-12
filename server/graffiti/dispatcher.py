@@ -1,8 +1,8 @@
-
 from dataclasses import dataclass
 import logging
 from typing import List
 from .network_handler import SocketWrapper
+
 
 @dataclass
 class RouteState:
@@ -12,7 +12,7 @@ class RouteState:
 
     def add_frontend(self, sock: SocketWrapper):
         self.frontends.append(sock)
-    
+
     def del_frontend(self, sock: SocketWrapper):
         try:
             self.frontends.remove(sock)
@@ -21,7 +21,7 @@ class RouteState:
 
     def add_backend(self, sock: SocketWrapper):
         self.backends.append(sock)
-    
+
     def del_backend(self, sock: SocketWrapper):
         try:
             self.backends.remove(sock)
@@ -38,6 +38,7 @@ class RouteState:
     def can_dispose(self) -> bool:
         return not self.frontends and not self.backends
 
+
 class Dispatcher:
     def __init__(self, should_dump_messages):
         self.routes: dict[str, RouteState] = dict()
@@ -53,7 +54,7 @@ class Dispatcher:
                 logging.info(f"Received backend message from {sock.peername} on route: {token}")
                 if self.should_dump_messages:
                     logging.info(f"Backend Message: {msg}")
-                
+
                 await self.send_to_all(msg, route.frontends)
             except ConnectionError:
                 logging.info(f"Removing disconnected {sock.peername} from backends")
@@ -73,7 +74,7 @@ class Dispatcher:
             for frontend in route.frontends:
                 await frontend.close()
             route.frontends = []
-        
+
         route.add_frontend(sock)
 
         while True:
@@ -82,7 +83,7 @@ class Dispatcher:
                 logging.info(f"Received frontend message from {sock.peername} on route: {token}")
                 if self.should_dump_messages:
                     logging.info(f"Frontend Message: {msg}")
-                
+
                 await self.send_to_all(msg, route.backends)
             except ConnectionError:
                 logging.info(f"Removing disconnected {sock.peername} from frontends")
@@ -95,26 +96,25 @@ class Dispatcher:
                 self._gc_route(route)
                 break
 
-    async def send_to_all(self, msg: str, sockets: List[SocketWrapper]):        
+    async def send_to_all(self, msg: str, sockets: List[SocketWrapper]):
         for frontend in sockets:
             try:
                 await frontend.send_msg(msg)
             except ConnectionError:
                 logging.exception("Exception while sending message, ignoring")
-            
 
     def _route_for_token(self, token: str) -> RouteState:
         if token in self.routes:
             return self.routes[token]
-        
+
         route = RouteState.from_token(token)
         self.routes[token] = route
         return route
-    
+
     def _gc_route(self, route: RouteState):
         if route.can_dispose():
             logging.info(f"GCing route {route.token}")
             del self.routes[route.token]
 
     def __repr__(self) -> str:
-        return '\n'.join('\t' + str(x) for x in self.routes.values())
+        return "\n".join("\t" + str(x) for x in self.routes.values())

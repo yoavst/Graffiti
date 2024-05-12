@@ -1,124 +1,124 @@
 {
-    "name": "graffiti",
-    "displayName": "Graffiti",
-    "description": "Add nodes to call graph directly from VSCode",
-    "version": "1.10.0",
-    "publisher": "yoavst",
-    "icon": "icon.png",
-    "author": {
-        "name": "yoavst",
-        "email": "yoav.sternberg@gmail.com"
-    },
-    "license": "MIT",
-    "homepage": "https://github.com/yoavst/Graffiti",
-    "repository": {
-        "type": "git",
-        "url": "https://github.com/yoavst/Graffiti"
-    },
-    "bugs": {
-        "url": "https://github.com/yoavst/Graffiti/issues"
-    },
-    "engines": {
-        "vscode": "^1.64.0"
-    },
-    "categories": [
-        "Programming Languages",
-        "Other"
+  "name": "graffiti",
+  "displayName": "Graffiti",
+  "description": "Add nodes to call graph directly from VSCode",
+  "version": "1.10.0",
+  "publisher": "yoavst",
+  "icon": "icon.png",
+  "author": {
+    "name": "yoavst",
+    "email": "yoav.sternberg@gmail.com"
+  },
+  "license": "MIT",
+  "homepage": "https://github.com/yoavst/Graffiti",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yoavst/Graffiti"
+  },
+  "bugs": {
+    "url": "https://github.com/yoavst/Graffiti/issues"
+  },
+  "engines": {
+    "vscode": "^1.64.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Other"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./out/src/extension",
+  "contributes": {
+    "commands": [
+      {
+        "command": "scopebar.ShowScopeSymbols",
+        "title": "Show Scope's Symbols"
+      },
+      {
+        "command": "graffiti.AddToGraph",
+        "title": "Graffiti: Add to graph"
+      },
+      {
+        "command": "graffiti.AddLineToGraph",
+        "title": "Graffiti: Add the current line to graph"
+      },
+      {
+        "command": "graffiti.AddToGraphWithEdgeInfo",
+        "title": "Graffiti: Add to graph with edge comment"
+      },
+      {
+        "command": "graffiti.ConnectToServer",
+        "title": "Graffiti: Connect to server"
+      },
+      {
+        "command": "graffiti.ConvertToSymbolBased",
+        "title": "Graffiti: Transform old graffiti files to new symbol based format"
+      }
     ],
-    "activationEvents": [
-        "onStartupFinished"
+    "keybindings": [
+      {
+        "command": "graffiti.AddToGraph",
+        "key": "ctrl+shift+a"
+      },
+      {
+        "command": "graffiti.AddLineToGraph",
+        "key": "ctrl+shift+q"
+      },
+      {
+        "command": "graffiti.AddToGraphWithEdgeInfo",
+        "key": "ctrl+shift+x"
+      },
+      {
+        "command": "workbench.action.showCommands",
+        "key": ""
+      }
     ],
-    "main": "./out/src/extension",
-    "contributes": {
-        "commands": [
-            {
-                "command": "scopebar.ShowScopeSymbols",
-                "title": "Show Scope's Symbols"
-            },
-            {
-                "command": "graffiti.AddToGraph",
-                "title": "Graffiti: Add to graph"
-            },
-            {
-                "command": "graffiti.AddLineToGraph",
-                "title": "Graffiti: Add the current line to graph"
-            },
-            {
-                "command": "graffiti.AddToGraphWithEdgeInfo",
-                "title": "Graffiti: Add to graph with edge comment"
-            },
-            {
-                "command": "graffiti.ConnectToServer",
-                "title": "Graffiti: Connect to server"
-            },
-            {
-                "command": "graffiti.ConvertToSymbolBased",
-                "title": "Graffiti: Transform old graffiti files to new symbol based format"
-            }
-        ],
-        "keybindings": [
-            {
-                "command": "graffiti.AddToGraph",
-                "key": "ctrl+shift+a"
-            },
-            {
-                "command": "graffiti.AddLineToGraph",
-                "key": "ctrl+shift+q"
-            },
-            {
-                "command": "graffiti.AddToGraphWithEdgeInfo",
-                "key": "ctrl+shift+x"
-            },
-            {
-                "command": "workbench.action.showCommands",
-                "key": ""
-            }
-        ],
-        "configuration": [
-            {
-                "title": "ScopeBar.Navigate",
-                "properties": {
-                    "scopebar.Navigate": {
-                        "scope": "resource",
-                        "type": "string",
-                        "enum": [
-                            "ScopeSymbol",
-                            "FileSymbol"
-                        ],
-                        "default": "ScopeSymbol",
-                        "description": "Behavior for click status bar or command for 'ShowScopeSymbols'."
-                    }
-                }
-            },
-            {
-                "title": "Graffiti",
-                "properties": {
-                    "graffiti.removeParentheses": {
-                        "scope": "resource",
-                        "type": "boolean",
-                        "default": true,
-                        "description": "Remove text between parentheses when querying the LSP for the current symbol"
-                    },
-                    "graffiti.searchForSymbol": {
-                        "scope": "resource",
-                        "type": "boolean",
-                        "default": true,
-                        "description": "Should graffiti search for the symbol, and not use the exact original line? Setting to false will improve performance, but will only work on a readonly project."
-                    }
-                }
-            }
-        ]
-    },
-    "scripts": {
-        "vscode:prepublish": "tsc -p ./",
-        "compile": "tsc -watch -p ./"
-    },
-    "devDependencies": {
-        "@types/mocha": "^2.2.42",
-        "@types/node": "^8.10.25",
-        "@types/vscode": "^1.64.0",
-        "mocha": "^2.3.3",
-        "typescript": "^5.2.2",
-        "@vscode/vsce": "^2.26.0"
-    }
+    "configuration": [
+      {
+        "title": "ScopeBar.Navigate",
+        "properties": {
+          "scopebar.Navigate": {
+            "scope": "resource",
+            "type": "string",
+            "enum": [
+              "ScopeSymbol",
+              "FileSymbol"
+            ],
+            "default": "ScopeSymbol",
+            "description": "Behavior for click status bar or command for 'ShowScopeSymbols'."
+          }
+        }
+      },
+      {
+        "title": "Graffiti",
+        "properties": {
+          "graffiti.removeParentheses": {
+            "scope": "resource",
+            "type": "boolean",
+            "default": true,
+            "description": "Remove text between parentheses when querying the LSP for the current symbol"
+          },
+          "graffiti.searchForSymbol": {
+            "scope": "resource",
+            "type": "boolean",
+            "default": true,
+            "description": "Should graffiti search for the symbol, and not use the exact original line? Setting to false will improve performance, but will only work on a readonly project."
+          }
+        }
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "tsc -p ./",
+    "compile": "tsc -watch -p ./"
+  },
+  "devDependencies": {
+    "@types/mocha": "^2.2.42",
+    "@types/node": "^8.10.25",
+    "@types/vscode": "^1.64.0",
+    "mocha": "^2.3.3",
+    "typescript": "^5.2.2",
+    "@vscode/vsce": "^2.26.0"
+  }
 }

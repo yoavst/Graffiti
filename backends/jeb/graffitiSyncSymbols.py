@@ -8,17 +8,17 @@ from com.pnfsoftware.jeb.core import RuntimeProjectUtil
 from com.pnfsoftware.jeb.core.units.code import ICodeUnit
 from java.lang import Runnable, Thread
 
+
 class graffitiSyncSymbols(IScript):
     def run(self, ctx):
         try:
             prj = ctx.getMainProject()
-            assert prj, 'Need a project'
+            assert prj, "Need a project"
 
             units = RuntimeProjectUtil.findUnitsByType(prj, ICodeUnit, False)
             if not units:
-                print('No code unit available')
+                print("No code unit available")
                 return
-            
 
             progress_window = ProgressBarWindow("Sync symbols")
             progress_window.show()
@@ -29,17 +29,21 @@ class graffitiSyncSymbols(IScript):
                     self.total_symbols = 0
 
                     for unit in units:
-                        self.total_symbols += len(unit.classes) + len(unit.fields) + len(unit.methods)
+                        self.total_symbols += (
+                            len(unit.classes) + len(unit.fields) + len(unit.methods)
+                        )
 
                 def update_progress(self):
                     self.i += 1
                     if self.i % 1000 == 0:
-                        progress_window.update_progress(int(100 * self.i / self.total_symbols))
+                        progress_window.update_progress(
+                            int(100 * self.i / self.total_symbols)
+                        )
 
                 def complete_progress(self):
                     progress_window.update_progress(100)
 
-                def run(self):            
+                def run(self):
                     for unit in units:
                         for c in unit.classes:
                             self.update_progress()
@@ -65,6 +69,6 @@ class graffitiSyncSymbols(IScript):
                     self.complete_progress()
 
             Thread(UpdateRunnable()).start()
-            
+
         except:
             traceback.print_exc(file=sys.stdout)

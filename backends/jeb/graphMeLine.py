@@ -6,6 +6,7 @@ import traceback
 from graphUtils import *
 from com.pnfsoftware.jeb.client.api import IScript
 
+
 class graphMeLine(IScript):
     def run(self, ctx):
         try:
@@ -31,31 +32,33 @@ class graphMeLine(IScript):
         class_addr = method.getClassType().getSignature(False)
         method_name = method.getName(True)
         method_addr = method.getSignature(False)
-        
+
         # Calculate offset
         try:
             plus_index = address.rindex("+")
-            offset = address[plus_index+1:]
+            offset = address[plus_index + 1 :]
         except ValueError:
             offset = "0h"
 
-        normalized_address = method_addr + '+' + offset
+        normalized_address = method_addr + "+" + offset
 
         return {
-                "type": "addData", "node": {
-                    "project": "Jeb: " + rchop(rchop(ctx.mainProject.name, '.jdb2'), '.apk'),
-                    "address": normalized_address, 
-                    "class": class_name, 
-                    "classAddress": class_addr,
-                    "method": method_name, 
-                    "methodAddress": method_addr,
-                    "line": offset,
-                    "computedProperties": [
-                        {
-                            "name": "label",
-                            "format": "{0}::\n{1}+{2}",
-                            "replacements": ["class", "method", "line"]
-                        }
-                    ]
-                }
+            "type": "addData",
+            "node": {
+                "project": "Jeb: "
+                + rchop(rchop(ctx.mainProject.name, ".jdb2"), ".apk"),
+                "address": normalized_address,
+                "class": class_name,
+                "classAddress": class_addr,
+                "method": method_name,
+                "methodAddress": method_addr,
+                "line": offset,
+                "computedProperties": [
+                    {
+                        "name": "label",
+                        "format": "{0}::\n{1}+{2}",
+                        "replacements": ["class", "method", "line"],
+                    }
+                ],
+            },
         }
