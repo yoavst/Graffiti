@@ -6,6 +6,7 @@ import traceback
 from graphUtils import *
 from com.pnfsoftware.jeb.client.api import IScript
 
+
 class graphMe(IScript):
     def run(self, ctx):
         try:
@@ -36,20 +37,22 @@ class graphMe(IScript):
         addr = method.getSignature(False)
 
         return {
-                "type": "addData", "node": {
-                    "project": "Jeb: " + rchop(rchop(ctx.mainProject.name, '.jdb2'), '.apk'),
-                    "address": addr, 
-                    "class": class_name, 
-                    "classAddress": class_addr,
-                    "method": method_name, 
-                    "computedProperties": [
-                        {
-                            "name": "label",
-                            "format": "{0}::\n{1}",
-                            "replacements": ["class", "method"]
-                        }
-                    ]
-                }
+            "type": "addData",
+            "node": {
+                "project": "Jeb: "
+                + rchop(rchop(ctx.mainProject.name, ".jdb2"), ".apk"),
+                "address": addr,
+                "class": class_name,
+                "classAddress": class_addr,
+                "method": method_name,
+                "computedProperties": [
+                    {
+                        "name": "label",
+                        "format": "{0}::\n{1}",
+                        "replacements": ["class", "method"],
+                    }
+                ],
+            },
         }
 
     def create_field_update(self, ctx, field):
@@ -59,21 +62,23 @@ class graphMe(IScript):
         addr = field.getSignature(False)
 
         return {
-                "type": "addData", "node": {
-                    "project": "Jeb: " + rchop(rchop(ctx.mainProject.name, '.jdb2'), '.apk'),
-                    "address": addr, 
-                    "class": class_name, 
-                    "classAddress": class_addr,
-                    "field": field_name, 
-                    "computedProperties": [
-                        {
-                            "name": "label",
-                            "format": "{0}::\n_{1}",
-                            "replacements": ["class", "field"]
-                        }
-                    ]
-                }
-            }
+            "type": "addData",
+            "node": {
+                "project": "Jeb: "
+                + rchop(rchop(ctx.mainProject.name, ".jdb2"), ".apk"),
+                "address": addr,
+                "class": class_name,
+                "classAddress": class_addr,
+                "field": field_name,
+                "computedProperties": [
+                    {
+                        "name": "label",
+                        "format": "{0}::\n_{1}",
+                        "replacements": ["class", "field"],
+                    }
+                ],
+            },
+        }
 
     def create_class_update(self, ctx, cls):
         class_name = cls.getName(True)
@@ -81,18 +86,15 @@ class graphMe(IScript):
         addr = cls.getSignature(False)
 
         return {
-                "type": "addData", "node": {
-                    "project": "Jeb: " + rchop(rchop(ctx.mainProject.name, '.jdb2'), '.apk'),
-                    "address": addr, 
-                    "class": class_name, 
-                    "classAddress": class_addr,
-                    "computedProperties": [
-                        {
-                            "name": "label",
-                            "format": "{0}",
-                            "replacements": ["class"]
-                        }
-                    ]
-                }
-            }
-
+            "type": "addData",
+            "node": {
+                "project": "Jeb: "
+                + rchop(rchop(ctx.mainProject.name, ".jdb2"), ".apk"),
+                "address": addr,
+                "class": class_name,
+                "classAddress": class_addr,
+                "computedProperties": [
+                    {"name": "label", "format": "{0}", "replacements": ["class"]}
+                ],
+            },
+        }

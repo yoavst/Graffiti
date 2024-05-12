@@ -30,7 +30,8 @@ h1 {
     margin-right: 10px;
 }
 
-input[type="url"], input[type="text"] {
+input[type="url"],
+input[type="text"] {
     padding: 5px 12px;
     font-size: 14px;
     line-height: 20px;
@@ -46,14 +47,16 @@ input[type="url"], input[type="text"] {
     box-shadow: rgba(225, 228, 232, 0.2) 0px 1px 0px 0px inset;
 }
 
-input[type="url"]:focus, input[type="text"]:focus {
+input[type="url"]:focus,
+input[type="text"]:focus {
     border-color: #0366d6;
     outline: none;
     box-shadow: rgba(3, 102, 214, 0.3) 0px 0px 0px 3px;
 }
 
 #token {
-    width: 100%; margin-bottom: 10px
+    width: 100%;
+    margin-bottom: 10px;
 }
 
 .action_icon {

@@ -21,3 +21,7 @@ Issues = "https://github.com/yoavst/Graffiti/issues"
 
 [project.scripts]
 graffiti-server = "graffiti.__main__:main_cli"
+
+[tool.ruff]
+# Allow lines to be as long as 120.
+line-length = 120

@@ -7,7 +7,7 @@ from .dispatcher import Dispatcher
 from .network_handler import NetworkHandler, SocketWrapper
 
 SINGLE_USER_TOKEN = "00000000-0000-0000-0000-000000000000"
-AUTHENTICATION_TIMEOUT = float(300) # 5 minutes
+AUTHENTICATION_TIMEOUT = float(300)  # 5 minutes
 
 
 class Authenticator(NetworkHandler):
@@ -20,7 +20,6 @@ class Authenticator(NetworkHandler):
         if token is not None:
             await self.dispatcher.handle_backend(token, sock)
 
-    
     async def handle_frontend(self, sock: SocketWrapper):
         token = await self._handle_auth(sock)
         if token is not None:
@@ -35,7 +34,7 @@ class Authenticator(NetworkHandler):
                 if not self._validate_token(token):
                     logging.warning(f"{sock.peername} sent invalid token: ${token}")
                     raise ConnectionError("invalid token")
-                
+
                 logging.info(f"Successfully authenticated {sock.peername} with token: {token}")
             except ConnectionError:
                 await sock.close()
@@ -47,13 +46,11 @@ class Authenticator(NetworkHandler):
                 return
         else:
             token = SINGLE_USER_TOKEN
-        
+
         return token
 
     async def _send_auth_request(self, sock: SocketWrapper):
-        auth_req = {
-            'type': 'auth_req_v1'
-        }
+        auth_req = {"type": "auth_req_v1"}
         logging.info(f"Asking {sock.peername} to authenticate")
 
         await sock.send_msg(json.dumps(auth_req))
@@ -62,18 +59,22 @@ class Authenticator(NetworkHandler):
         response = await asyncio.wait_for(sock.recv_msg(), timeout=AUTHENTICATION_TIMEOUT)
         try:
             response_json = json.loads(response)
-            if 'type' not in response_json or response_json['type'] != 'auth_resp_v1':
-                logging.warning(f"Received invalid response for auth request from {sock.peername}, probably old version")
+            if "type" not in response_json or response_json["type"] != "auth_resp_v1":
+                logging.warning(
+                    f"Received invalid response for auth request from {sock.peername}, probably old version"
+                )
                 raise ConnectionError("Invalid response for auth request")
-            elif 'token' not in response_json or not isinstance(response_json['token'], str):
-                logging.warning(f"Received invalid response for auth request from {sock.peername}, token is not a string")
+            elif "token" not in response_json or not isinstance(response_json["token"], str):
+                logging.warning(
+                    f"Received invalid response for auth request from {sock.peername}, token is not a string"
+                )
                 raise ConnectionError("Invalid response for auth request")
-            
-            return response_json['token']
+
+            return response_json["token"]
         except json.JSONDecodeError as e:
             logging.exception(f"Received invalid json as authentication response from {sock.peername}")
             raise ConnectionError from e
-    
+
     def _validate_token(self, token: str) -> bool:
         try:
             UUID(token, version=4)

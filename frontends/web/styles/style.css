@@ -1,418 +1,420 @@
 * {
-    margin: 0;
-    padding: 0;
-    user-select: none;
+  margin: 0;
+  padding: 0;
+  user-select: none;
 }
 
 html {
-    font: 62.5% "segoe ui", helvetica, arial, sans-serif;
-    background-color: #2b2d31;
-    --primary-color: #1e1f22;
-    --primary-color-hover: #2a2b30;
-    --primary-color-active: #42444b;
-    --text-color: #fff;
+  font:
+    62.5% "segoe ui",
+    helvetica,
+    arial,
+    sans-serif;
+  background-color: #2b2d31;
+  --primary-color: #1e1f22;
+  --primary-color-hover: #2a2b30;
+  --primary-color-active: #42444b;
+  --text-color: #fff;
 }
 
 html.lightTheme {
-    background-color: #fff;
-    --primary-color: #0078d7;
-    --primary-color-hover: #005ca5;
-    --primary-color-active: #006abe;
-    --text-color: #000;
+  background-color: #fff;
+  --primary-color: #0078d7;
+  --primary-color-hover: #005ca5;
+  --primary-color-active: #006abe;
+  --text-color: #000;
 }
 
-
 header {
-    background-color: var(--primary-color);
-    color: #fff;
-    padding: 1rem;
-    padding-right: 0px;
+  background-color: var(--primary-color);
+  color: #fff;
+  padding: 1rem;
+  padding-right: 0px;
 }
 
 .icon {
-    width: 32px;
-    height: 32px;
-    margin-right: 10px;
+  width: 32px;
+  height: 32px;
+  margin-right: 10px;
 }
 
-header>* {
-    display: inline;
+header > * {
+  display: inline;
 }
 
 h1 {
-    font-size: 40px;
+  font-size: 40px;
 }
 
 .subtitle {
-    margin-left: 1rem;
+  margin-left: 1rem;
 }
 
 .buttons {
-    margin-top: 1.5rem;
+  margin-top: 1.5rem;
 }
 
-.buttons>* {
-    margin-right: 6px;
+.buttons > * {
+  margin-right: 6px;
 }
 
 .right {
-    float: right;
+  float: right;
 }
 
 .clearfix {
-    clear: both;
-    font-size: 1px;
-    display: block;
+  clear: both;
+  font-size: 1px;
+  display: block;
 }
 
 .content {
-    overflow: hidden;
-    height: 100%;
-    min-width: 100%;
+  overflow: hidden;
+  height: 100%;
+  min-width: 100%;
 }
 
 body {
-    overflow: hidden;
+  overflow: hidden;
 }
 
 #context-menu {
-    position: fixed;
-    z-index: 10000;
-    width: 150px;
-    background: #1b1a1a;
-    border-radius: 5px;
-    transform: scale(0);
-    transform-origin: top left;
+  position: fixed;
+  z-index: 10000;
+  width: 150px;
+  background: #1b1a1a;
+  border-radius: 5px;
+  transform: scale(0);
+  transform-origin: top left;
 }
 
 #context-menu.visible {
-    transform: scale(1);
-    transition: transform 200ms ease-in-out;
+  transform: scale(1);
+  transition: transform 200ms ease-in-out;
 }
 
 #context-menu .item {
-    padding: 8px 10px;
-    font-size: 15px;
-    color: #eee;
-    cursor: pointer;
-    border-radius: inherit;
+  padding: 8px 10px;
+  font-size: 15px;
+  color: #eee;
+  cursor: pointer;
+  border-radius: inherit;
 }
 
 #context-menu .item:hover {
-    background: #343434;
+  background: #343434;
 }
 
 #addTab {
-    float: right;
+  float: right;
 }
 
 /* Style the tab */
 .tabs {
-    overflow: hidden;
-    background-color: var(--primary-color);
+  overflow: hidden;
+  background-color: var(--primary-color);
 }
 
 .tabs .divider {
-    background-color: inherit;
-    float: left;
-    border: white solid 2px;
-    outline: none;
-    cursor: grabbing;
-    height: 48px;
-    width: 20px;
+  background-color: inherit;
+  float: left;
+  border: white solid 2px;
+  outline: none;
+  cursor: grabbing;
+  height: 48px;
+  width: 20px;
 }
 
 .tabs .divider.dragover {
-    filter: brightness(50%);
+  filter: brightness(50%);
 }
 
 /* Style the buttons inside the tab */
 .tabs button {
-    background-color: inherit;
-    float: left;
-    border: none;
-    outline: none;
-    color: white;
-    cursor: pointer;
-    padding: 14px 16px;
-    transition: 0.3s;
-    font-size: 17px;
+  background-color: inherit;
+  float: left;
+  border: none;
+  outline: none;
+  color: white;
+  cursor: pointer;
+  padding: 14px 16px;
+  transition: 0.3s;
+  font-size: 17px;
 }
 
 /* Change background color of buttons on hover */
 .tabs button:hover {
-    background-color: var(--primary-color-hover);
+  background-color: var(--primary-color-hover);
 }
 
 /* Create an active/current tablink class */
 .tabs button.active {
-    background-color: var(--primary-color-active) !important;
+  background-color: var(--primary-color-active) !important;
 }
 
-.buttons>button {
-    display: inline-block;
-    outline: 0;
-    border: none;
-    cursor: pointer;
-    height: 32px;
-    width: 32px;
-    /* padding: 0px 16px; */
-    border-radius: 32px;
-    background-color: white;
-    color: #222;
-    font-size: 12px;
-    font-weight: 500;
+.buttons > button {
+  display: inline-block;
+  outline: 0;
+  border: none;
+  cursor: pointer;
+  height: 32px;
+  width: 32px;
+  /* padding: 0px 16px; */
+  border-radius: 32px;
+  background-color: white;
+  color: #222;
+  font-size: 12px;
+  font-weight: 500;
 }
 
 button:hover {
-    background-color: #90A4AE;
+  background-color: #90a4ae;
 }
 
-
 input[type="url"] {
-    padding: 5px 12px;
-    font-size: 14px;
-    line-height: 20px;
-    color: #24292e;
-    vertical-align: middle;
-    background-color: #ffffff;
-    background-repeat: no-repeat;
-    background-position: right 8px center;
-    border: 1px solid #e1e4e8;
-    border-radius: 6px;
-    outline: none;
+  padding: 5px 12px;
+  font-size: 14px;
+  line-height: 20px;
+  color: #24292e;
+  vertical-align: middle;
+  background-color: #ffffff;
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  border: 1px solid #e1e4e8;
+  border-radius: 6px;
+  outline: none;
 
-    box-shadow: rgba(225, 228, 232, 0.2) 0px 1px 0px 0px inset;
+  box-shadow: rgba(225, 228, 232, 0.2) 0px 1px 0px 0px inset;
 }
 
 input[type="url"]:focus {
-    border-color: #0366d6;
-    outline: none;
-    box-shadow: rgba(3, 102, 214, 0.3) 0px 0px 0px 3px;
+  border-color: #0366d6;
+  outline: none;
+  box-shadow: rgba(3, 102, 214, 0.3) 0px 0px 0px 3px;
 }
 
 .hidden {
-    display: none;
+  display: none;
 }
 
 .action_icon {
-    width: 70%;
-    height: 70%;
-    margin: auto;
-    vertical-align: middle;
+  width: 70%;
+  height: 70%;
+  margin: auto;
+  vertical-align: middle;
 }
 
 .swal2-content * {
-    user-select: text;
+  user-select: text;
 }
 
 .swal2-popup {
-    font-size: 1.6rem !important;
+  font-size: 1.6rem !important;
 }
 
 footer {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background-color: var(--primary-color);
-    color: #fff;
-    padding: 1rem;
-    display: flex;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background-color: var(--primary-color);
+  color: #fff;
+  padding: 1rem;
+  display: flex;
 }
 
-footer>* {
-    width: 33%;
-    flex-grow: 1;
+footer > * {
+  width: 33%;
+  flex-grow: 1;
 }
 
 .github_link {
-    color: white;
-    text-decoration: none;
+  color: white;
+  text-decoration: none;
 }
 
-.github_link>span {
-    padding-right: 0.75rem;
+.github_link > span {
+  padding-right: 0.75rem;
 }
 
 .center {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .arrowToggle {
-    display: inline-block;
+  display: inline-block;
 }
 
 .arrowToggle label {
-    pointer-events: none;
+  pointer-events: none;
 }
 
 .arrowToggle label .input {
-    display: none;
+  display: none;
 }
-
 
 .arrowToggle label .toggle-wrapper-wrapper {
-    background-color: white;
-    border-radius: 999px;
-    position: relative;
-    padding-left: 10px;
-    padding-right: 10px;
-    cursor: pointer;
-    pointer-events: all;
+  background-color: white;
+  border-radius: 999px;
+  position: relative;
+  padding-left: 10px;
+  padding-right: 10px;
+  cursor: pointer;
+  pointer-events: all;
 }
 
-.toggle-wrapper-wrapper>* {
-    display: inline-block;
-    vertical-align: middle;
+.toggle-wrapper-wrapper > * {
+  display: inline-block;
+  vertical-align: middle;
 }
 
 .arrowToggle label .toggle-wrapper {
-    position: relative;
-    width: 50px;
-    height: 30px;
-    background-color: white;
-    border-radius: 999px;
-    margin: auto;
+  position: relative;
+  width: 50px;
+  height: 30px;
+  background-color: white;
+  border-radius: 999px;
+  margin: auto;
 }
 
-
 .arrowToggle label .toggle-wrapper .line {
-    width: 40px;
-    height: 2px;
-    position: absolute;
-    top: 50%;
-    left: 5px;
-    transform: translateY(-50%);
-    background-color: #222;
+  width: 40px;
+  height: 2px;
+  position: absolute;
+  top: 50%;
+  left: 5px;
+  transform: translateY(-50%);
+  background-color: #222;
 }
 
 .arrowToggle label .toggle-wrapper .head {
-    padding: 3px;
-    border: solid #222;
-    border-width: 0 2px 2px 0;
-    position: absolute;
-    top: 50%;
-    left: 5px;
-    transform: translateY(-50%) rotate(135deg);
-    transition: left 0.25s ease, transform 0.25s ease;
+  padding: 3px;
+  border: solid #222;
+  border-width: 0 2px 2px 0;
+  position: absolute;
+  top: 50%;
+  left: 5px;
+  transform: translateY(-50%) rotate(135deg);
+  transition:
+    left 0.25s ease,
+    transform 0.25s ease;
 }
 
-.arrowToggle label #isExistingToNew:checked~* .toggle-wrapper>.head {
-    left: calc(100% - 13px);
-    transform: translateY(-50%) rotate(-45deg);
+.arrowToggle label #isExistingToNew:checked ~ * .toggle-wrapper > .head {
+  left: calc(100% - 13px);
+  transform: translateY(-50%) rotate(-45deg);
 }
 
 .arrowToggle .text {
-    color: #222;
-    transition: font-weight 0.25s ease;
+  color: #222;
+  transition: font-weight 0.25s ease;
 }
 
 .arrowToggle .text::after {
-    display: block;
-    content: attr(content);
-    font-weight: bold;
-    height: 1px;
-    color: transparent;
-    overflow: hidden;
-    visibility: hidden;
+  display: block;
+  content: attr(content);
+  font-weight: bold;
+  height: 1px;
+  color: transparent;
+  overflow: hidden;
+  visibility: hidden;
 }
 
-.arrowToggle label #isNewWillBeSelected:not(:checked)~* .notSelectedText {
-    font-weight: bold;
+.arrowToggle label #isNewWillBeSelected:not(:checked) ~ * .notSelectedText {
+  font-weight: bold;
 }
 
-.arrowToggle label #isNewWillBeSelected:checked~* .selectedText {
-    font-weight: bold;
+.arrowToggle label #isNewWillBeSelected:checked ~ * .selectedText {
+  font-weight: bold;
 }
 
 .hoverDoc * {
-    color: white !important;
+  color: white !important;
 }
 
 .graph {
-    color: var(--text-color);
+  color: var(--text-color);
 }
 
 /* Style for the list container */
 .material-list {
-    list-style-type: none;
-    padding: 0;
+  list-style-type: none;
+  padding: 0;
 }
 
 .material-list * {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
 /* Style for each list item */
 .material-item {
-    display: flex;
-    align-items: center;
-    background-color: #fff;
-    padding: 12px 20px;
-    margin-bottom: 5px;
-    border-radius: 4px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    transition: background-color 0.3s ease;
+  display: flex;
+  align-items: center;
+  background-color: #fff;
+  padding: 12px 20px;
+  margin-bottom: 5px;
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: background-color 0.3s ease;
 }
 
 /* Icon style */
 .material-icon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    overflow: hidden;
-    margin-right: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  overflow: hidden;
+  margin-right: 20px;
 }
 
 .material-icon svg {
-    width: 100%;
-    height: 100%;
+  width: 100%;
+  height: 100%;
 }
 
 /* Title style */
 .material-title {
-    flex: 1;
-    text-align: left;
-    /* Adjust font size, color, etc. as needed */
+  flex: 1;
+  text-align: left;
+  /* Adjust font size, color, etc. as needed */
 }
 
 /* Button style */
 .material-btn {
-    padding: 8px 16px;
-    border: none;
-    color: white;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-    margin-left: 10px;
+  padding: 8px 16px;
+  border: none;
+  color: white;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  margin-left: 10px;
 }
 
 /* Button hover effect */
 .material-btn:hover {
-    filter: brightness(90%);
+  filter: brightness(90%);
 }
 
 /* Divider style */
 .material-divider {
-    border: none;
-    border-top: 3px solid #999;
-    /* Divider line color */
-    margin: 20px 0;
+  border: none;
+  border-top: 3px solid #999;
+  /* Divider line color */
+  margin: 20px 0;
 }
 
 .swal2-container * {
-    user-select: text;
-    list-style-position: inside;
+  user-select: text;
+  list-style-position: inside;
 }
 
 .swal2-container .left * {
-    text-align: left;
+  text-align: left;
 }
