@@ -5,8 +5,6 @@ on:
     branches:
       - "master"
   pull_request:
-    branches:
-      - "master"
   workflow_dispatch:
 
 permissions:
@@ -23,10 +21,11 @@ jobs:
           - { name: jeb, type: pybunch }
           - { name: intellij, type: java }
           - { name: clion, type: java }
-          - { name: ida, type: pack }
+          - { name: ida, type: pybunch }
           - { name: vscode, type: typescript }
           - { name: opengrok_sourcegraph, type: typescript }
           - { name: jadx, type: pack }
+          - { name: server, type: pybunch }
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4

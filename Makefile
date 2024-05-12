@@ -1,3 +1,5 @@
+.SHELLFLAGS := -ec
+
 # Load version
 FILE := version.txt
 ifeq ($(wildcard $(FILE)),)
@@ -25,7 +27,7 @@ frontends: web visio
 ida: 
 	@echo "Building Graffiti for IDA"
 	echo "# Graffiti for IDA, Version: $(VERSION)" > graffiti.py
-	python3 -m pybunch -d backends/ida -e graffiti -so  | cat >> graffiti.py
+	python3 -m pybunch -d backends/ida -e graffiti -so -o graffiti.py
 	zip -j out/graffiti_v$(VERSION)_for_ida.zip graffiti.py
 	rm graffiti.py
 
@@ -36,9 +38,9 @@ jadx:
 jeb_packed_%:
 	@echo Packing $*
 	mkdir -p backends/jeb/packed && \
-	( (cat backends/jeb/$*.py | awk '/^#/ {print} !/^#/ {exit}') &&\
+	(cat backends/jeb/$*.py | awk '/^#/ {print} !/^#/ {exit}') &&\
 	   echo && echo &&\
-	   python3 -m pybunch -d backends/jeb -e $* -so ) | cat > backends/jeb/packed/$*.py
+	   python3 -m pybunch -d backends/jeb -e $* -so -o backends/jeb/packed/$*.py
 
 JEB_SCRIPTS := $(shell grep -rlP '^#\?' backends/jeb | sed 's/.*\///;s/\.[^.]*$$//')
 
