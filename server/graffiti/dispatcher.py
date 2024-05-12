@@ -2,7 +2,7 @@
 from dataclasses import dataclass
 import logging
 from typing import List
-from network_handler import SocketWrapper
+from .network_handler import SocketWrapper
 
 @dataclass
 class RouteState:

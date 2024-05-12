@@ -20,4 +20,4 @@ Homepage = "https://github.com/yoavst/Graffiti"
 Issues = "https://github.com/yoavst/Graffiti/issues"
 
 [project.scripts]
-graffiti-server = "graffiti:main_cli"
+graffiti-server = "graffiti.__main__:main_cli"

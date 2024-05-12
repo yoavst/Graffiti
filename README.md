@@ -45,7 +45,7 @@ pip3 install websockets==10.3
 
 Then, just run `python3 server.py`. If you want to use multi-user mode, add the `--multi-user-mode` flag.
 
-Note: if you want to run the unpacked version from source, run `python3 server/graffiti`.
+Note: if you want to run the unpacked version from source, run `python3 -m server.graffiti`.
 
 ### Backend
 

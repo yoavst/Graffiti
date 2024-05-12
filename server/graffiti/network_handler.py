@@ -1,4 +1,3 @@
-import socket
 import struct
 from typing import Awaitable, Protocol, TypeVar
 import websockets
