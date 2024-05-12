@@ -2,7 +2,7 @@
 from dataclasses import dataclass
 import logging
 from typing import List
-from graffiti.network_handler import SocketWrapper
+from network_handler import SocketWrapper
 
 @dataclass
 class RouteState:
@@ -60,6 +60,11 @@ class Dispatcher:
                 route.del_backend(sock)
                 self._gc_route(route)
                 break
+            except Exception:
+                logging.info("Got exception during handling a backend. Closing the connection.")
+                route.del_backend(sock)
+                self._gc_route(route)
+                break
 
     async def handle_frontend(self, token: str, sock: SocketWrapper):
         route = self._route_for_token(token)
@@ -81,6 +86,11 @@ class Dispatcher:
                 await self.send_to_all(msg, route.backends)
             except ConnectionError:
                 logging.info(f"Removing disconnected {sock.peername} from frontends")
+                route.del_frontend(sock)
+                self._gc_route(route)
+                break
+            except Exception:
+                logging.info("Got exception during handling a frontend. Closing the connection.")
                 route.del_frontend(sock)
                 self._gc_route(route)
                 break

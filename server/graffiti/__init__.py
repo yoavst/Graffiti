@@ -1,1 +1,1 @@
-from graffiti.main import main_cli
+from main import main_cli

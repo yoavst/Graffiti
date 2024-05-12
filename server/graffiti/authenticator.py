@@ -3,8 +3,8 @@ import json
 import logging
 from typing import Optional
 from uuid import UUID
-from graffiti.dispatcher import Dispatcher
-from graffiti.network_handler import NetworkHandler, SocketWrapper
+from dispatcher import Dispatcher
+from network_handler import NetworkHandler, SocketWrapper
 
 SINGLE_USER_TOKEN = "00000000-0000-0000-0000-000000000000"
 AUTHENTICATION_TIMEOUT = float(300) # 5 minutes

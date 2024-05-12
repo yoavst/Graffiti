@@ -1,10 +1,12 @@
 import socket
 import struct
-from typing import Protocol
+from typing import Awaitable, Protocol, TypeVar
 import websockets
 from websockets.server import WebSocketServerProtocol
 import asyncio
 import logging
+
+DEFAULT_TIMEOUT = float(60 * 60 * 24 * 7) # A week
 
 class SocketWrapper(Protocol):
     peername: str
@@ -19,7 +21,6 @@ class SocketWrapper(Protocol):
         ...
 
     
-
     @staticmethod
     def wrap_asyncio(reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> 'SocketWrapper':
         return AsyncioSocketWrapper(reader, writer)
@@ -36,12 +37,12 @@ class AsyncioSocketWrapper(SocketWrapper):
 
     async def recv_msg(self) -> str:
         try:
-            length = struct.unpack('>i', (await self.reader.readexactly(4)))[0]
+            length = struct.unpack('>i', (await _timeout(self.reader.readexactly(4))))[0]
             if length < 0 or length > 65536:
                 logging.error(f"[TCP] Length is too big: {length}, aborting. It might be because of an older backend script...")
                 raise ConnectionResetError()
 
-            msg = (await self.reader.readexactly(length)).decode('utf8')
+            msg = (await _timeout(self.reader.readexactly(length))).decode('utf8')
             if not msg:
                 logging.info(f"[TCP] Connection from {self.peername} is closed")
                 raise ConnectionResetError()
@@ -49,14 +50,23 @@ class AsyncioSocketWrapper(SocketWrapper):
             return msg
         except asyncio.IncompleteReadError as e:
             raise ConnectionResetError() from e
+        except TimeoutError as e:
+            logging.info(f"[TCP] Connection from {self.peername} had timeout while trying to read message from it")
+            raise ConnectionError() from e
+        except OSError as e:
+            logging.info(f"[TCP] Connection from {self.peername} is closed while trying to read message from it")
+            raise ConnectionError() from e
     
     async def send_msg(self, msg: str):
         request_bytes = msg.encode('utf-8')
         try:
             self.writer.write(struct.pack('>i', len(request_bytes)))
             self.writer.write(request_bytes)
-            await self.writer.drain()
-        except socket.error as e:
+            await _timeout(self.writer.drain())
+        except TimeoutError as e:
+            logging.info(f"[TCP] Connection from {self.peername} had timeout while trying to send message to it")
+            raise ConnectionError() from e
+        except OSError as e:
             logging.info(f"[TCP] Connection from {self.peername} is closed while trying to send message to it")
             raise ConnectionError() from e
         
@@ -75,10 +85,13 @@ class WebSocketSocketWraper(SocketWrapper):
 
     async def recv_msg(self) -> str:
         try:
-            msg = await self.websocket.recv()
+            msg = await _timeout(self.websocket.recv())
         except websockets.exceptions.ConnectionClosed as e:
             logging.info(f"[WS] Connection from {self.peername} is closed")
             raise ConnectionResetError from e
+        except TimeoutError as e:
+            logging.info(f"[WS] Connection from {self.peername} had timeout while trying to read message from it")
+            raise ConnectionError() from e
 
         if isinstance(msg, str):
             return msg
@@ -90,10 +103,13 @@ class WebSocketSocketWraper(SocketWrapper):
 
     async def send_msg(self, msg: str):
         try:
-            await self.websocket.send(msg)
+            await _timeout(self.websocket.send(msg))
         except websockets.exceptions.ConnectionClosed as e:
             logging.info(f"[WS] Connection from {self.peername} is closed")    
             raise ConnectionResetError from e
+        except TimeoutError as e:
+            logging.info(f"[WS] Connection from {self.peername} had timeout while trying to write message to it")
+            raise ConnectionError() from e
         
     async def close(self):
         try:
@@ -126,3 +142,7 @@ class NetworkHandlerAdapter:
         sock = SocketWrapper.wrap_websocket(websocket)
         logging.info(f"Received frontend connection over WS from {sock.peername}")
         await self.handler.handle_frontend(sock)
+
+T = TypeVar('T')
+def _timeout(awaitable: Awaitable[T]) -> Awaitable[T]:
+    return asyncio.wait_for(awaitable, timeout=DEFAULT_TIMEOUT)

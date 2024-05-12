@@ -5,9 +5,9 @@ from typing import AsyncIterable
 import websockets
 import argparse
 
-from graffiti.authenticator import Authenticator
-from graffiti.dispatcher import Dispatcher
-from graffiti.network_handler import NetworkHandlerAdapter
+from authenticator import Authenticator
+from dispatcher import Dispatcher
+from network_handler import NetworkHandlerAdapter
 
 logging.basicConfig()
 logging.root.setLevel(logging.INFO)
