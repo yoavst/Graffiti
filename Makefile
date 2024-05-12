@@ -122,5 +122,7 @@ visio:
 	@echo "Building visio via makefile is not yet supported"
 
 server:
+	@echo "Updating the version in pyproject.toml"
+	sed -i 's/version = "[^"]*"/version = "$(VERSION)"/' server/pyproject.toml
 	@echo "Building the graffiti Server"
 	python3 -m pybunch -d server -e graffiti -so -o out/graffiti_v$(VERSION)_server.py
