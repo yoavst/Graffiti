@@ -41,7 +41,7 @@ class RouteState:
 
 class Dispatcher:
     def __init__(self, should_dump_messages):
-        self.routes: Dict[str, RouteState] = dict()
+        self.routes: dict[str, RouteState] = dict()
         self.should_dump_messages: bool = should_dump_messages
 
     async def handle_backend(self, token: str, sock: SocketWrapper):
