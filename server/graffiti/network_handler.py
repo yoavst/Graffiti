@@ -1,5 +1,6 @@
 import struct
-from typing import Awaitable, Protocol, TypeVar
+from typing import Awaitable, TypeVar
+from abc import ABC, abstractmethod
 import websockets
 from websockets.server import WebSocketServerProtocol
 import asyncio
@@ -8,13 +9,16 @@ import logging
 DEFAULT_TIMEOUT = float(60 * 60 * 24 * 7)  # A week
 
 
-class SocketWrapper(Protocol):
+class SocketWrapper(ABC):
     peername: str
 
+    @abstractmethod
     async def recv_msg(self) -> str: ...
 
+    @abstractmethod
     async def send_msg(self, msg: str): ...
 
+    @abstractmethod
     async def close(self): ...
 
     @staticmethod
@@ -118,9 +122,10 @@ class WebSocketSocketWraper(SocketWrapper):
             logging.exception("Unknown exception while closing the socket, ignoring.")
 
 
-class NetworkHandler(Protocol):
+class NetworkHandler(ABC):
+    @abstractmethod
     async def handle_backend(self, sock: SocketWrapper): ...
-
+    @abstractmethod
     async def handle_frontend(self, sock: SocketWrapper): ...
 
 
