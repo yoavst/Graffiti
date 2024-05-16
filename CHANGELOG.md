@@ -1,20 +1,20 @@
 ## 1.11.0
 
-## General
+### General
 
 - [Feature] Add multi-user-mode support to all the backends and the web frontend.
 - [CI/CD] Add CI/CD that also publishes automatically to [graffiti.quest](https://graffiti.quest)!
 - [Packaging] Use @ykaridi PyBunch for packging python scripts.
 - [Code] Formatted most of the code using prettier and ruff.
 
-## Server
+### Server
 
 - [Rewrite] Full rewrite of the server.
 - [Feature] Prints stats on pressing enter from the CLI.
 - [Feature] Added cli options to change the ports used by the server.
 - [Packaging] Can be installed as a pip library, and run as `graffiti-server`.
 
-## IDA
+### IDA
 
 - [Feature] use pywin32 to reliably bring the IDA window to the foreground (thanks @noaml13)
 
