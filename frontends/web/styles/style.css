@@ -383,7 +383,6 @@ footer > * {
 .material-title {
   flex: 1;
   text-align: left;
-  /* Adjust font size, color, etc. as needed */
 }
 
 /* Button style */
@@ -417,4 +416,8 @@ footer > * {
 
 .swal2-container .left * {
   text-align: left;
+}
+
+#supported-platforms {
+  column-count: 2;
 }

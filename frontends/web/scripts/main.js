@@ -29,7 +29,7 @@ const GRAFFITI_PLATFORMS = [
     color: "#ec6038",
   },
   {
-    name: "Intellij IDEA",
+    name: "Intellij",
     filename: "graffiti_v{}_for_intellij.jar",
     icon: "images/platforms/IntelliJ_IDEA.svg",
     color: "#fe315d",
@@ -41,7 +41,7 @@ const GRAFFITI_PLATFORMS = [
     color: "#16c0ab",
   },
   {
-    name: "Visual Studio Code",
+    name: "VSCode",
     filename: "graffiti_v{}_for_vscode.vsix",
     icon: "images/platforms/Visual_Studio_Code.svg",
     color: "#007ACC",
@@ -51,6 +51,12 @@ const GRAFFITI_PLATFORMS = [
     filename: "graffiti_v{}_for_ida.zip",
     icon: "images/platforms/IDA.png",
     color: "#c0a58f",
+  },
+  {
+    name: "Ghidra",
+    filename: "graffiti_v{}_for_ghidra.zip",
+    icon: "images/platforms/Ghidra.svg",
+    color: "#F44336",
   },
   {
     name: "OpenGrok & SourceGraph",
@@ -84,7 +90,7 @@ function event_connect() {
     url,
     window.tabsController,
     localStorage.getItem(LOCAL_STORAGE_TOKEN_KEY),
-    () => event_showManageTokenDialog(true),
+    () => event_showManageTokenDialog(true)
   );
 }
 
@@ -163,7 +169,7 @@ function event_shareGraph() {
             function (err) {
               console.log(s);
               logEvent("Logged to console");
-            },
+            }
           );
         } catch (err) {
           console.log(s);
@@ -217,11 +223,11 @@ function event_exportAll() {
     tabsController.map((name, tabController) => ({
       name,
       content: tabController.export(),
-    })),
+    }))
   );
 
   files.forEach(({ name, content }) =>
-    tarWriter.addTextFile(`${name}.json`, content),
+    tarWriter.addTextFile(`${name}.json`, content)
   );
   tarWriter.download("graffiti_export.tar");
   return false;
@@ -335,7 +341,7 @@ function event_addTabFromNode() {
         const tab = window.tabsController.addTab(value);
         window.tabsController.selectTab(tab);
         tab.tabController.addNode(
-          controller.selectedNode[(NODE_LABEL, NODE_EXTRA)],
+          controller.selectedNode[(NODE_LABEL, NODE_EXTRA)]
         );
       }
     });
@@ -411,7 +417,7 @@ function event_addComment() {
     addTextualNode(
       "Add comment",
       { isMarkdown: true, isComment: true, isUnclickable: true },
-      { isExistingToNew: true },
+      { isExistingToNew: true }
     );
   });
 }
@@ -419,7 +425,7 @@ function event_addComment() {
 function addTextualNode(
   title,
   extra_node_properties,
-  extra_edge_properties = {},
+  extra_edge_properties = {}
 ) {
   // FIXME: don't depend on network controller
   if (!("networkController" in window)) {
@@ -540,7 +546,9 @@ function event_help() {
   const toHtml = function ({ name, icon, color, filename }) {
     return `<li class="material-item">
             <img src="${icon}" class="material-icon"></img>
-            <span class="material-title">${name}</span>
+            <span class="material-title" ${
+              name.length >= 10 ? 'style="font-size: 70%;"' : ""
+            }>${name}</span>
             <button class="material-btn" style="background-color: ${color};" onclick="event_showDocs('${name}')">Docs</button>
             <button class="material-btn" style="background-color: ${color};" onclick="event_downloadPlatform('${filename}')">Download</button>
         </li>`;
@@ -554,10 +562,14 @@ function event_help() {
         <p>To run graffiti, you have to run the python server, and activate the graffiti plugin on your IDE</p>
         <p>If you use a multi-user server, you can get the auth token from the key button on the top right of the screen. 
            The key is cached for the backends at <code>~/.graffiti/token</code></p>
+        <div id="utils">
         ${utilsHtml.join("")}
+        </div>
         <hr class="material-divider">
         <h2>Supported Platforms</h2>
+        <div id="supported-platforms">
         ${platformsHtml.join("")}
+        </div>
     </div>`;
 
   Swal.fire({
@@ -678,7 +690,7 @@ function main() {
   const tabsController = new TabsController(
     document.getElementsByClassName("tabs")[0],
     document.getElementsByClassName("view")[0],
-    document.getElementById("context-menu"),
+    document.getElementById("context-menu")
   );
   tabsController.restore();
 
@@ -687,7 +699,7 @@ function main() {
   // initiate command palatte
   window.commandPalette = new CommandPalette(
     tabsController,
-    document.querySelector("ninja-keys"),
+    document.querySelector("ninja-keys")
   );
 
   if (strToBool(localStorage.getItem("isFirstTime"))) {
@@ -799,7 +811,7 @@ function initiateHotkeys() {
           event_setTheme(themeIndex);
           return;
       }
-    },
+    }
   );
 }
 
@@ -811,7 +823,7 @@ function initializeDragAndDrop() {
         e.preventDefault();
         e.stopPropagation();
       },
-      false,
+      false
     );
   });
 
@@ -822,7 +834,7 @@ function initializeDragAndDrop() {
         event_import_onFile(file);
       }
     },
-    false,
+    false
   );
 }
 
@@ -882,7 +894,7 @@ function generateUuidv4() {
     (
       +c ^
       (crypto.getRandomValues(new Uint8Array(1))[0] & (15 >> (+c / 4)))
-    ).toString(16),
+    ).toString(16)
   );
 }
 

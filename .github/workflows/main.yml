@@ -36,6 +36,7 @@ jobs:
           - { name: jeb, type: pybunch }
           - { name: intellij, type: java }
           - { name: clion, type: java }
+          - { name: ghidra, type: java }
           - { name: ida, type: pybunch }
           - { name: vscode, type: typescript }
           - { name: opengrok_sourcegraph, type: typescript }
@@ -53,7 +54,7 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: "temurin"
-          java-version: "19"
+          java-version: "17"
         if: matrix.target.type == 'java'
 
       - name: Setup Gradle
@@ -61,6 +62,11 @@ jobs:
         with:
           gradle-version: 7.6
         if: matrix.target.type == 'java'
+
+      - uses: er28-0652/setup-ghidra@master
+        with:
+          version: "11.0.3"
+        if: matrix.target.name == 'ghidra'
 
       - name: Configure
         run: make init
