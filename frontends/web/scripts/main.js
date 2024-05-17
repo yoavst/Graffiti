@@ -54,7 +54,7 @@ const GRAFFITI_PLATFORMS = [
   },
   {
     name: "Ghidra",
-    filename: "graffiti_v{}_for_Ghidra.zip",
+    filename: "graffiti_v{}_for_ghidra.zip",
     icon: "images/platforms/Ghidra.svg",
     color: "#F44336",
   },
