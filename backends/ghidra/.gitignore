@@ -1,7 +1,5 @@
 build/
 .gradle/
-gradlew
-gradlew.bat
 lib/*jar
 dist/
 gradle.properties
