@@ -54,7 +54,7 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: "temurin"
-          java-version: "19"
+          java-version: "17"
         if: matrix.target.type == 'java'
 
       - name: Setup Gradle
