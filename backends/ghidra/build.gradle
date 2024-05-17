@@ -1,0 +1,69 @@
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+
+// Builds a Ghidra Extension for a given Ghidra installation.
+//
+// An absolute path to the Ghidra installation directory must be supplied
+// To make this work well with IntelliJ this should be automatically resolve able and NOT an environmental variable
+// You can either:
+// * use the `gradle.properties` file in the extension folder to set it for this project
+// * add the line `GHIDRA_INSTALL_DIR=/path/to/ghidras/ghidra_10.1_PUBLIC/` to your global config (`.gradle/gradle.properties` in your home folder)
+
+
+plugins {
+	id 'org.jetbrains.kotlin.jvm' version "1.9.24"
+	id 'idea'
+}
+
+repositories {
+	mavenCentral()
+}
+
+//----------------------START "DO NOT MODIFY" SECTION------------------------------
+def ghidraInstallDir
+
+if (System.env.GHIDRA_INSTALL_DIR) {
+	ghidraInstallDir = System.env.GHIDRA_INSTALL_DIR
+}
+else if (project.hasProperty("GHIDRA_INSTALL_DIR")) {
+	ghidraInstallDir = project.getProperty("GHIDRA_INSTALL_DIR")
+}
+
+if (ghidraInstallDir) {
+	apply from: new File(ghidraInstallDir).getCanonicalPath() + "/support/buildExtension.gradle"
+}
+else {
+	throw new GradleException("GHIDRA_INSTALL_DIR is not defined!")
+}
+//----------------------END "DO NOT MODIFY" SECTION-------------------------------
+
+// Set the JVM target to 11, as described in https://stackoverflow.com/a/44297713/13220684
+// Ghidra requires 11 and the buildExtension.gradle sets this for Java
+// IntelliJ will complain about the discrepancy between the Java and the Kotlin target otherwise
+tasks.withType(KotlinCompile).configureEach {
+	kotlinOptions {
+		jvmTarget = "17"
+	}
+}
+
+dependencies {
+	// If you are using the Ghidra Jupyter Plugin for Kotlin, add the following line to declare it as a dependency
+	// This allows using the extension methods and makes sure that the required Kotlin libraries are present and not
+	// conflicting
+	//	api fileTree(dir: ghidraInstallDir + '/Ghidra/Extensions/GhidraJupyterKotlin/', include: "**/*.jar")
+}
+
+// Make it explicit that the compilation depends on some libraries in the `lib` folder,
+// otherwise gradle will issue warnings
+compileKotlin.dependsOn(copyDependencies)
+
+// Add the ghidra_scripts directory as an additional source set, so IntelliJ IDEA treats the scripts there as part of
+// the module
+// this means that your plugin code is available for code completion and analysis and that all dependencies of the module
+// are inherited
+sourceSets {
+	main {
+		kotlin {
+			srcDirs 'ghidra_scripts'
+		}
+	}
+}

@@ -62,6 +62,7 @@ Graffiti supports multiple backends, as can be seen [here](#backends). Open the 
 | OpenGrok    | \*                                   | ✅           | ✅             | ❌             | ❌            | ✅                | ❌        | Websocket   |
 | Sourcegraph | Java, C, C++                         | ✅           | ✅             | ❌             | ❌            | ✅                | ❌        | Websocket   |
 | IDA         | \*                                   | ✅           | ✅             | ✅             | -             | ✅                | ✅        | TCP         |
+| Ghidra      | \*                                   | ✅           | ✅             | ✅             | -             | ✅                | ✅        | TCP         |
 | Jadx        | Java                                 | ✅           | ✅             | ✅             | ✅            | ❌                | ✅        | TCP         |
 
 The common shortcuts are:
