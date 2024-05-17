@@ -1,3 +1,9 @@
+## 1.12.0
+
+### Ghidra
+
+- [Feautre] Ghidra support!
+
 ## 1.11.0
 
 ### General
