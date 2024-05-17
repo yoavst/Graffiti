@@ -21,7 +21,7 @@ clean:
 init:
 	mkdir -p out
 
-backends: jeb intellij clion ida vscode opengrok_sourcegraph jadx
+backends: jeb intellij clion ida ghidra vscode opengrok_sourcegraph jadx
 frontends: web visio
 
 ida: 
@@ -78,6 +78,21 @@ intellij:
 
 	@echo "Copying the file"
 	cp backends/intellij/build/libs/intellij-$(VERSION).jar out/graffiti_v$(VERSION)_for_intellij.jar
+
+ghidra:
+	@echo "Building Graffiti for Ghidra"
+ifndef GHIDRA_INSTALL_DIR
+	$(error GHIDRA_INSTALL_DIR is undefined, cannot build graffiti for ghidra)
+endif
+	
+	@echo "Updating the version in extension.properties"
+	sed -i 's/version=.*/version=$(VERSION)/' backends/ghidra/extension.properties
+
+	@echo "Compiling the extension"
+	cd backends/ghidra && ./gradlew buildExtension
+
+	@echo "Copying the file"
+	cp backends/ghidra/dist/*.zip out/graffiti_v$(VERSION)_for_ghidra.zip
 
 clion:
 	@echo "Building Graffiti for CLion"
