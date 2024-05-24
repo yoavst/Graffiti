@@ -32,21 +32,22 @@ function main() {
 
     // Add context menu
     chrome.runtime.onInstalled.addListener(() => {
+        const contexts: chrome.contextMenus.ContextType[] = ["page", "link", "selection"];
         chrome.contextMenus.create({
             id: "add_to_graffiti",
             title: "Add to Graph",
-            contexts: ["page"],
+            contexts,
         });
         chrome.contextMenus.create({
             id: "add_to_graffiti_with_custom_edge",
             title: "Add to Graph with edge comment",
-            contexts: ["page"],
+            contexts,
         });
 
         chrome.contextMenus.create({
             id: "add_line_to_graffiti",
             title: "Add current line to Graph",
-            contexts: ["page"],
+            contexts,
         });
 
         chrome.contextMenus.onClicked.addListener((info, tab) => {
