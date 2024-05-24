@@ -1,5 +1,5 @@
 import { languageFrom } from "./grammar_symbols";
-import { SourceType, SymbolInfo, SymbolProvider, timeout } from "./shared";
+import { SourceType, SymbolInfo, SymbolProvider, stripUrl, timeout } from "./shared";
 
 export interface LineAndName {
     line: number;
@@ -19,9 +19,12 @@ export abstract class BaseSymbolProvider implements SymbolProvider {
     abstract getFileName(): string;
 
     private cacheCode: string | null = null;
+    private cachedCodeUrl: string = "";
+
     protected abstract getCodeInternal(): Promise<string>;
     async getCode(): Promise<string> {
-        if (this.cacheCode == null) {
+        const currentUrl = stripUrl(document.location.href);
+        if (this.cacheCode == null || currentUrl != this.cachedCodeUrl) {
             this.cacheCode = await timeout(this.getCodeInternal(), 2000);
         }
         return this.cacheCode;

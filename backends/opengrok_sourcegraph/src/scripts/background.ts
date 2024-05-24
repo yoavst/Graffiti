@@ -6,6 +6,7 @@ import {
     isValidUUIDv4,
     onExtMessage,
     sendExtMessage,
+    stripUrl,
 } from "./shared";
 
 let graffitiWebSocket: WebSocket | null;
@@ -185,10 +186,7 @@ function createNewTab(url: string) {
 }
 
 function changeSameTabIfExists(url: string) {
-    const urlWithoutHashBuilder = new URL(url);
-    urlWithoutHashBuilder.hash = "";
-    urlWithoutHashBuilder.search = "";
-    const urlWithoutHash = urlWithoutHashBuilder.toString();
+    const urlWithoutHash = stripUrl(url);
 
     chrome.tabs.query({}, function (tabs) {
         const matchingTabs = tabs.filter(

@@ -110,3 +110,10 @@ export function isValidUUIDv4(uuid: string): boolean {
     const uuidv4Regex = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$/i;
     return uuidv4Regex.test(uuid);
 }
+
+export function stripUrl(url: string): string {
+    const urlWithoutHashBuilder = new URL(url);
+    urlWithoutHashBuilder.hash = "";
+    urlWithoutHashBuilder.search = "";
+    return urlWithoutHashBuilder.toString();
+}
