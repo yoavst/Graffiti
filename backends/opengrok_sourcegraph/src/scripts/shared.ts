@@ -80,7 +80,7 @@ export interface SymbolProvider {
     getCurrentLineSymbol(x: number, y: number): Promise<SymbolInfo>;
 }
 
-export type SourceType = "OpenGrok" | "SourceGraph";
+export type SourceType = "OpenGrok" | "SourceGraph" | "Github" | "Gitlab";
 
 export interface SymbolInfo {
     sourceType: SourceType;

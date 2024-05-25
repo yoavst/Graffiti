@@ -1,5 +1,5 @@
-import { SourceType } from "./shared";
-import { BaseSymbolProvider } from "./symbol_provider";
+import { SourceType } from "../shared";
+import { BaseSymbolProvider } from "../symbol_provider";
 
 export default class SourceGraphProvider extends BaseSymbolProvider {
     private providers: BaseSymbolProvider[] = [new SourceGraphProviderV5(), new SourceGraphProviderV4()];

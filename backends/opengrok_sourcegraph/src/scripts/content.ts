@@ -1,8 +1,12 @@
 import { SymbolProvider, onExtMessageEx, reject } from "./shared";
-import OpenGrokProvider from "./opengrok";
-import SourceGraphProvider from "./sourcegraph";
+import * as Providers from "./providers";
 
-const SYMBOL_PROVIDERS: Array<SymbolProvider> = [new OpenGrokProvider(), new SourceGraphProvider()];
+const SYMBOL_PROVIDERS: SymbolProvider[] = [
+    new Providers.OpenGrokProvider(),
+    new Providers.SourceGraphProvider(),
+    new Providers.GithubProvider(),
+    new Providers.GitlabProvider(),
+];
 
 function main() {
     const s = document.createElement("script");

@@ -1,5 +1,5 @@
-import { SourceType } from "./shared";
-import { BaseSymbolInfo, BaseSymbolProvider } from "./symbol_provider";
+import { SourceType } from "../shared";
+import { BaseSymbolInfo, BaseSymbolProvider } from "../symbol_provider";
 
 export default class OpenGrokProvider extends BaseSymbolProvider {
     override sourceType: SourceType = "OpenGrok";
