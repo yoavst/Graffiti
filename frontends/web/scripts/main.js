@@ -59,8 +59,8 @@ const GRAFFITI_PLATFORMS = [
     color: "#F44336",
   },
   {
-    name: "OpenGrok & SourceGraph",
-    filename: "graffiti_v{}_for_opengrok_sourcegraph.zip",
+    name: "OpenGrok, SourceGraph, Github, Gitlab",
+    filename: "graffiti_v{}_for_opengrok_sourcegraph_github_gitlab.zip",
     icon: "images/platforms/Opengrok_Sourcegraph.png",
     color: "#5484a4",
   },
@@ -546,14 +546,17 @@ function event_help() {
   const toHtml = function ({ name, icon, color, filename }) {
     return `<li class="material-item">
             <img src="${icon}" class="material-icon"></img>
-            <span class="material-title" ${
-              name.length >= 10 ? 'style="font-size: 70%;"' : ""
-            }>${name}</span>
+            <span class="material-title">${name}</span>
             <button class="material-btn" style="background-color: ${color};" onclick="event_showDocs('${name}')">Docs</button>
             <button class="material-btn" style="background-color: ${color};" onclick="event_downloadPlatform('${filename}')">Download</button>
         </li>`;
   };
-  const platformsHtml = GRAFFITI_PLATFORMS.map(toHtml);
+  const twoPanePlatforms = GRAFFITI_PLATFORMS.filter(
+    (platform) => platform.name.length <= 10
+  ).map(toHtml);
+  const onePanePlatforms = GRAFFITI_PLATFORMS.filter(
+    (platform) => platform.name.length > 10
+  ).map(toHtml);
   const utilsHtml = GRAFFITI_UTILS.map(toHtml);
 
   const html = `<div class="platforms">
@@ -567,8 +570,11 @@ function event_help() {
         </div>
         <hr class="material-divider">
         <h2>Supported Platforms</h2>
-        <div id="supported-platforms">
-        ${platformsHtml.join("")}
+        <div id="one-pane-supported-platforms">
+        ${onePanePlatforms.join("")}
+        </div>
+        <div id="two-pane-supported-platforms">
+        ${twoPanePlatforms.join("")}
         </div>
     </div>`;
 

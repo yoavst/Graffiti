@@ -39,7 +39,7 @@ jobs:
           - { name: ghidra, type: java }
           - { name: ida, type: pybunch }
           - { name: vscode, type: typescript }
-          - { name: opengrok_sourcegraph, type: typescript }
+          - { name: websites, type: typescript }
           - { name: jadx, type: pack }
           - { name: server, type: pybunch }
     steps:

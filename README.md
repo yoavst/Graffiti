@@ -53,17 +53,19 @@ Graffiti supports multiple backends, as can be seen [here](#backends). Open the 
 
 ## Backends
 
-| Editor      | Languages                            | add to graph | open in editor | Rename support | Field support | Add line to graph | Add xrefs | Socket type |
-| ----------- | ------------------------------------ | ------------ | -------------- | -------------- | ------------- | ----------------- | --------- | ----------- |
-| JEB         | Java                                 | ✅           | ✅             | ✅             | ✅            | ✅                | ✅        | TCP         |
-| Intellij    | Java, Kotlin                         | ✅           | ✅             | ❌             | ✅            | ✅                | ✅        | TCP         |
-| CLion       | C, C++                               | ✅           | ✅             | ❌             | ✅            | ✅                | ❌        | TCP         |
-| VSCode      | Depends on available language server | ✅           | ✅             | ❌             | ❌            | ✅                | ❌        | TCP         |
-| OpenGrok    | \*                                   | ✅           | ✅             | ❌             | ❌            | ✅                | ❌        | Websocket   |
-| Sourcegraph | Java, C, C++                         | ✅           | ✅             | ❌             | ❌            | ✅                | ❌        | Websocket   |
-| IDA         | \*                                   | ✅           | ✅             | ✅             | -             | ✅                | ✅        | TCP         |
-| Ghidra      | \*                                   | ✅           | ✅             | ✅             | -             | ✅                | ❌        | TCP         |
-| Jadx        | Java                                 | ✅           | ✅             | ✅             | ✅            | ❌                | ✅        | TCP         |
+| Editor      | Languages                             | add to graph | open in editor | Rename support | Field support | Add line to graph | Add xrefs | Socket type |
+| ----------- | ------------------------------------- | ------------ | -------------- | -------------- | ------------- | ----------------- | --------- | ----------- |
+| JEB         | Java                                  | ✅           | ✅             | ✅             | ✅            | ✅                | ✅        | TCP         |
+| Intellij    | Java, Kotlin                          | ✅           | ✅             | ❌             | ✅            | ✅                | ✅        | TCP         |
+| CLion       | C, C++                                | ✅           | ✅             | ❌             | ✅            | ✅                | ❌        | TCP         |
+| VSCode      | Depends on available language server  | ✅           | ✅             | ❌             | ❌            | ✅                | ❌        | TCP         |
+| IDA         | \*                                    | ✅           | ✅             | ✅             | -             | ✅                | ✅        | TCP         |
+| Ghidra      | \*                                    | ✅           | ✅             | ✅             | -             | ✅                | ❌        | TCP         |
+| Jadx        | Java                                  | ✅           | ✅             | ✅             | ✅            | ❌                | ✅        | TCP         |
+| OpenGrok    | \* if indexed, Java, C, C++ otherwise | ✅           | ✅             | -              | ❌            | ✅                | ❌        | Websocket   |
+| Sourcegraph | Java, C, C++                          | ✅           | ✅             | -              | ❌            | ✅                | ❌        | Websocket   |
+| Github      | Java, C, C++                          | ✅           | ✅             | -              | ❌            | ✅                | ❌        | Websocket   |
+| Gitlab      | Java, C, C++                          | ✅           | ✅             | -              | ❌            | ✅                | ❌        | Websocket   |
 
 The common shortcuts are:
 

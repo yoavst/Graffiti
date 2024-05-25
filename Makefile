@@ -21,7 +21,7 @@ clean:
 init:
 	mkdir -p out
 
-backends: jeb intellij clion ida ghidra vscode opengrok_sourcegraph jadx
+backends: jeb intellij clion ida ghidra vscode websites jadx
 frontends: web visio
 
 ida: 
@@ -106,18 +106,18 @@ clion:
 	@echo "Copying the file"
 	cp backends/clion/build/libs/clion-$(VERSION).jar out/graffiti_v$(VERSION)_for_clion.jar
 
-opengrok_sourcegraph:
-	@echo "Building Graffiti for OpenGrok & Sourcegraph"
+websites:
+	@echo "Building Graffiti for OpenGrok, Sourcegraph, Github and Gitlab"
 
 	@echo "Updating the version in manifest.json and package.json"
-	sed -i 's/"version": "[^"]*",/"version": "$(VERSION)",/' backends/opengrok_sourcegraph/public/manifest.json
-	cd backends/opengrok_sourcegraph && npm pkg set version=$(VERSION)
+	sed -i 's/"version": "[^"]*",/"version": "$(VERSION)",/' backends/websites/public/manifest.json
+	cd backends/websites && npm pkg set version=$(VERSION)
 	
 	@echo "Compile the typescript"
-	cd backends/opengrok_sourcegraph && npm install && npm run build
+	cd backends/websites && npm install && npm run build
 
 	@echo "Since chrome dropped support for CRXs not from store, just zipping the folder"
-	cd backends/opengrok_sourcegraph/dist && zip -r ../../../out/graffiti_v$(VERSION)_for_opengrok_sourcegraph.zip *
+	cd backends/websites/dist && zip -r ../../../out/graffiti_v$(VERSION)_for_opengrok_sourcegraph_github_gitlab.zip *
 
 web:
 	@echo "Building Graffiti for Web"
