@@ -61,7 +61,7 @@ const GRAFFITI_PLATFORMS = [
   {
     name: "OpenGrok, SourceGraph, Github, Gitlab",
     filename: "graffiti_v{}_for_opengrok_sourcegraph_github_gitlab.zip",
-    icon: "images/platforms/Opengrok_Sourcegraph.png",
+    icon: "images/platforms/websites.png",
     color: "#5484a4",
   },
 ];
