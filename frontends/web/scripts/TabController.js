@@ -56,7 +56,7 @@ class TabController {
 
     // add layout
     const wrapperLayout = htmlToElement(
-      '<div class="content"><div class="graph"></div></div>',
+      '<div class="content"><div class="graph"></div></div>'
     );
     this.view.appendChild(wrapperLayout);
     this.wrapper = wrapperLayout;
@@ -94,7 +94,7 @@ class TabController {
         },
       ],
       null,
-      4,
+      4
     );
   }
 
@@ -125,7 +125,7 @@ class TabController {
 
       setTimeout(() => {
         const selectedElement = this.#getDomElementFromId(
-          this._selectedNode.id,
+          this._selectedNode.id
         );
         const [boxX, boxY, boxWidth, boxHeight] =
           this.#getSvgInnerPosition(selectedElement);
@@ -179,7 +179,7 @@ class TabController {
       const innerRect = rects[0];
       const [rectX, rectY] = [innerRect.x, innerRect.y].map(toValue);
       const [rectWidth, rectHeight] = [innerRect.width, innerRect.height].map(
-        toValue,
+        toValue
       );
 
       // Calculate the x,y of the middle of element
@@ -201,7 +201,7 @@ class TabController {
   #getRectPosition(element) {
     // Inner rect relative position + size
     const innerRect = element.querySelectorAll(
-      ":scope > rect, :scope > polygon",
+      ":scope > rect, :scope > polygon"
     )[0];
     const boudingRect = innerRect.getBoundingClientRect();
     const [rectX, rectY] = [boudingRect.x, boudingRect.y];
@@ -328,7 +328,9 @@ config:
         if (commentNodesSet.has(edge.to) || commentNodesSet.has(edge.from)) {
           s += `N${edge.from} --- N${edge.to}\n`;
         } else if ("label" in edge) {
-          s += `N${edge.from}-->|"${escapeHtml(edge.label, gui)}"|N${edge.to}\n`;
+          s += `N${edge.from}-->|"${escapeHtml(edge.label, gui)}"|N${
+            edge.to
+          }\n`;
         } else {
           s += `N${edge.from} --> N${edge.to}\n`;
         }
@@ -400,7 +402,7 @@ config:
 
     // Annotate comments
     const commentIds = new Set(
-      this.queryNodes("isComment", true).map((n) => `N${n.id}`),
+      this.queryNodes("isComment", true).map((n) => `N${n.id}`)
     );
     if (commentIds.size > 0) {
       graph.children.forEach((child) => {
@@ -423,7 +425,7 @@ config:
           version: 2,
           address: node.extra.address,
           project: node.extra.project,
-        }),
+        })
       );
     } else if (node.extra.isMarkdown) {
       this.editMarkdownNode(node);
@@ -436,7 +438,7 @@ config:
         this._selectedNode.id,
         elementId,
         !isCtrlPressed,
-        isShiftPressed,
+        isShiftPressed
       );
     }
   }
@@ -492,7 +494,7 @@ config:
   onEdgeRightClick(src, dst) {
     const _this = this;
     const edge = this.edges.filter(
-      (item) => item.from == src && item.to == dst,
+      (item) => item.from == src && item.to == dst
     )[0];
     const edgeOldLabel = edge.label;
 
@@ -536,6 +538,17 @@ config:
         }
       });
     });
+  }
+
+  onEdgeMiddleClick(src, dst) {
+    const edge = this.edges.filter(
+      (item) => item.from == src && item.to == dst
+    )[0];
+
+    edge.from = dst;
+    edge.to = src;
+    this.cachedMermaid = null;
+    this.draw();
   }
 
   editMarkdownNode(node) {
@@ -631,7 +644,7 @@ config:
             node.addEventListener("contextmenu", (event) => {
               onRightClick(
                 event.currentTarget,
-                getIdFromNode(event.currentTarget),
+                getIdFromNode(event.currentTarget)
               );
               event.preventDefault();
               event.stopPropagation();
@@ -644,7 +657,7 @@ config:
                   event.currentTarget,
                   getIdFromNode(event.currentTarget),
                   event.ctrlKey,
-                  event.shiftKey,
+                  event.shiftKey
                 );
                 event.preventDefault();
                 event.stopPropagation();
@@ -695,10 +708,10 @@ config:
             edge.addEventListener("contextmenu", (event) => {
               const classes = [...edge.classList];
               const src = parseInt(
-                classes.filter((it) => it.startsWith("LS-N"))[0].substring(4),
+                classes.filter((it) => it.startsWith("LS-N"))[0].substring(4)
               );
               const dst = parseInt(
-                classes.filter((it) => it.startsWith("LE-N"))[0].substring(4),
+                classes.filter((it) => it.startsWith("LE-N"))[0].substring(4)
               );
               _this.onEdgeRightClick(src, dst);
               event.preventDefault();
@@ -707,14 +720,28 @@ config:
             edge.addEventListener("click", (event) => {
               const classes = [...edge.classList];
               const src = parseInt(
-                classes.filter((it) => it.startsWith("LS-N"))[0].substring(4),
+                classes.filter((it) => it.startsWith("LS-N"))[0].substring(4)
               );
               const dst = parseInt(
-                classes.filter((it) => it.startsWith("LE-N"))[0].substring(4),
+                classes.filter((it) => it.startsWith("LE-N"))[0].substring(4)
               );
               _this.onEdgeClick(src, dst);
               event.preventDefault();
               event.stopPropagation();
+            });
+            edge.addEventListener("auxclick", (event) => {
+              if (event.button == 1) {
+                const classes = [...edge.classList];
+                const src = parseInt(
+                  classes.filter((it) => it.startsWith("LS-N"))[0].substring(4)
+                );
+                const dst = parseInt(
+                  classes.filter((it) => it.startsWith("LE-N"))[0].substring(4)
+                );
+                _this.onEdgeMiddleClick(src, dst);
+                event.preventDefault();
+                event.stopPropagation();
+              }
             });
           }
         }
@@ -726,10 +753,10 @@ config:
       // Add all node and edges to undo
       this.addUndoMarker();
       this.undoHistory.push(
-        ...this.nodes.map((node) => ({ type: REMOVE_NODE, data: { ...node } })),
+        ...this.nodes.map((node) => ({ type: REMOVE_NODE, data: { ...node } }))
       );
       this.undoHistory.push(
-        ...this.edges.map((edge) => ({ type: REMOVE_EDGE, data: { ...edge } })),
+        ...this.edges.map((edge) => ({ type: REMOVE_EDGE, data: { ...edge } }))
       );
     } else {
       this.undoHistory = [];
@@ -815,7 +842,7 @@ config:
 
   queryNodes(propertyName, propertyValue) {
     return this.nodes.filter(
-      (item) => item.extra[propertyName] == propertyValue,
+      (item) => item.extra[propertyName] == propertyValue
     );
   }
 
@@ -847,7 +874,7 @@ config:
       if (oldId != null) {
         const oldSelectedElement = this.#getDomElementFromId(
           oldId,
-          nodesContainer,
+          nodesContainer
         );
         const oldSelectedBorders =
           oldSelectedElement.querySelector("rect, polygon");
@@ -858,7 +885,7 @@ config:
       if (newId != null) {
         const newSelectedElement = this.#getDomElementFromId(
           newId,
-          nodesContainer,
+          nodesContainer
         );
         const newSelectedBorders =
           newSelectedElement.querySelector("rect, polygon");
@@ -908,15 +935,15 @@ config:
         ...e,
         from: swap(e.from, id1, id2),
         to: swap(e.to, id1, id2),
-      })),
+      }))
     );
     this.nodes = new DataSet(
-      this.nodes.map((n) => ({ ...n, id: swap(n.id, id1, id2) })),
+      this.nodes.map((n) => ({ ...n, id: swap(n.id, id1, id2) }))
     );
 
     if (this._selectedNode != null) {
       this._selectedNode = this.nodes.get(
-        swap(this._selectedNode.id, id1, id2),
+        swap(this._selectedNode.id, id1, id2)
       );
     }
   }
@@ -944,7 +971,7 @@ config:
     const secondNodeEdges = this.edges.filter((e) => mySide(e) == id2);
     const commonSides = firstNodeEdges
       .filter((e) =>
-        secondNodeEdges.some((e2) => otherSide(e) == otherSide(e2)),
+        secondNodeEdges.some((e2) => otherSide(e) == otherSide(e2))
       )
       .map(otherSide);
 
@@ -956,10 +983,10 @@ config:
     } else {
       const side = commonSides[0];
       const firstNodeSpecificEdges = firstNodeEdges.filter(
-        (e) => otherSide(e) == side,
+        (e) => otherSide(e) == side
       );
       const secondNodeSpecificEdges = secondNodeEdges.filter(
-        (e) => otherSide(e) == side,
+        (e) => otherSide(e) == side
       );
 
       if (
@@ -1122,7 +1149,7 @@ config:
     this.undoHistory.push({ type: REMOVE_NODE, data: { ...removedNode } });
     // Get all edges containing the node
     const removedEdges = this.edges.filter(
-      (edge) => edge.from == removedNodeId || edge.to == removedNodeId,
+      (edge) => edge.from == removedNodeId || edge.to == removedNodeId
     );
     // Remove them, and update undo history
     for (const removedEdge of removedEdges) {
@@ -1156,11 +1183,11 @@ config:
     let updates;
     if (version == 1) {
       updates = this.nodes.filter((item) =>
-        this.#selectionV1(item.extra, selection),
+        this.#selectionV1(item.extra, selection)
       );
     } else {
       updates = this.nodes.filter((item) =>
-        this.#selectionV2(item.extra, selection),
+        this.#selectionV2(item.extra, selection)
       );
     }
 
@@ -1218,7 +1245,7 @@ config:
     return new Set(
       this.nodes
         .map((it) => ("project" in it.extra ? it.extra.project : null))
-        .filter((it) => it != null),
+        .filter((it) => it != null)
     );
   }
 
@@ -1437,7 +1464,7 @@ function formatString(s, replacements) {
     for (const key in replacements) {
       str = str.replace(
         new RegExp("\\{" + key + "\\}", "gi"),
-        replacements[key],
+        replacements[key]
       );
     }
   }
