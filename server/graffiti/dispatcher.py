@@ -4,6 +4,9 @@ from typing import List, Dict
 from .network_handler import SocketWrapper
 
 
+KEEP_ALIVE_MSG = '{"project":"keep_alive"}'
+
+
 @dataclass
 class RouteState:
     token: str
@@ -51,6 +54,10 @@ class Dispatcher:
         while True:
             try:
                 msg = await sock.recv_msg()
+                if msg == KEEP_ALIVE_MSG:
+                    logging.debug(f"Received keep alive message from {sock.peername} on route: {token}")
+                    continue
+
                 logging.info(f"Received backend message from {sock.peername} on route: {token}")
                 if self.should_dump_messages:
                     logging.info(f"Backend Message: {msg}")

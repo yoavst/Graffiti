@@ -56,6 +56,8 @@ def handle_args(args):
         dump_messages = True
     if args.multi_user_mode:
         multi_user_mode = True
+    if args.debug:
+        logging.root.setLevel(logging.DEBUG)
 
 
 def serve_websocket(
@@ -73,6 +75,7 @@ def serve_websocket(
 async def main():
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument("--dump", help="Dump the network traffic to output", action="store_true")
+    parser.add_argument("--debug", help="Enable debug logs", action="store_true")
     parser.add_argument(
         "--frontend-port",
         help="The port for communication with the frontend",

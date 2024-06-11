@@ -78,6 +78,9 @@ function main() {
             tabs.forEach((tab) => onCommand(command as GraffitiCommand, tab, false));
         });
     });
+
+    // https://developer.chrome.com/docs/extensions/how-to/web-platform/websockets
+    setInterval(keepAlive, 20 * 1000);
 }
 
 function closeWebSocket() {
@@ -299,6 +302,14 @@ function onCommand(command: GraffitiCommand, tab: chrome.tabs.Tab, isContextMenu
     };
     console.log(tab);
     chrome.tabs.sendMessage(tab.id!, request, isLine ? onLineSymbol : onSymbol);
+}
+
+const KEEP_ALIVE_MSG = '{"project":"keep_alive"}';
+function keepAlive() {
+    const websocket = graffitiWebSocket;
+    if (websocket != null) {
+        websocket.send(KEEP_ALIVE_MSG);
+    }
 }
 
 main();
