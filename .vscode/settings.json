@@ -1,0 +1,8 @@
+{
+  "python.analysis.typeCheckingMode": "basic",
+  "files.exclude": {
+    "**/*.class": true,
+    "**/*.pyc": true,
+    "**/__pycache__": true,
+  }
+}

@@ -1,3 +1,19 @@
+## 1.13.0
+
+### Web
+
+- [Feature] Middle click an arrow to reverse it
+
+### Chrome extension
+
+- [Feature] Support for Gitlab and Github
+- [Bug] Support older OpenGrok and SourceGraph
+- [Bug] Fix disconnection after 30 seconds of inactivity
+
+### Server
+
+- [Feature] Ignore keepalive messages
+
 ## 1.12.0
 
 ### Ghidra
