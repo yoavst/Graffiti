@@ -1,18 +1,26 @@
-import { parser as CppParser } from "@lezer/cpp";
-import { parser as JavaParser } from "@lezer/java";
-import { TreeCursor, Tree, SyntaxNode } from "@lezer/common";
+import Parser from "web-tree-sitter";
 import { BaseSymbolInfo, LineAndName } from "./symbol_provider";
+import { lazyPromise } from "./shared";
+
+const initParser = (): Promise<void> =>
+    Parser.init({
+        locateFile(scriptName: string, scriptDirectory: string) {
+            return getWasm(scriptName);
+        },
+    });
 
 export abstract class Language {
-    protected tree: Tree;
+    protected tree: Parser.Tree;
     constructor(
         protected code: string,
+        // Zero based
         protected line: number,
-        protected position: number,
+        language: Parser.Language,
     ) {
-        this.tree = this.parse(code);
+        const parser = new Parser();
+        parser.setLanguage(language);
+        this.tree = parser.parse(code);
     }
-    protected abstract parse(code: string): Tree;
     protected abstract getMethod(): LineAndName | null;
     protected abstract getClass(): LineAndName | null;
 
@@ -25,90 +33,177 @@ export abstract class Language {
     }
 
     protected lineAndNameFromNode(
-        node: SyntaxNode | TreeCursor | null,
+        node: Parser.SyntaxNode | null,
         force_name: string | null = null,
     ): LineAndName | null {
         if (node == null) return null;
         return {
-            name: force_name || this.code.substring(node.from, node.to),
-            line: findIndexOfLineBreakFromIndex(this.code, node.from),
+            name: force_name || this.code.substring(node.startIndex, node.endIndex),
+            line: node.startPosition.row + 1,
         };
     }
 
-    protected goToParent(cursor: TreeCursor, ...types: string[]): boolean {
-        while (!types.includes(cursor.name)) {
-            if (cursor.type.isTop) return false;
-            cursor.parent();
+    protected goToParent(cursor: Parser.TreeCursor, ...types: string[]): boolean {
+        while (!types.includes(cursor.nodeType)) {
+            if (!cursor.gotoParent()) return false;
         }
         return true;
+    }
+
+    protected getCursor(): Parser.TreeCursor {
+        // Tries to find a leaf node in the given line, by selecting the first node each time that contains the line
+        // If no such leaf, it will select the first parent that should have contained it.
+        const cursor = this.tree.walk();
+        outer: while (cursor.gotoFirstChild()) {
+            do {
+                if (cursor.startPosition.row <= this.line - 1 && this.line - 1 <= cursor.endPosition.row) {
+                    continue outer;
+                }
+            } while (cursor.gotoNextSibling());
+            // No child in this line, but the parent contains the line
+            cursor.gotoParent();
+            return cursor;
+        }
+        // Leaf in this line
+        return cursor;
+    }
+
+    protected gotoChildForType(cursor: Parser.TreeCursor, type: string, stopAtType?: string): boolean {
+        if (!cursor.gotoFirstChild()) return false;
+        do {
+            if (cursor.nodeType === type) return true;
+            else if (cursor.nodeType == stopAtType) break;
+        } while (cursor.gotoNextSibling());
+
+        cursor.gotoParent();
+        return false;
+    }
+
+    protected gotoChildForFieldName(cursor: Parser.TreeCursor, field: string): boolean {
+        if (!cursor.gotoFirstChild()) return false;
+        do {
+            if (cursor.currentFieldName === field) return true;
+        } while (cursor.gotoNextSibling());
+
+        cursor.gotoParent();
+        return false;
+    }
+
+    protected getLineAndNameFromNameField(cursor: Parser.TreeCursor): LineAndName | null {
+        if (!this.gotoChildForFieldName(cursor, "name")) {
+            return null;
+        }
+
+        return this.lineAndNameFromNode(cursor.currentNode);
+    }
+
+    protected getLineAndNameFromType(cursor: Parser.TreeCursor, type: string, stopAtType: string): LineAndName | null {
+        if (!this.gotoChildForType(cursor, type, stopAtType)) {
+            return null;
+        }
+
+        return this.lineAndNameFromNode(cursor.currentNode);
     }
 }
 
 class Java extends Language {
-    protected override parse(code: string): Tree {
-        return JavaParser.parse(code);
-    }
-    protected override getMethod(): LineAndName | null {
-        const cursor = this.tree.cursorAt(this.position);
+    static treeSitterLang: Promise<Parser.Language> = lazyPromise(() =>
+        initParser().then(() => Parser.Language.load(getWasm("tree-sitter-java.wasm"))),
+    );
 
-        if (!this.goToParent(cursor, "MethodDeclaration", "ConstructorDeclaration", "StaticInitializer")) return null;
-        if (cursor.name == "MethodDeclaration") {
-            /*
-            MethodDeclaration { Modifiers? methodHeader (Block | ";") }
-            methodHeader { (TypeParameters annotation*)? unannotatedType methodDeclarator Throws? }
-            methodDeclarator { Definition FormalParameters Dimension* }
-            Definition { identifier ~identifier | capitalIdentifier ~identifier }
-            */
-            return this.lineAndNameFromNode(cursor.node.getChild("Definition"));
-        } else if (cursor.name == "StaticInitializer") {
-            return this.lineAndNameFromNode(cursor, "<clinit>");
+    protected override getMethod(): LineAndName | null {
+        const cursor = this.getCursor();
+
+        if (!this.goToParent(cursor, "method_declaration", "constructor_declaration", "static_initializer"))
+            return null;
+
+        if (cursor.nodeType == "method_declaration") {
+            return this.getLineAndNameFromNameField(cursor);
+        } else if (cursor.nodeType == "static_initializer") {
+            return this.lineAndNameFromNode(cursor.currentNode, "<clinit>");
         } else {
-            return this.lineAndNameFromNode(cursor, "<init>");
+            return this.lineAndNameFromNode(cursor.currentNode, "<init>");
         }
     }
     protected override getClass(): LineAndName | null {
-        const cursor = this.tree.cursorAt(this.position);
+        const cursor = this.getCursor();
 
         if (
             !this.goToParent(
                 cursor,
-                "ClassDeclaration",
-                "InterfaceDeclaration",
-                "AnnotationTypeDeclaration",
-                "EnumDeclaration",
+                "class_declaration",
+                "interface_declaration",
+                "annotation_type_declaration",
+                "enum_declaration",
             )
-        )
+        ) {
+            return null;
+        }
+        return this.getLineAndNameFromNameField(cursor);
+    }
+}
+
+class Kotlin extends Language {
+    static treeSitterLang: Promise<Parser.Language> = lazyPromise(() =>
+        initParser().then(() => Parser.Language.load(getWasm("tree-sitter-kotlin.wasm"))),
+    );
+
+    protected override getMethod(): LineAndName | null {
+        const cursor = this.getCursor();
+
+        if (!this.goToParent(cursor, "function_declaration", "secondary_constructor", "anonymous_initializer"))
             return null;
 
-        if (cursor.name == "AnnotationTypeDeclaration") {
-            /*
-            AnnotationTypeDeclaration { Modifiers? "@interface" Identifier AnnotationTypeBody }
-            */
-            return this.lineAndNameFromNode(cursor.node.getChild("Identifier"));
+        if (cursor.nodeType == "function_declaration") {
+            return this.getLineAndNameFromType(cursor, "simple_identifier", "function_value_parameters");
+        } else if (cursor.nodeType == "secondary_constructor") {
+            return this.lineAndNameFromNode(cursor.currentNode, "<init>");
         } else {
-            /*
-            ClassDeclaration { Modifiers? kw<"class"> Definition TypeParameters? Superclass? SuperInterfaces? ClassBody }
-            InterfaceDeclaration { Modifiers? kw<"interface"> Definition TypeParameters? ExtendsInterfaces? InterfaceBody }
-            EnumDeclaration { Modifiers? kw<"enum"> Definition SuperInterfaces? EnumBody }
-    
-            Definition { identifier ~identifier | capitalIdentifier ~identifier }
-            */
-            return this.lineAndNameFromNode(cursor.node.getChild("Definition"));
+            return this.lineAndNameFromNode(cursor.currentNode, "<annon_init>");
         }
+    }
+    protected override getClass(): LineAndName | null {
+        const possibleReceiverName = this.getPossibleExtReceiverName();
+        if (possibleReceiverName != null) return possibleReceiverName;
+
+        const cursor = this.getCursor();
+
+        if (!this.goToParent(cursor, "class_declaration")) {
+            return null;
+        }
+        return this.getLineAndNameFromType(cursor, "type_identifier", "type_parameters");
+    }
+
+    private getPossibleExtReceiverName(): LineAndName | null {
+        const cursor = this.getCursor();
+        if (!this.goToParent(cursor, "function_declaration")) {
+            return null;
+        }
+
+        return this.getLineAndNameFromType(cursor, "user_type", "function_value_parameters");
     }
 }
 
 class Cpp extends Language {
-    protected override parse(code: string): Tree {
-        return CppParser.parse(code);
+    static treeSitterLang: Promise<Parser.Language> = lazyPromise(() =>
+        initParser().then(() => Parser.Language.load(getWasm("tree-sitter-cpp.wasm"))),
+    );
+
+    private extractName(node: Parser.SyntaxNode): Parser.SyntaxNode {
+        let currentNode = node;
+        while (true) {
+            const name = currentNode.childForFieldName("name");
+            if (name == null) break;
+            currentNode = name;
+        }
+
+        return currentNode;
     }
+
     protected override getMethod(): LineAndName | null {
         let possibleName = this.getPossibleName();
         if (possibleName == null) return null;
-        if (possibleName.name.toLowerCase().includes("scope")) {
-            possibleName = possibleName.lastChild;
-        }
-        return this.lineAndNameFromNode(possibleName);
+        return this.lineAndNameFromNode(this.extractName(possibleName));
     }
     protected override getClass(): LineAndName | null {
         // Two different ways to declare class:
@@ -117,34 +212,35 @@ class Cpp extends Language {
 
         // Start with the first way
         const possibleName = this.getPossibleName();
-        if (possibleName == null || !possibleName.name.toLowerCase().includes("scope")) {
-            // try the second way
-            const cursor = this.tree.cursorAt(this.position);
-            if (!this.goToParent(cursor, "StructSpecifier", "UnionSpecifier", "ClassSpecifier")) return null;
-            cursor.firstChild();
-            while (!cursor.name.includes("Identifier") && cursor.nextSibling()) {}
-            if (cursor.name.includes("Identifier")) {
-                return this.lineAndNameFromNode(cursor);
+        if (possibleName != null) {
+            // TODO: support nested scoped
+            const scope = possibleName.childForFieldName("scope");
+            if (scope != null) {
+                return this.lineAndNameFromNode(scope);
             }
-            return null;
-        } else {
-            return this.lineAndNameFromNode(possibleName.firstChild);
         }
+        // try the second way
+        const cursor = this.getCursor();
+        if (!this.goToParent(cursor, "struct_specifier", "union_specifier", "class_specifier")) {
+            return null;
+        }
+
+        return this.getLineAndNameFromNameField(cursor);
     }
 
-    private getPossibleName(): SyntaxNode | null {
-        const cursor = this.tree.cursorAt(this.position);
-        if (!this.goToParent(cursor, "FunctionDefinition", "TemplateDeclaration")) {
+    private getPossibleName(): Parser.SyntaxNode | null {
+        const cursor = this.getCursor();
+        if (!this.goToParent(cursor, "function_definition", "template_declaration", "field_declaration")) {
             return null;
         }
 
-        const queue = [cursor.node];
+        const queue = [cursor.currentNode];
         while (queue.length) {
             const current = queue.shift()!;
             for (let child = current.firstChild; child != null; child = child.nextSibling) {
-                if (child.name == "FunctionDeclarator") {
-                    return child.firstChild;
-                } else if (child.name.includes("Declarator") || child.name.includes("Declaration")) {
+                if (child.type == "function_declarator") {
+                    return child.childForFieldName("declarator");
+                } else if (child.type.includes("declarator") || child.type.includes("declaration")) {
                     queue.push(child);
                 }
             }
@@ -153,41 +249,15 @@ class Cpp extends Language {
     }
 }
 
-export const languageFrom = (code: string, line: number, extension: string): Language | null => {
-    const userPos = findNthLineBreakIndex(code, line + 1) - 1;
-    let language: Language | null = null;
+export const languageFrom = async (code: string, line: number, extension: string): Promise<Language | null> => {
     if (extension == "java") {
-        language = new Java(code, line, userPos);
+        return await Java.treeSitterLang.then((lang) => new Java(code, line, lang));
+    } else if (extension == "kt" || extension == "kts") {
+        return await Kotlin.treeSitterLang.then((lang) => new Kotlin(code, line, lang));
     } else if (["c", "h", "cc", "cpp", "hpp", "hxx", "cxx", "h++", "cppm", "inl", "inc"].includes(extension)) {
-        language = new Cpp(code, line, userPos);
+        return await Cpp.treeSitterLang.then((lang) => new Cpp(code, line, lang));
     }
-    return language;
+    return null;
 };
 
-const findNthLineBreakIndex = (input: string, n: number): number => {
-    let lineBreakCount = 0;
-    let index = 0;
-
-    if (n == 1) return 0;
-
-    while (index < input.length) {
-        if (input[index] === "\n") {
-            lineBreakCount++;
-            if (lineBreakCount === n - 1) {
-                return index;
-            }
-        }
-        index++;
-    }
-    return -1;
-};
-
-const findIndexOfLineBreakFromIndex = (input: string, n: number): number => {
-    let lineBreakCount = 0;
-    for (let i = 0; i < n; i++) {
-        if (input[i] == "\n") {
-            lineBreakCount++;
-        }
-    }
-    return lineBreakCount + 1;
-};
+const getWasm = (name: string): string => chrome.runtime.getURL(`wasm/${name}`);

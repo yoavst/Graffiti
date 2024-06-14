@@ -1,3 +1,5 @@
+import PLazy from "p-lazy";
+
 /* Prefs */
 
 const PREF_KEYS = ["tabBehavior"];
@@ -104,6 +106,12 @@ export function timeout<T>(prom: Promise<T>, time: number): Promise<T> {
 
 export function reject<T>(): Promise<T> {
     return Promise.reject(new Error());
+}
+
+export function lazyPromise<T>(gen: () => Promise<T>): Promise<T> {
+    return new PLazy((resolve) => {
+        gen().then(resolve, reject);
+    });
 }
 
 export function isValidUUIDv4(uuid: string): boolean {

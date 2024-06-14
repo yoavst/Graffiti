@@ -1,6 +1,5 @@
 const path = require("path");
 const CopyPlugin = require("copy-webpack-plugin");
-const { Compilation, sources } = require("webpack");
 
 module.exports = {
     mode: "production",
@@ -14,7 +13,11 @@ module.exports = {
         filename: "[name].js",
     },
     resolve: {
-        extensions: [".ts", ".js"],
+        extensions: [".ts", ".js", ".wasm"],
+        fallback: {
+            fs: false,
+            path: false,
+        },
     },
     module: {
         rules: [

@@ -41,7 +41,7 @@ export abstract class BaseSymbolProvider implements SymbolProvider {
         const fileName = this.getFileName();
         const extension = getExtension(fileName);
 
-        let language = languageFrom(code, line, extension);
+        let language = await languageFrom(code, line, extension);
         if (language == null) {
             throw new Error("graffiti doesn't support the file's language");
         }

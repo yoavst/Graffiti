@@ -51,7 +51,8 @@ function main() {
                         info: currentSymbol,
                     });
                 })
-                .catch(() => {
+                .catch((e) => {
+                    console.log("Graffiti error:", e);
                     // For mattching site but not matching symbol
                     sendResponse({
                         isCorrectWebsite: true,

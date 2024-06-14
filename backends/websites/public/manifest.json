@@ -8,6 +8,9 @@
     },
     "permissions": ["contextMenus", "activeTab", "tabs", "storage", "notifications", "scripting", "background"],
     "host_permissions": ["http://*/*", "https://*/*"],
+    "content_security_policy": {
+        "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self';"
+    },
     "action": {
         "default_popup": "popup/popup.html"
     },
@@ -45,6 +48,10 @@
         {
             "resources": ["js/injected_to_page.js"],
             "matches": ["http://*/*", "https://*/*"]
+        },
+        {
+            "resources": ["wasm/*.wasm"],
+            "matches": ["<all_urls>"]
         }
     ]
 }
