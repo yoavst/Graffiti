@@ -1,6 +1,5 @@
 import Parser from "web-tree-sitter";
-import { BaseSymbolInfo, LineAndName } from "./symbol_provider";
-import { lazyPromise } from "./shared";
+import { BaseSymbolInfo, LineAndName, lazyPromise } from "./shared";
 
 const initParser = (): Promise<void> =>
     Parser.init({
@@ -280,7 +279,7 @@ class Go extends Language {
     }
 }
 
-export const languageFrom = async (code: string, line: number, extension: string): Promise<Language | null> => {
+export const languageFrom = async (code: string, line: number, extension: string): Promise<Language> => {
     if (extension == "java") {
         return await Java.treeSitterLang.then((lang) => new Java(code, line, lang));
     } else if (extension == "kt" || extension == "kts") {
@@ -290,7 +289,7 @@ export const languageFrom = async (code: string, line: number, extension: string
     } else if (extension == "go") {
         return await Go.treeSitterLang.then((lang) => new Go(code, line, lang));
     }
-    return null;
+    throw new Error(`Graffiti does not support the given extension: ${extension}`);
 };
 
 const getWasm = (name: string): string => chrome.runtime.getURL(`wasm/${name}`);

@@ -1,10 +1,12 @@
+import { languageFrom } from "./grammar_symbols";
 import {
+    GetBaseSymbolFromCodeResponseMessage,
     GetSymbolRequestMessage,
     Prefs,
     SymbolResponse,
     getPrefs,
     isValidUUIDv4,
-    onExtMessage,
+    onExtMessageEx,
     sendExtMessage,
     stripUrl,
 } from "./shared";
@@ -58,7 +60,7 @@ function main() {
     });
 
     // Handle connection commands
-    onExtMessage((extMsg) => {
+    onExtMessageEx((extMsg, callback) => {
         console.log("received:", extMsg);
         if (extMsg.action == "connectPull") {
             connectPullWebSocket(extMsg.addr);
@@ -69,6 +71,14 @@ function main() {
                     status: graffitiWebSocket.readyState !== WebSocket.CLOSED,
                 });
             }
+        } else if (extMsg.action == "getBaseSymbolFromCodeRequest") {
+            const action: "getBaseSymbolFromCodeResponse" = "getBaseSymbolFromCodeResponse";
+
+            languageFrom(extMsg.source, extMsg.line, extMsg.extension)
+                .then((lang) => lang.getBaseSymbolInfo())
+                .then((data) => ({ action, errorMessage: null, data }))
+                .catch((err) => ({ action, errorMessage: err.toString(), data: null }))
+                .then((resp: GetBaseSymbolFromCodeResponseMessage) => callback(resp));
         }
     });
 

@@ -1,9 +1,6 @@
 import PLazy from "p-lazy";
 
 /* Prefs */
-
-const PREF_KEYS = ["tabBehavior"];
-
 export type TabBehavior = "alwaysNew" | "sameIfExists";
 
 export interface Prefs {
@@ -49,11 +46,26 @@ export interface GetSymbolRequestMessage {
     askForEdgeText: boolean;
 }
 
+export interface GetBaseSymbolFromCodeRequestMessage {
+    action: "getBaseSymbolFromCodeRequest";
+    source: string;
+    line: number;
+    extension: string;
+}
+
+export interface GetBaseSymbolFromCodeResponseMessage {
+    action: "getBaseSymbolFromCodeResponse";
+    errorMessage: string | null;
+    data: BaseSymbolInfo | null;
+}
+
 export type ExtMessage =
     | GetConnectPullRequestMessage
     | GetConnectPullResultMessage
     | ConnectPullMessage
-    | GetSymbolRequestMessage;
+    | GetSymbolRequestMessage
+    | GetBaseSymbolFromCodeRequestMessage
+    | GetBaseSymbolFromCodeResponseMessage;
 
 export function sendExtMessage(extMsg: ExtMessage): Promise<ExtMessage> {
     return chrome.runtime.sendMessage(extMsg);
@@ -83,6 +95,17 @@ export interface SymbolProvider {
 }
 
 export type SourceType = "OpenGrok" | "SourceGraph" | "Github" | "Gitlab";
+
+export interface LineAndName {
+    line: number;
+    name: string;
+}
+
+export interface BaseSymbolInfo {
+    line: number;
+    method: LineAndName | null;
+    clazz: LineAndName | null;
+}
 
 export interface SymbolInfo {
     sourceType: SourceType;

@@ -1,16 +1,14 @@
 import { languageFrom } from "./grammar_symbols";
-import { SourceType, SymbolInfo, SymbolProvider, stripUrl, timeout } from "./shared";
-
-export interface LineAndName {
-    line: number;
-    name: string;
-}
-
-export interface BaseSymbolInfo {
-    line: number;
-    method: LineAndName | null;
-    clazz: LineAndName | null;
-}
+import {
+    BaseSymbolInfo,
+    GetBaseSymbolFromCodeResponseMessage,
+    SourceType,
+    SymbolInfo,
+    SymbolProvider,
+    sendExtMessage,
+    stripUrl,
+    timeout,
+} from "./shared";
 
 export abstract class BaseSymbolProvider implements SymbolProvider {
     abstract sourceType: SourceType;
@@ -37,19 +35,22 @@ export abstract class BaseSymbolProvider implements SymbolProvider {
         if (line == null) {
             throw new Error("Failed to get current line");
         }
-        const code = await this.getCode();
+        const source = await this.getCode();
         const fileName = this.getFileName();
         const extension = getExtension(fileName);
 
-        let language = await languageFrom(code, line, extension);
-        if (language == null) {
-            throw new Error("graffiti doesn't support the file's language");
+        const result = (await sendExtMessage({
+            action: "getBaseSymbolFromCodeRequest",
+            source,
+            line,
+            extension,
+        })) as GetBaseSymbolFromCodeResponseMessage;
+
+        if (result.errorMessage) {
+            throw new Error(result.errorMessage);
         }
 
-        const symbol = language.getBaseSymbolInfo();
-        if (symbol == null) throw new Error("Failed get symbol info from language");
-
-        return symbol;
+        return result.data!;
     }
 
     async getCurrentSymbol(x: number, y: number): Promise<SymbolInfo> {
