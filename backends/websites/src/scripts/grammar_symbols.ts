@@ -57,7 +57,10 @@ export abstract class Language {
         outer: while (cursor.gotoFirstChild()) {
             do {
                 if (cursor.startPosition.row <= this.line - 1 && this.line - 1 <= cursor.endPosition.row) {
-                    continue outer;
+                    // Skip new line or spaces nodes
+                    if (!/^\s+$/.test(cursor.nodeText)) {
+                        continue outer;
+                    }
                 }
             } while (cursor.gotoNextSibling());
             // No child in this line, but the parent contains the line
@@ -249,6 +252,34 @@ class Cpp extends Language {
     }
 }
 
+class Go extends Language {
+    static treeSitterLang: Promise<Parser.Language> = lazyPromise(() =>
+        initParser().then(() => Parser.Language.load(getWasm("tree-sitter-go.wasm"))),
+    );
+
+    protected override getMethod(): LineAndName | null {
+        const cursor = this.getCursor();
+
+        if (!this.goToParent(cursor, "method_declaration", "function_declaration", "method_elem")) return null;
+
+        return this.getLineAndNameFromNameField(cursor);
+    }
+    protected override getClass(): LineAndName | null {
+        const cursor = this.getCursor();
+
+        if (!this.goToParent(cursor, "method_declaration", "method_elem")) return null;
+
+        if (cursor.nodeType == "method_declaration") {
+            if (!this.gotoChildForFieldName(cursor, "receiver")) return null;
+            if (!this.gotoChildForType(cursor, "parameter_declaration")) return null;
+            return this.getLineAndNameFromNameField(cursor);
+        } else {
+            if (!this.goToParent(cursor, "type_spec")) return null;
+            return this.getLineAndNameFromNameField(cursor);
+        }
+    }
+}
+
 export const languageFrom = async (code: string, line: number, extension: string): Promise<Language | null> => {
     if (extension == "java") {
         return await Java.treeSitterLang.then((lang) => new Java(code, line, lang));
@@ -256,6 +287,8 @@ export const languageFrom = async (code: string, line: number, extension: string
         return await Kotlin.treeSitterLang.then((lang) => new Kotlin(code, line, lang));
     } else if (["c", "h", "cc", "cpp", "hpp", "hxx", "cxx", "h++", "cppm", "inl", "inc"].includes(extension)) {
         return await Cpp.treeSitterLang.then((lang) => new Cpp(code, line, lang));
+    } else if (extension == "go") {
+        return await Go.treeSitterLang.then((lang) => new Go(code, line, lang));
     }
     return null;
 };

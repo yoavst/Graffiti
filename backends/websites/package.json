@@ -16,6 +16,7 @@
         "prettier": "3.2.5",
         "tree-sitter-cli": "^0.22.6",
         "tree-sitter-cpp": "^0.22.2",
+        "tree-sitter-go": "^0.21.0",
         "tree-sitter-java": "^0.21.0",
         "tree-sitter-kotlin": "^0.3.6",
         "ts-loader": "^9.5.1",
