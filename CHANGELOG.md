@@ -1,3 +1,10 @@
+## 1.14.0
+
+### Chrome extension
+
+- [Feature] Switch to Tree-Sitter parser
+- [Feature] support for Go and Kotlin
+
 ## 1.13.0
 
 ### Web
