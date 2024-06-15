@@ -170,7 +170,7 @@ class Kotlin extends Language {
 
         const cursor = this.getCursor();
 
-        if (!this.goToParent(cursor, "class_declaration")) {
+        if (!this.goToParent(cursor, "class_declaration", "object_declaration")) {
             return null;
         }
         return this.getLineAndNameFromType(cursor, "type_identifier", "type_parameters");
