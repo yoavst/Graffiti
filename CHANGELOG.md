@@ -25,7 +25,7 @@
 
 ### Ghidra
 
-- [Feautre] Ghidra support!
+- [Feature] Ghidra support!
 
 ## 1.11.0
 
@@ -66,14 +66,14 @@
 
 ### Sourcegraph
 
-- [Feautre] Support for Java and C/C++!
+- [Feature] Support for Java and C/C++!
 
 ## 1.9.0
 
 ### Web
 
 - [Feature] Add documentations and downloads to the web frontend. Now you can use `?` to download all backends.
-- [Feautre] Add changelog to the web frontend. Available from command palette
+- [Feature] Add changelog to the web frontend. Available from command palette
 - [Feature] Check for graffiti frontend on server every 3 hours.
 
 ### General
