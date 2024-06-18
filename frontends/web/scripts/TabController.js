@@ -545,8 +545,15 @@ config:
       (item) => item.from == src && item.to == dst
     )[0];
 
+    this.redoHistory = [];
+    this.addUndoMarker();
+    this.undoHistory.push({ type: REMOVE_EDGE, data: { ...edge } });
+
     edge.from = dst;
     edge.to = src;
+
+    this.undoHistory.push({ type: ADD_EDGE, data: { ...edge } });
+
     this.cachedMermaid = null;
     this.draw();
   }
