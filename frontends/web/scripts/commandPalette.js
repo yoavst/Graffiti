@@ -49,9 +49,10 @@ class CommandPalette {
   #getBaseCommands() {
     const isCurvedEdges = strToBool(localStorage.getItem("isCurvedEdges"));
     const isKeymapReversed = strToBool(
-      localStorage.getItem("isKeymapReversed"),
+      localStorage.getItem("isKeymapReversed")
     );
     const enableHoverDoc = strToBool(localStorage.getItem("hoverDoc"));
+    const isDomainMode = strToBool(localStorage.getItem("isDomainMode"));
 
     return [
       {
@@ -275,7 +276,13 @@ class CommandPalette {
         id: "Settings",
         title: "Modify Settings",
         icon: iconFor("settings"),
-        children: ["Theme", "CurvedEdges", "ReverseKeymap", "HoverDoc"],
+        children: [
+          "Theme",
+          "CurvedEdges",
+          "DomainMode",
+          "ReverseKeymap",
+          "HoverDoc",
+        ],
         handler: () => {
           this.ninjaElement.open({ parent: "Settings" });
           return { keepOpen: true };
@@ -300,6 +307,17 @@ class CommandPalette {
         section: "General",
         handler: () => {
           localStorage.setItem("darkMode", !isDarkMode());
+          logEvent("Refresh the page to apply the changes");
+        },
+      },
+      {
+        id: "DomainMode",
+        title: isDomainMode ? "Disable domain mode" : "Enable domain mode",
+        parent: "Settings",
+        icon: iconFor("settings"),
+        section: "General",
+        handler: () => {
+          localStorage.setItem("isDomainMode", !isDomainMode);
           logEvent("Refresh the page to apply the changes");
         },
       },

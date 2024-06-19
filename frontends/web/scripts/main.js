@@ -3,8 +3,6 @@ const MSG_ADD_NODES_AND_EDGES = "addDataBulk";
 const MSG_UPDATE_NODES = "updateNodes";
 const NODE_LABEL = "label";
 const NODE_EXTRA = "extra";
-const LOCAL_STORAGE_OLD_VERSION = "__OLD_VERSION";
-const LOCAL_STORAGE_BACKUP_KEY = "__OLD_BACKUP";
 const LOCAL_STORAGE_TOKEN_KEY = "authToken";
 
 const LOCAL_STORAGE_DEFAULT = {
@@ -13,6 +11,7 @@ const LOCAL_STORAGE_DEFAULT = {
   darkMode: true,
   isCurvedEdges: false,
   isFirstTime: true,
+  isDomainMode: getDefaultDomainMode(),
 };
 
 const GRAFFITI_PLATFORMS = [
@@ -689,6 +688,7 @@ function main() {
   initiateHotkeys();
   initializeDragAndDrop();
   initiateCheckForUpdates();
+  initiateConnectionUrl();
   setHelpBarAppearance();
   handleDarkMode();
 
@@ -729,6 +729,17 @@ function elk_beforeCallback(id, graph) {
   tabsController.onId(id, (_, controller) => {
     controller.modifyElkGraph(graph);
   });
+}
+
+function initiateConnectionUrl() {
+  const urlInput = document.getElementById("socketUrl");
+
+  const protocol = location.protocol == "https:" ? "wss" : "ws";
+  const isDomain = strToBool(localStorage.getItem("isDomainMode"));
+  const domain = isDomain ? location.host : "localhost";
+  const connectionUrl = `${protocol}://${domain}:8503`;
+
+  urlInput.value = connectionUrl;
 }
 
 function initiateHotkeys() {
@@ -859,7 +870,7 @@ function initiateCheckForUpdates() {
 }
 
 function checkForUpdates() {
-  fetch("version.txt")
+  fetch("version.txt", { cache: "no-cache" })
     .then((r) => {
       if (!r.ok) {
         throw new Error("Network response was not ok");
@@ -902,6 +913,12 @@ function generateUuidv4() {
       (crypto.getRandomValues(new Uint8Array(1))[0] & (15 >> (+c / 4)))
     ).toString(16)
   );
+}
+
+function getDefaultDomainMode() {
+  // On localhost domain mode doesn't matter as the urls are the same.
+  // On graffiti.quest we don't want to enable domain mode
+  return location.hostname != "graffiti.quest";
 }
 
 main();
