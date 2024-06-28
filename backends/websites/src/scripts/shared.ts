@@ -6,11 +6,13 @@ export type TabBehavior = "alwaysNew" | "sameIfExists";
 export interface Prefs {
     tabBehavior: TabBehavior;
     token: string;
+    lastConnectedServer: string;
 }
 
 const PREFS_DEFAULTS: Prefs = {
     tabBehavior: "alwaysNew",
     token: "",
+    lastConnectedServer: "ws://localhost:8502",
 };
 
 export function getPrefs(onPrefs: (prefs: Prefs) => void) {
@@ -21,6 +23,12 @@ export function getPrefs(onPrefs: (prefs: Prefs) => void) {
 
 export function setPrefs(prefs: Partial<Prefs>) {
     chrome.storage.local.set(prefs);
+}
+
+export function onPrefsChanged(onPrefs: (prefs: Prefs) => void) {
+    chrome.storage.local.onChanged.addListener(function (changes) {
+        getPrefs(onPrefs);
+    });
 }
 
 /* Inner extension messaging */
@@ -59,13 +67,20 @@ export interface GetBaseSymbolFromCodeResponseMessage {
     data: BaseSymbolInfo | null;
 }
 
+export interface UpdateServerConnectionFromWeb {
+    action: "updateServerConnectionFromWeb";
+    hostname: string;
+    protocol: "ws" | "wss";
+}
+
 export type ExtMessage =
     | GetConnectPullRequestMessage
     | GetConnectPullResultMessage
     | ConnectPullMessage
     | GetSymbolRequestMessage
     | GetBaseSymbolFromCodeRequestMessage
-    | GetBaseSymbolFromCodeResponseMessage;
+    | GetBaseSymbolFromCodeResponseMessage
+    | UpdateServerConnectionFromWeb;
 
 export function sendExtMessage(extMsg: ExtMessage): Promise<ExtMessage> {
     return chrome.runtime.sendMessage(extMsg);

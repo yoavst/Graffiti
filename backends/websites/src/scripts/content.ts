@@ -1,4 +1,4 @@
-import { SymbolProvider, onExtMessageEx, reject } from "./shared";
+import { SymbolProvider, onExtMessageEx, reject, sendExtMessage } from "./shared";
 import * as Providers from "./providers";
 
 const SYMBOL_PROVIDERS: SymbolProvider[] = [
@@ -64,6 +64,15 @@ function main() {
         }
 
         sendResponse({ isCorrectWebsite: false, info: null });
+    });
+
+    document.addEventListener("graffiti_connect", (e: Event) => {
+        const { hostname, protocol }: { hostname: string; protocol: "ws" | "wss" } = (e as CustomEvent).detail;
+        sendExtMessage({
+            action: "updateServerConnectionFromWeb",
+            hostname,
+            protocol,
+        });
     });
 }
 

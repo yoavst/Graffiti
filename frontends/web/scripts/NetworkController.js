@@ -18,6 +18,19 @@ class NetworkController {
       console.log("Connected to WS!");
       document.getElementById("connectBtn").style.backgroundColor = "green";
       document.getElementById("connectBtn").title = "Connect (Connected)";
+
+      localStorage.setItem("lastConnectedUrl", url);
+
+      // Notify graffiti chrome extension, so it could suggest the user to connect the same server.
+      const extendedUrl = new URL(url);
+      document.dispatchEvent(
+        new CustomEvent("graffiti_connect", {
+          detail: {
+            hostname: extendedUrl.hostname,
+            protocol: extendedUrl.protocol,
+          },
+        })
+      );
     };
 
     this.webSocket.onmessage = function (event) {

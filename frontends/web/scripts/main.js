@@ -12,6 +12,7 @@ const LOCAL_STORAGE_DEFAULT = {
   isCurvedEdges: false,
   isFirstTime: true,
   isDomainMode: getDefaultDomainMode(),
+  lastConnectedUrl: "",
 };
 
 const GRAFFITI_PLATFORMS = [
@@ -734,12 +735,16 @@ function elk_beforeCallback(id, graph) {
 function initiateConnectionUrl() {
   const urlInput = document.getElementById("socketUrl");
 
-  const protocol = location.protocol == "https:" ? "wss" : "ws";
+  const protocol =
+    location.protocol == "https:" && !shouldForceWs() ? "wss" : "ws";
   const isDomain = strToBool(localStorage.getItem("isDomainMode"));
   const domain = isDomain ? location.host : "localhost";
   const connectionUrl = `${protocol}://${domain}:8503`;
 
-  urlInput.value = connectionUrl;
+  urlInput.placeholder = connectionUrl;
+
+  const lastConnectedUrl = localStorage.getItem("lastConnectedUrl");
+  urlInput.value = lastConnectedUrl || connectionUrl;
 }
 
 function initiateHotkeys() {
@@ -918,6 +923,11 @@ function generateUuidv4() {
 function getDefaultDomainMode() {
   // On localhost domain mode doesn't matter as the urls are the same.
   // On graffiti.quest we don't want to enable domain mode
+  return location.hostname != "graffiti.quest";
+}
+
+function shouldForceWs() {
+  // People using graffiti.quest still setup localhost server
   return location.hostname != "graffiti.quest";
 }
 

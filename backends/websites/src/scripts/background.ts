@@ -8,6 +8,7 @@ import {
     isValidUUIDv4,
     onExtMessageEx,
     sendExtMessage,
+    setPrefs,
     stripUrl,
 } from "./shared";
 
@@ -79,6 +80,15 @@ function main() {
                 .then((data) => ({ action, errorMessage: null, data }))
                 .catch((err) => ({ action, errorMessage: err.toString(), data: null }))
                 .then((resp: GetBaseSymbolFromCodeResponseMessage) => callback(resp));
+        } else if (extMsg.action == "updateServerConnectionFromWeb") {
+            getPrefs((prefs) => {
+                const lastConnectedServer = new URL(prefs.lastConnectedServer);
+                lastConnectedServer.protocol = extMsg.protocol;
+                lastConnectedServer.hostname = extMsg.hostname;
+                setPrefs({
+                    lastConnectedServer: lastConnectedServer.toString(),
+                });
+            });
         }
     });
 
@@ -107,6 +117,9 @@ function connectPullWebSocket(addr: string) {
 
     graffitiWebSocket.onopen = function (event) {
         sendExtMessage({ action: "getConnectionPullResult", status: true });
+        setPrefs({
+            lastConnectedServer: addr,
+        });
     };
 
     graffitiWebSocket.onerror = function (event) {
