@@ -106,12 +106,12 @@ class TabsController {
           // Move the tab to the left of the current tab
           _this.tabsView.insertBefore(
             _this.tabs[draggedTabIndex].tabElement,
-            _this.tabs[index].tabElement,
+            _this.tabs[index].tabElement
           );
         } else {
           _this.tabsView.insertAdjacentElement(
             "beforeend",
-            _this.tabs[draggedTabIndex].tabElement,
+            _this.tabs[draggedTabIndex].tabElement
           );
         }
         arraymove(_this.tabs, draggedTabIndex, index);
@@ -137,7 +137,7 @@ class TabsController {
   removeTab(index) {
     const [{ tabController, tabElement, contentElement }] = this.tabs.splice(
       index,
-      1,
+      1
     );
 
     tabController.deinitView();
@@ -203,7 +203,7 @@ class TabsController {
 
   map(func) {
     return this.tabs.map(({ name, tabController }, index) =>
-      func(name, tabController, index),
+      func(name, tabController, index)
     );
   }
 
@@ -217,10 +217,7 @@ class TabsController {
 
   save() {
     const data = JSON.stringify(
-      this.tabs.map(({ name, tabController }) => [
-        name,
-        tabController.export(),
-      ]),
+      this.tabs.map(({ name, tabController }) => [name, tabController.export()])
     );
     localStorage.setItem("__SAVED_DATA", data);
     localStorage.setItem("__SAVED_DATA_VERSION", STORAGE_VERSION);
@@ -231,14 +228,14 @@ class TabsController {
   saveSelectedTab() {
     localStorage.setItem(
       "__SAVED_TAB_INDEX",
-      this.tabs.indexOf(this.selectedTab),
+      this.tabs.indexOf(this.selectedTab)
     );
   }
 
   restore() {
     const data = JSON.parse(localStorage.getItem("__SAVED_DATA"));
     const selectedTabIndex = parseInt(
-      localStorage.getItem("__SAVED_TAB_INDEX") || 0,
+      localStorage.getItem("__SAVED_TAB_INDEX") || 0
     );
 
     if (data != null) {
@@ -378,7 +375,7 @@ class TabsController {
 
       const { normalizedX, normalizedY } = this.#normalizePozition(
         mouseX,
-        mouseY,
+        mouseY
       );
 
       this.contextMenu.classList.remove("visible");

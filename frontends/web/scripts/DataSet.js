@@ -4,7 +4,7 @@ class DataSet {
     id_func = (element) => element.id,
     id_set_func = (element, new_id) => {
       element.id = new_id;
-    },
+    }
   ) {
     this.elements = [...elements];
     this.id_func = id_func;
@@ -27,7 +27,7 @@ class DataSet {
     const insertionIndex = binarySearch(this.elements, elementId, this.id_func);
     if (insertionIndex >= 0) {
       throw new Error(
-        `Element with the given id is already in the array. Inserted element: ${element}`,
+        `Element with the given id is already in the array. Inserted element: ${element}`
       );
     }
 
@@ -38,7 +38,7 @@ class DataSet {
     const deletionIndex = binarySearch(this.elements, id, this.id_func);
     if (deletionIndex < 0) {
       throw new Error(
-        `Element with the given id is not in the array. id: ${id}`,
+        `Element with the given id is not in the array. id: ${id}`
       );
     }
 
@@ -67,7 +67,7 @@ class DataSet {
 
     if (firstIndex < 0 || secondIndex < 0) {
       throw new Error(
-        `Failed to swap, as one of those ids are not in the dataset: ${id1}, ${id2}`,
+        `Failed to swap, as one of those ids are not in the dataset: ${id1}, ${id2}`
       );
     }
 

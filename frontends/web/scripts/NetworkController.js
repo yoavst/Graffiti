@@ -10,7 +10,7 @@ class NetworkController {
     this.isExistingToNew = () => isExistingToNewSwitch.checked;
 
     const isNewWillBeSelectedSwitch = document.getElementById(
-      "isNewWillBeSelected",
+      "isNewWillBeSelected"
     );
     this.isNewWillBeSelected = () => isNewWillBeSelectedSwitch.checked;
 
@@ -28,7 +28,7 @@ class NetworkController {
             JSON.stringify({
               type: "auth_resp_v1",
               token: _this.token,
-            }),
+            })
           );
         } else {
           // Disconnect and let the user generate a token.
@@ -58,7 +58,7 @@ class NetworkController {
           msg.node,
           msg.edge,
           this.isExistingToNew(),
-          true,
+          true
         );
         if (this.isNewWillBeSelected()) controller.selectNode(nodeId, true);
       });
@@ -81,7 +81,7 @@ class NetworkController {
             msg.edge,
             isExistingToNew,
             false,
-            false,
+            false
           );
         }
         controller.draw();
@@ -101,7 +101,7 @@ class NetworkController {
     msgEdge,
     isExistingToNew,
     shouldAddUndo,
-    shouldDraw = true,
+    shouldDraw = true
   ) {
     // 1. If msgEdge forces isExistingToNew, replace
     isExistingToNew =
@@ -122,12 +122,12 @@ class NetworkController {
             ...createFromTo(
               selectedNode.id,
               existingDestNode.id,
-              isExistingToNew,
+              isExistingToNew
             ),
             ...(msgEdge || {}),
           },
           null,
-          shouldDraw,
+          shouldDraw
         );
       }
       // return new node
@@ -144,7 +144,7 @@ class NetworkController {
             ...(msgEdge || {}),
           },
           null,
-          shouldDraw,
+          shouldDraw
         );
       }
       // 4. selected added node
