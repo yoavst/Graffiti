@@ -1,0 +1,76 @@
+<idea-plugin>
+    <id>com.yoavst.graffiti.intellij</id>
+    <name>Graffiti</name>
+    <vendor email="yoav.sternberg@gmail.com" url="https://yoavst.com">Yoav Sternberg</vendor>
+    <idea-version since-build="213"/>
+    <description><![CDATA[
+    Graffiti support for Intellij, Clion and PHPStorm. Supports Java, Kotlin, C/C++ and PHP.
+    ]]></description>
+
+    <!-- please see https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html
+         on how to target different products -->
+    <depends>com.intellij.modules.platform</depends>
+    <depends optional="true">com.intellij.java</depends>
+    <depends optional="true">org.jetbrains.kotlin</depends>
+    <depends optional="true">com.intellij.modules.clion</depends>
+    <depends optional="true">com.jetbrains.php</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+        <!-- Add your extensions here -->
+        <notificationGroup id="Graffiti Notifications"
+                           displayType="BALLOON"/>
+    </extensions>
+
+    <actions>
+        <!-- Add your actions here -->
+        <action id="com.yoavst.graffiti.intellij.action.AddToGraffitiWithEdgeInfoAction"
+                class="com.yoavst.graffiti.intellij.action.AddToGraffitiWithEdgeInfoAction"
+                text="Add to Graffiti with Edge Info"
+                icon="MyIcons.Action"
+                description="Add the current function or method to graffiti graph with label on the edge">
+            <add-to-group group-id="EditorPopupMenu" anchor="last"/>
+            <keyboard-shortcut keymap="$default" first-keystroke="shift ctrl X"/>
+        </action>
+        <action id="com.yoavst.graffiti.intellij.AddToGraffitiAction"
+                class="com.yoavst.graffiti.intellij.action.AddToGraffitiAction"
+                text="Add to Graffiti"
+                icon="MyIcons.Action"
+                description="Add the current function or method to graffiti graph">
+            <add-to-group group-id="EditorPopupMenu" anchor="last"/>
+            <keyboard-shortcut keymap="$default" first-keystroke="shift ctrl A"/>
+        </action>
+        <action id="com.yoavst.graffiti.intellij.AddLineToGraffitiAction"
+                class="com.yoavst.graffiti.intellij.action.AddLineToGraffitiAction"
+                text="Add Current Line to Graffiti"
+                icon="MyIcons.Action"
+                description="Add the current line to graffiti graph">
+            <add-to-group group-id="EditorPopupMenu" anchor="last"/>
+            <keyboard-shortcut keymap="$default" first-keystroke="shift ctrl alt A"/>
+        </action>
+
+        <action id="com.yoavst.graffiti.intellij.AddAllXrefsToGraffitiAction"
+                class="com.yoavst.graffiti.intellij.action.AddAllXrefsToGraffitiAction"
+                text="Add All Xrefs to Graffiti"
+                icon="MyIcons.Action"
+                description="Add all xrefs of the current method/field to graffiti">
+            <add-to-group group-id="EditorPopupMenu" anchor="last"/>
+            <keyboard-shortcut keymap="$default" first-keystroke="shift ctrl Q"/>
+        </action>
+
+        <action id="com.yoavst.graffiti.intellij.AddAllXrefsLineToGraffitiAction"
+                class="com.yoavst.graffiti.intellij.action.AddAllXrefsLineToGraffitiAction"
+                text="Add All Xrefs Lines to Graffiti"
+                icon="MyIcons.Action"
+                description="Add all xrefs lines of the current method/field to graffiti">
+            <add-to-group group-id="EditorPopupMenu" anchor="last"/>
+            <keyboard-shortcut keymap="$default" first-keystroke="shift ctrl alt Q"/>
+        </action>
+
+        <action id="com.yoavst.graffiti.intellij.EnableGraffitiSyncAction"
+                class="com.yoavst.graffiti.intellij.action.EnableGraffitiSyncAction"
+                icon="MyIcons.Action"
+                text="Graffiti: Connect to Server">
+            <add-to-group group-id="ToolsMenu" anchor="last"/>
+        </action>
+    </actions>
+</idea-plugin>
