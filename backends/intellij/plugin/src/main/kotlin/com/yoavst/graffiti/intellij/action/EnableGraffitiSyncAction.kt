@@ -8,12 +8,14 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.yoavst.graffiti.intellij.SocketHolder
 import com.yoavst.graffiti.intellij.getTokenOrElse
 import com.yoavst.graffiti.intellij.notify
 import java.io.DataInputStream
+import java.io.File
 import kotlin.concurrent.thread
 
 
@@ -89,7 +91,11 @@ class EnableGraffitiSyncAction : AnAction() {
 
     private fun threadCodeForUi(project: Project, target: String) {
         val (file, offset) = target.split("@")
-        val vFile = LocalFileSystem.getInstance().findFileByPath(file) ?: return
+        var fileObj = File(file)
+        if (!fileObj.isAbsolute) {
+            fileObj = File(project.guessProjectDir()!!.path, fileObj.path)
+        }
+        val vFile = LocalFileSystem.getInstance().findFileByPath(fileObj.canonicalPath) ?: return
         OpenFileDescriptor(project, vFile, offset.toInt()).navigate(true)
     }
 
