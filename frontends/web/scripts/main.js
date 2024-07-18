@@ -29,16 +29,10 @@ const GRAFFITI_PLATFORMS = [
     color: "#ec6038",
   },
   {
-    name: "Intellij",
-    filename: "graffiti_v{}_for_intellij.jar",
-    icon: "images/platforms/IntelliJ_IDEA.svg",
+    name: "Android Studio, Intellij, Clion & PHPStorm",
+    filename: "graffiti_v{}_for_jetbrains.jar",
+    icon: "images/platforms/jetbrains.svg",
     color: "#fe315d",
-  },
-  {
-    name: "Clion",
-    filename: "graffiti_v{}_for_clion.jar",
-    icon: "images/platforms/Clion.svg",
-    color: "#16c0ab",
   },
   {
     name: "VSCode",

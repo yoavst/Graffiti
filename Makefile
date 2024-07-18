@@ -21,7 +21,7 @@ clean:
 init:
 	mkdir -p out
 
-backends: jeb intellij clion ida ghidra vscode websites jadx
+backends: jeb intellij ida ghidra vscode websites jadx
 frontends: web visio
 
 ida: 
@@ -71,13 +71,13 @@ intellij:
 	@echo "Building Graffiti for Intellij"
 	
 	@echo "Updating the version in build.gradle.kts"
-	sed -i 's/version = "[^"]*"/version = "$(VERSION)"/' backends/intellij/build.gradle.kts
+	sed -i 's/version = "[^"]*"/version = "$(VERSION)"/' backends/intellij/plugin/build.gradle.kts
 
 	@echo "Compiling the extension"
-	cd backends/intellij && ./gradlew jar
+	cd backends/intellij && ./gradlew plugin:jar
 
 	@echo "Copying the file"
-	cp backends/intellij/build/libs/intellij-$(VERSION).jar out/graffiti_v$(VERSION)_for_intellij.jar
+	cp backends/intellij/plugin/build/libs/plugin-$(VERSION).jar out/graffiti_v$(VERSION)_for_jetbrains.jar
 
 ghidra:
 	@echo "Building Graffiti for Ghidra"
@@ -93,18 +93,6 @@ endif
 
 	@echo "Copying the file"
 	cp backends/ghidra/dist/*.zip out/graffiti_v$(VERSION)_for_ghidra.zip
-
-clion:
-	@echo "Building Graffiti for CLion"
-	
-	@echo "Updating the version in build.gradle.kts"
-	sed -i 's/version = "[^"]*"/version = "$(VERSION)"/' backends/clion/build.gradle.kts
-
-	@echo "Compiling the extension"
-	cd backends/clion && ./gradlew jar
-
-	@echo "Copying the file"
-	cp backends/clion/build/libs/clion-$(VERSION).jar out/graffiti_v$(VERSION)_for_clion.jar
 
 websites:
 	@echo "Building Graffiti for OpenGrok, Sourcegraph, Github and Gitlab"

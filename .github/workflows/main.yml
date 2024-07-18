@@ -35,7 +35,6 @@ jobs:
         target:
           - { name: jeb, type: pybunch }
           - { name: intellij, type: java }
-          - { name: clion, type: java }
           - { name: ghidra, type: java }
           - { name: ida, type: pybunch }
           - { name: vscode, type: typescript }
