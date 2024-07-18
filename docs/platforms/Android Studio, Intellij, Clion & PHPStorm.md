@@ -1,7 +1,7 @@
 ## Installation
 
-- In Intellij settings, go to plugins, then choose the setting icon and "Install plugin from Disk"
-- In Intellij settings, go to keymap. Press the find actions by shortcut (on the right) and search for "Ctrl+Shift+A". Remove the non-Graffiti shortcut. You might need to do this for other shortcuts
+- In the IDE settings, go to plugins, then choose the setting icon and "Install plugin from Disk"
+- In the IDE settings, go to keymap. Press the find actions by shortcut (on the right) and search for "Ctrl+Shift+A". Remove the non-Graffiti shortcut. You might need to do this for other shortcuts
 
 ## Usage
 

@@ -58,6 +58,7 @@ Graffiti supports multiple backends, as can be seen [here](#backends). Open the 
 | JEB         | Java                                    | ✅           | ✅             | ✅             | ✅            | ✅                | ✅        | TCP         |
 | Intellij    | Java, Kotlin                            | ✅           | ✅             | ❌             | ✅            | ✅                | ✅        | TCP         |
 | CLion       | C, C++                                  | ✅           | ✅             | ❌             | ✅            | ✅                | ❌        | TCP         |
+| PHPStorm    | PHP                                     | ✅           | ✅             | ❌             | ✅            | ✅                | ❌        | TCP         |
 | VSCode      | Depends on available language server    | ✅           | ✅             | ❌             | ❌            | ✅                | ❌        | TCP         |
 | IDA         | \*                                      | ✅           | ✅             | ✅             | -             | ✅                | ✅        | TCP         |
 | Ghidra      | \*                                      | ✅           | ✅             | ✅             | -             | ✅                | ❌        | TCP         |
