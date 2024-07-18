@@ -1,3 +1,25 @@
+## 1.15.0
+
+### Jetbrains
+
+- [Feature] Merge all jetbrains plugins to one plugin
+- [Feature] Support xrefs for clion plugin
+- [Feature] Support PHPStorm and PHP plugin
+
+## Web
+
+- [Feature] Add domain mode - will try to suggest connection url based on the server url
+- [Feature] Remember last connected url
+- [Bug] Add missing undo for swap edge
+
+## Chrome extension
+
+- [Feature] Remember last connected url
+
+### Jeb
+
+- [Bug] Fix makefile bug in copying jeb script headers.
+
 ## 1.14.0
 
 ### Chrome extension
