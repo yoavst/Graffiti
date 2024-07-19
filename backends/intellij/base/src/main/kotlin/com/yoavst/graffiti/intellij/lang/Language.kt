@@ -26,7 +26,7 @@ interface Language {
                 val lang = newLang("com.yoavst.graffiti.intellij.lang.Kotlin")
                 languages[lang.name] = lang
             }
-            if (isPluginEnabled("com.intellij.modules.clion")) {
+            if (isPluginEnabled("com.intellij.modules.clion") || isPluginEnabled("com.intellij.clion")) {
                 val lang = newLang("com.yoavst.graffiti.intellij.lang.Cpp")
                 languages[lang.name] = lang
             }
