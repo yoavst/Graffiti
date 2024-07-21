@@ -74,10 +74,10 @@ intellij:
 	sed -i 's/version = "[^"]*"/version = "$(VERSION)"/' backends/intellij/plugin/build.gradle.kts
 
 	@echo "Compiling the extension"
-	cd backends/intellij && ./gradlew plugin:jar
+	cd backends/intellij && ./gradlew plugin:buildPlugin
 
 	@echo "Copying the file"
-	cp backends/intellij/plugin/build/libs/plugin-$(VERSION).jar out/graffiti_v$(VERSION)_for_jetbrains.jar
+	cp backends/intellij/plugin/build/distributions/plugin-$(VERSION).zip out/graffiti_v$(VERSION)_for_jetbrains.zip
 
 ghidra:
 	@echo "Building Graffiti for Ghidra"
