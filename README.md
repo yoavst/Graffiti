@@ -56,9 +56,10 @@ Graffiti supports multiple backends, as can be seen [here](#backends). Open the 
 | Editor      | Languages                               | add to graph | open in editor | Rename support | Field support | Add line to graph | Add xrefs | Socket type |
 | ----------- | --------------------------------------- | ------------ | -------------- | -------------- | ------------- | ----------------- | --------- | ----------- |
 | JEB         | Java                                    | ✅           | ✅             | ✅             | ✅            | ✅                | ✅        | TCP         |
-| Intellij    | Java, Kotlin                            | ✅           | ✅             | ❌             | ✅            | ✅                | ✅        | TCP         |
+| Intellij    | Java, Kotlin, Go, C, C++, PHP           | ✅           | ✅             | ❌             | ✅            | ✅                | ✅        | TCP         |
 | CLion       | C, C++                                  | ✅           | ✅             | ❌             | ✅            | ✅                | ❌        | TCP         |
 | PHPStorm    | PHP                                     | ✅           | ✅             | ❌             | ✅            | ✅                | ❌        | TCP         |
+| GoLand      | Go                                      | ✅           | ✅             | ❌             | ✅            | ✅                | ❌        | TCP         |
 | VSCode      | Depends on available language server    | ✅           | ✅             | ❌             | ❌            | ✅                | ❌        | TCP         |
 | IDA         | \*                                      | ✅           | ✅             | ✅             | -             | ✅                | ✅        | TCP         |
 | Ghidra      | \*                                      | ✅           | ✅             | ✅             | -             | ✅                | ❌        | TCP         |
