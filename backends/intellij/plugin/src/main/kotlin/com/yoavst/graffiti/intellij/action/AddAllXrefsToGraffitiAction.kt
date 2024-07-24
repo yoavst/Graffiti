@@ -5,7 +5,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
-import com.intellij.refactoring.suggested.startOffset
 import com.yoavst.graffiti.intellij.SocketHolder
 import com.yoavst.graffiti.intellij.getLineNumber
 import com.yoavst.graffiti.intellij.lang.Language
@@ -52,10 +51,10 @@ open class AddAllXrefsToGraffitiAction : AnAction() {
             is Info.File -> return null // should not be possible
         }
 
-        reference.startOffset
+        reference.textRange.startOffset
         AddToGraffitiAction.applyLineOrHover(
             lineUpdate,
-            getLineNumber(reference.containingFile.text, reference.startOffset),
+            getLineNumber(reference.containingFile.text, reference.textRange.startOffset),
             nodeUpdate,
             reference.containingFile,
             info

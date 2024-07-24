@@ -34,6 +34,10 @@ interface Language {
                 val lang = newLang("com.yoavst.graffiti.intellij.lang.PHP")
                 languages[lang.name] = lang
             }
+            if (isPluginEnabled("org.jetbrains.plugins.go")) {
+                val lang = newLang("com.yoavst.graffiti.intellij.lang.Go")
+                languages[lang.name] = lang
+            }
 
             this.languages = languages
         }

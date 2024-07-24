@@ -14,6 +14,7 @@
     <depends optional="true">org.jetbrains.kotlin</depends>
     <depends optional="true">com.intellij.modules.clion</depends>
     <depends optional="true">com.jetbrains.php</depends>
+    <depends optional="true">org.jetbrains.plugins.go</depends>
 
     <extensions defaultExtensionNs="com.intellij">
         <!-- Add your extensions here -->
