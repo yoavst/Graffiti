@@ -19,6 +19,7 @@ dependencies {
     implementation(project(":kotlin"))
     implementation(project(":php"))
     implementation(project(":cpp"))
+    implementation(projecy(":go"))
 }
 
 // See https://github.com/JetBrains/gradle-intellij-plugin/
