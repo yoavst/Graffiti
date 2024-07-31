@@ -12,9 +12,14 @@ import java.io.File
 
 
 fun PsiFile.toPath() = FileUtil.getRelativePath(File(originalFile.project.guessProjectDir()!!.path), File(originalFile.virtualFile.path))
-fun PsiElement.toAddress() = containingFile.toPath() + "@" + textOffset
+fun PsiElement.toAddress() = containingFile.toPath() + "@" + textOffset + "@" + getLine()
+fun PsiElement.getLine() = getLineNumber(containingFile.text, textOffset)
 
-fun String.replaceOffset(newOffset: Int): String = split("@")[0] + "@" + newOffset
+fun String.replaceOffset(newOffset: Int): String {
+    val elements = split("@").toMutableList()
+    elements[1] = newOffset.toString()
+    return elements.joinToString("@")
+}
 
 fun isPluginEnabled(pluginId: String): Boolean =
     PluginManagerCore.getLoadedPlugins().any { it.pluginId.idString == pluginId }
