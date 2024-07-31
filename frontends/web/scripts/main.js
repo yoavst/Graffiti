@@ -29,7 +29,7 @@ const GRAFFITI_PLATFORMS = [
     color: "#ec6038",
   },
   {
-    name: "Android Studio, Intellij, Clion, PHPStorm, GoLand",
+    name: "Android Studio, Intellij, Clion, PHPStorm, GoLand, Pycharm",
     filename: "graffiti_v{}_for_jetbrains.zip",
     icon: "images/platforms/jetbrains.svg",
     color: "#fe315d",
