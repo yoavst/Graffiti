@@ -20,6 +20,7 @@ dependencies {
     implementation(project(":php"))
     implementation(project(":cpp"))
     implementation(project(":go"))
+    implementation(project(":python"))
 }
 
 // See https://github.com/JetBrains/gradle-intellij-plugin/

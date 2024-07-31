@@ -38,6 +38,10 @@ interface Language {
                 val lang = newLang("com.yoavst.graffiti.intellij.lang.Go")
                 languages[lang.name] = lang
             }
+            if (isPluginEnabled("com.intellij.modules.python") || isPluginEnabled("PythonCore")) {
+                val lang = newLang("com.yoavst.graffiti.intellij.lang.Python")
+                languages[lang.name] = lang
+            }
 
             this.languages = languages
         }

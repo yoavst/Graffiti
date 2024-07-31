@@ -1,2 +1,2 @@
 rootProject.name = "intellij"
-include("base", "java", "kotlin", "cpp", "php", "go", "plugin")
+include("base", "java", "kotlin", "cpp", "php", "go", "python", "plugin")
