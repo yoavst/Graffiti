@@ -32,7 +32,7 @@ object Java : Language {
         member,
         type,
         member.name!!,
-        member.containingClass!!.name,
+        member.containingClass!!.name ?: "<anonymous>",
         file.name,
         member.toAddress()
     )
