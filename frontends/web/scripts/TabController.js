@@ -425,6 +425,7 @@ config:
           version: 2,
           address: node.extra.address,
           project: node.extra.project,
+          line: node.extra.line,
         })
       );
     } else if (node.extra.isMarkdown) {

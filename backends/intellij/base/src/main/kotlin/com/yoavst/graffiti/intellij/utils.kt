@@ -44,3 +44,16 @@ fun getLineNumber(text: String, offset: Int): Int {
         n++
     }
 }
+
+fun getOffset(text: String, line: Int): Int {
+    var curIndex = -1
+    for (i in 0 until line) {
+        val nextIndex = text.indexOf('\n', curIndex + 1)
+        if (nextIndex == -1) {
+            return curIndex + 1 - line
+        }
+
+        curIndex = nextIndex
+    }
+    return curIndex + 1 - line
+}

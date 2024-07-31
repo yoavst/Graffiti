@@ -22,7 +22,7 @@ class UpdateParams {
 export function createUpdate(
   document: vscode.TextDocument,
   symbol: SymbolNode | null,
-  updateParams: UpdateParams,
+  updateParams: UpdateParams
 ) {
   const nameAndSymbol =
     symbol == null
@@ -104,7 +104,7 @@ const SymbolKindsForName = [
 
 function getNameAndLastSymbol(
   filename: string,
-  symbol: SymbolNode,
+  symbol: SymbolNode
 ): [string, SymbolNode] {
   if (symbol.isRoot) {
     return null;
@@ -221,11 +221,11 @@ function receive(socket, data, onMsg) {
     ) {
       var buffer = socket.chunk.bufferStack.slice(
         4,
-        socket.chunk.messageSize + 4,
+        socket.chunk.messageSize + 4
       );
       socket.chunk.messageSize = 0;
       socket.chunk.bufferStack = socket.chunk.bufferStack.slice(
-        buffer.length + 4,
+        buffer.length + 4
       );
       onMsg(socket, buffer);
       //if the stack contains more data after read the entire message, maybe you got a new message, so it will verify the next 4 bytes and so on...
@@ -240,7 +240,7 @@ export function connectServer(host: string, port: number) {
   currentServerConnection = new net.Socket();
   currentServerConnection.connect(port, host, () => {
     vscode.window.showInformationMessage(
-      "Connected to graffiti! (might require authentication if enabled on server)",
+      "Connected to graffiti! (might require authentication if enabled on server)"
     );
     debugChannel.appendLine(`Connected to graffiti at ${host}:${port}`);
   });
@@ -267,6 +267,11 @@ export function connectServer(host: string, port: number) {
         return;
       }
       if ("project" in data) {
+        if (data["project"].startsWith("Intellij:")) {
+          // hack to support intellij links
+          goToIntellij(data["address"]);
+          return;
+        }
         if (!data["project"].startsWith("VSCode:")) {
           return;
         }
@@ -276,7 +281,8 @@ export function connectServer(host: string, port: number) {
 
       if (
         rest.length == 0 ||
-        !vscode.workspace.getConfiguration("graffiti")["searchForSymbol"]
+        !vscode.workspace.getConfiguration("graffiti")["searchForSymbol"] ||
+        data["line"] != undefined
       ) {
         // Old version
         jumpToPath(path, line);
@@ -295,6 +301,12 @@ export function connectServer(host: string, port: number) {
     debugChannel.appendLine("Connection closed");
     currentServerConnection = null;
   });
+}
+
+function goToIntellij(address: string) {
+  let [path, offsetStr] = address.trim().split("@");
+  let offset = parseInt(offsetStr);
+  jumpToPathAtIntellijOffset(path, offset);
 }
 
 export function disconnectServer() {
@@ -319,6 +331,37 @@ function jumpToPath(path: string, line: number) {
   });
 }
 
+function jumpToPathAtIntellijOffset(path: string, offset: number) {
+  vscode.workspace.openTextDocument(pathToUri(path)).then((document) => {
+    // Intellij offsets ignore newlines...
+    const fileContent = document.getText();
+
+    // Calculate the position
+    let line = 0;
+    let character = 0;
+    let currentOffset = 0;
+
+    for (let i = 0; i < fileContent.length; i++) {
+      if (fileContent[i] === "\n") {
+        line++;
+        character = 0;
+      } else {
+        character++;
+        currentOffset++;
+      }
+
+      if (currentOffset > offset) {
+        break;
+      }
+    }
+
+    const position = new vscode.Position(line, character);
+    vscode.window.showTextDocument(document, {
+      selection: new vscode.Range(position, position),
+    });
+  });
+}
+
 async function jumpToSymbol(path: string, symbol: string): Promise<boolean> {
   const symbols = await ScopeFinder.getScopeSymbolsFor(pathToUri(path));
   if (symbols) {
@@ -336,7 +379,7 @@ async function jumpToSymbol(path: string, symbol: string): Promise<boolean> {
 function iterSymbolsDFS(
   currentSymbol: vscode.DocumentSymbol | undefined,
   targetSymbol: string,
-  baseIndex: number = 0,
+  baseIndex: number = 0
 ): vscode.DocumentSymbol | undefined {
   if (!currentSymbol) return undefined;
 
@@ -360,7 +403,7 @@ function iterSymbolsDFS(
 
 function pathToUri(path: string): vscode.Uri {
   return vscode.Uri.file(
-    join(vscode.workspace.workspaceFolders[0].uri.fsPath, path),
+    join(vscode.workspace.workspaceFolders[0].uri.fsPath, path)
   );
 }
 
@@ -390,7 +433,7 @@ export async function updateSymbolsForGraffiti(graffitiObj): Promise<boolean> {
         continue;
       }
       debugChannel.appendLine(
-        `handling file: ${path} line: ${line} symbol: ${label}`,
+        `handling file: ${path} line: ${line} symbol: ${label}`
       );
 
       // Get tree from cache or calculate it
@@ -438,7 +481,7 @@ export async function updateSymbolsForGraffiti(graffitiObj): Promise<boolean> {
     }
   } catch (e) {
     await vscode.window.showErrorMessage(
-      `failed to process graffiti file: ${e.message}`,
+      `failed to process graffiti file: ${e.message}`
     );
     debugChannel.appendLine(e.stack);
     return false;
@@ -448,7 +491,7 @@ export async function updateSymbolsForGraffiti(graffitiObj): Promise<boolean> {
     debugChannel.appendLine(`Debugging file: ${path}`);
     for (const node of tree.iterNodes()) {
       debugChannel.appendLine(
-        `\t${JSON.stringify(node.range.start)} -> ${node.getFullName()}`,
+        `\t${JSON.stringify(node.range.start)} -> ${node.getFullName()}`
       );
     }
     debugChannel.appendLine("");

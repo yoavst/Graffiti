@@ -12,6 +12,7 @@ import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.yoavst.graffiti.intellij.SocketHolder
+import com.yoavst.graffiti.intellij.getOffset
 import com.yoavst.graffiti.intellij.getTokenOrElse
 import com.yoavst.graffiti.intellij.notify
 import java.io.DataInputStream
@@ -76,6 +77,10 @@ class EnableGraffitiSyncAction : AnAction() {
                     }
 
                     if (data.has("project")) {
+                        if (data["project"].asString.startsWith("VSCode:")) {
+                            ApplicationManager.getApplication().invokeLater { threadCodeForVscodeUi(project, data["address"].asString) }
+                            continue
+                        }
                         if (!data["project"].asString.startsWith("Intellij:")) {
                             continue
                         }
@@ -97,6 +102,17 @@ class EnableGraffitiSyncAction : AnAction() {
         }
         val vFile = LocalFileSystem.getInstance().findFileByPath(fileObj.canonicalPath) ?: return
         OpenFileDescriptor(project, vFile, offset.toInt()).navigate(true)
+    }
+
+    private fun threadCodeForVscodeUi(project: Project, target: String) {
+        val (file, lineStr) = target.split(":")
+        val line = lineStr.toInt()
+        var fileObj = File(file)
+        if (!fileObj.isAbsolute) {
+            fileObj = File(project.guessProjectDir()!!.path, fileObj.path)
+        }
+        val vFile = LocalFileSystem.getInstance().findFileByPath(fileObj.canonicalPath) ?: return
+        OpenFileDescriptor(project, vFile, getOffset(fileObj.readText(), line)).navigate(true)
     }
 
     private fun getAddressAndPort(project: Project): Pair<String, Int> {
