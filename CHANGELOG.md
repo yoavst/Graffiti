@@ -1,13 +1,13 @@
 ## 1.16.0
 
-## Jetbrains
+### Jetbrains
 
 - [Feature] Support for GoLand and Pycharm
 - [Feature] Support VSCode nodes
 - [Bug] Support anonymous classes in Java
 - [Bug] Now "Add all xrefs" will join multiple edges to same node
 
-## VSCode
+### VSCode
 
 - [Feature] Support Intellij nodes
 - [Bug] Fix jump to line nodes if symbol mode is enabled (requires new frontend)
@@ -20,7 +20,7 @@
 - [Feature] Support xrefs for clion plugin
 - [Feature] Support PHPStorm and PHP plugin
 
-## Web
+### Web
 
 - [Feature] Add domain mode - will try to suggest connection url based on the server url
 - [Feature] Remember last connected url
