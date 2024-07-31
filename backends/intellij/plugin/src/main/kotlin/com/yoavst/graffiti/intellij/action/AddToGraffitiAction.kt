@@ -73,7 +73,7 @@ open class AddToGraffitiAction : AnAction() {
                 nodeUpdate["address"] =
                     (nodeUpdate["address"] as String).replaceOffset(ordinalIndexOf(psiFile.text, "\n", line - 1) + 1)
 
-                val computedProperties = nodeUpdate["computedProperties"] as Array<ComputedProperty>
+                val computedProperties = nodeUpdate["computedProperties"] as MutableList<ComputedProperty>
                 val labelProp = computedProperties[0]
                 computedProperties[0] = ComputedProperty(
                     labelProp.name,
@@ -91,7 +91,7 @@ open class AddToGraffitiAction : AnAction() {
             val doc =
                 DocumentationManager.getProviderFromElement(psiElement).generateDoc(psiElement, null)?.trim() ?: ""
             if (doc.isNotEmpty()) {
-                update["hover"] = arrayOf(doc)
+                update["hover"] = listOf(doc)
                 update["hoverCT"] = "html"
             }
         }
@@ -104,7 +104,7 @@ open class AddToGraffitiAction : AnAction() {
             "address" to memberInfo.address,
             "class" to (memberInfo.containingClassName ?: memberInfo.containingFileName),
             memberInfo.type.toName() to memberInfo.name,
-            "computedProperties" to arrayOf(
+            "computedProperties" to mutableListOf(
                 ComputedProperty(
                     "label",
                     "{0}::\n${memberInfo.type.prefix}{1}",
@@ -120,7 +120,7 @@ open class AddToGraffitiAction : AnAction() {
             "project" to ("Intellij: " + project.name),
             "address" to classInfo.address,
             "class" to classInfo.name,
-            "computedProperties" to arrayOf(
+            "computedProperties" to mutableListOf(
                 ComputedProperty(
                     "label", "{0}", listOf("class")
                 )
@@ -133,7 +133,7 @@ open class AddToGraffitiAction : AnAction() {
         ): MutableMap<String, Any> = mutableMapOf(
             "project" to ("Intellij: " + project.name),
             "address" to fileInfo.address,
-            "computedProperties" to arrayOf(
+            "computedProperties" to mutableListOf(
                 ComputedProperty(
                     "label", fileInfo.name, listOf()
                 )

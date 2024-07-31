@@ -31,11 +31,12 @@ open class AddAllXrefsToGraffitiAction : AnAction() {
             return
         }
 
-        val references =
-            (Language.searchReferencesOrMethodReferences(info.element, psiFile) ?: emptyList()).map { it.element }
+        var references =
+            (Language.searchReferencesOrMethodReferences(info.element, psiFile) ?: emptyList())
+                .map { it.element }
                 .filter { it.containingFile.fileType.name in Language.supportedLanguages() }
         if (references.isEmpty()) return
-        val updates = references.mapNotNull { toUpdateNode(project, it) }
+        val updates = references.mapNotNull { toUpdateNode(project, it) }.distinct()
 
         val finalUpdate = mapOf("type" to "addDataBulk", "nodes" to updates, "direction" to "n2e")
         SocketHolder.sendJson(project, finalUpdate)
