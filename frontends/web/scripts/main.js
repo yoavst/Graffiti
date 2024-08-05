@@ -922,7 +922,7 @@ function getDefaultDomainMode() {
 
 function shouldForceWs() {
   // People using graffiti.quest still setup localhost server
-  return location.hostname != "graffiti.quest";
+  return location.hostname == "graffiti.quest";
 }
 
 main();
