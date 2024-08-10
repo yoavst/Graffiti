@@ -11,10 +11,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vfs.LocalFileSystem
-import com.yoavst.graffiti.intellij.SocketHolder
-import com.yoavst.graffiti.intellij.getOffset
-import com.yoavst.graffiti.intellij.getTokenOrElse
-import com.yoavst.graffiti.intellij.notify
+import com.yoavst.graffiti.intellij.*
 import java.io.DataInputStream
 import java.io.File
 import kotlin.concurrent.thread
@@ -28,9 +25,10 @@ class EnableGraffitiSyncAction : AnAction() {
     }
 
     override fun actionPerformed(e: AnActionEvent) {
-        val (address, port) = getAddressAndPort(e.project!!)
+        val (address, port) = getAddressAndPort(e.project!!) ?: return
 
         if (SocketHolder.connect(address, port)) {
+            saveLastConnectedServerToFile("$address:$port")
             e.project!!.notify("Connected to graffiti at $address:$port (might require authentication if enabled on server)", NotificationType.INFORMATION)
             thread(start = true, isDaemon = true) {
                 threadCode(e.project!!)
@@ -115,11 +113,12 @@ class EnableGraffitiSyncAction : AnAction() {
         OpenFileDescriptor(project, vFile, getOffset(fileObj.readText(), line)).navigate(true)
     }
 
-    private fun getAddressAndPort(project: Project): Pair<String, Int> {
+    private fun getAddressAndPort(project: Project): Pair<String, Int>? {
+        val defaultServer = getLastConnectedServer() ?: "localhost:8501"
         val addressAndPort = Messages.showInputDialog(
-            project, "Enter address and port for connection",
-            "Input", Messages.getQuestionIcon(), "localhost:8501", null
-        ) ?: "localhost:8501"
+            project, "Enter address and port for connection (default port is 8501)",
+            "Input", Messages.getQuestionIcon(), defaultServer, null
+        ) ?: return null
         return addressAndPort.split(":").let { (address, port) -> address to port.toInt() }
     }
 }

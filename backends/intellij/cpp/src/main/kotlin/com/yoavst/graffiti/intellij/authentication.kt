@@ -6,10 +6,33 @@ import java.util.*
 
 private val logger = Logger.getInstance((object : Any(){})::class.java)
 
-private fun getTokenBaseDir() = File(System.getProperty("user.home"), ".graffiti")
+private fun getGraffitiFolder() = File(System.getProperty("user.home"), ".graffiti")
+
+private fun getLastConnectedServerFile(): File {
+    val baseDir = getGraffitiFolder()
+    baseDir.mkdirs()
+    return File(baseDir, "server")
+}
+
+fun getLastConnectedServer(): String? {
+    val serverFile = getLastConnectedServerFile()
+    if (!serverFile.exists()) return null
+    val server = serverFile.readText().trim()
+    try {
+        val (_, port) = server.split(":")
+        port.toInt()
+        return server
+    } catch (e: Exception) {
+        return null
+    }
+}
+
+fun saveLastConnectedServerToFile(server: String) {
+    getLastConnectedServerFile().writeText(server)
+}
 
 private fun getTokenPath(): File {
-    val baseDir = getTokenBaseDir()
+    val baseDir = getGraffitiFolder()
     baseDir.mkdirs()
     return File(baseDir, "token")
 }
