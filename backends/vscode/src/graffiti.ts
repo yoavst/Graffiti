@@ -4,7 +4,10 @@ import { SymbolKind } from "vscode";
 import { join, basename } from "path";
 import { SymbolNode, ScopeFinder } from "./scope";
 import { debugChannel } from "./extension";
-import { getTokenOrElse } from "./authentication";
+import {
+  getTokenOrElse,
+  saveLastConnectedServerToFile,
+} from "./authentication";
 
 let currentServerConnection: net.Socket | null = null;
 
@@ -239,6 +242,7 @@ export function connectServer(host: string, port: number) {
 
   currentServerConnection = new net.Socket();
   currentServerConnection.connect(port, host, () => {
+    saveLastConnectedServerToFile(`${host}:${port}`);
     vscode.window.showInformationMessage(
       "Connected to graffiti! (might require authentication if enabled on server)"
     );

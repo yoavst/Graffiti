@@ -3,12 +3,35 @@ import * as fs from "fs";
 import * as path from "path";
 import { debugChannel } from "./extension";
 
-function getTokenBaseDir(): string {
+function getGraffitiBaseDir(): string {
   return path.join(homedir(), ".graffiti");
 }
 
+function getLastConnectedServerPath(): string {
+  const baseDir = getGraffitiBaseDir();
+  mkdirsSync(baseDir);
+  return path.join(baseDir, "server");
+}
+
+export function getLastConnectedServerFromFile(): string | null {
+  const serverPath = getLastConnectedServerPath();
+  if (fs.existsSync(serverPath)) {
+    const server = fs.readFileSync(serverPath, "utf-8")?.trim();
+    if (!server || server.length == 0) {
+      debugChannel.appendLine("server file is empty!");
+      return null;
+    } else {
+      return server;
+    }
+  }
+}
+
+export function saveLastConnectedServerToFile(server: string) {
+  fs.writeFileSync(getLastConnectedServerPath(), server, "utf-8");
+}
+
 function getTokenPath(): string {
-  const baseDir = getTokenBaseDir();
+  const baseDir = getGraffitiBaseDir();
   mkdirsSync(baseDir);
   return path.join(baseDir, "token");
 }
@@ -38,7 +61,7 @@ function saveTokenToFile(token: string) {
 }
 
 export function getTokenOrElse(
-  askForToken: () => Thenable<string | null>,
+  askForToken: () => Thenable<string | null>
 ): Thenable<string | null> {
   const tokenFromFile = getTokenFromFile();
   if (tokenFromFile != null) return Promise.resolve(tokenFromFile);

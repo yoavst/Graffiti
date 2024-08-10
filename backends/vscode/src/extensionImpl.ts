@@ -5,6 +5,7 @@ import * as assert from "assert";
 import * as graffiti from "./graffiti";
 import { TextEncoder } from "util";
 import { debugChannel } from "./extension";
+import { getLastConnectedServerFromFile } from "./authentication";
 
 interface NavigationItem extends vscode.QuickPickItem {
   node: SymbolNode;
@@ -21,7 +22,7 @@ export class ScopeSymbolProvider {
   constructor(context: vscode.ExtensionContext) {
     this._status = vscode.window.createStatusBarItem(
       vscode.StatusBarAlignment.Right,
-      100,
+      100
     );
     this._status.tooltip = "Symbol Navigation";
     this.refreshNavigateCommand();
@@ -30,7 +31,7 @@ export class ScopeSymbolProvider {
         if (e.affectsConfiguration("scopebar.Navigate")) {
           this.refreshNavigateCommand();
         }
-      }),
+      })
     );
 
     let editor = vscode.window.activeTextEditor;
@@ -81,7 +82,7 @@ export class ScopeSymbolProvider {
       async () => {
         let selection = vscode.window.activeTextEditor.selection;
         const scopeFinder = new ScopeFinder(
-          vscode.window.activeTextEditor.document,
+          vscode.window.activeTextEditor.document
         );
         let node = await scopeFinder.getScopeNode(selection.start);
 
@@ -98,7 +99,7 @@ export class ScopeSymbolProvider {
         if (node != null) {
           let hovers = await scopeFinder.getHover(selection.anchor);
           let hover = (hovers[0]?.contents as vscode.MarkdownString[])?.map(
-            (it) => it.value,
+            (it) => it.value
           );
 
           const update = graffiti.createUpdate(scopeFinder.document, node, {
@@ -107,13 +108,13 @@ export class ScopeSymbolProvider {
           });
           if (update != null) await graffiti.sendUpdate(update);
         }
-      },
+      }
     );
 
     vscode.commands.registerCommand("graffiti.AddToGraph", async () => {
       let selection = vscode.window.activeTextEditor.selection;
       const scopeFinder = new ScopeFinder(
-        vscode.window.activeTextEditor.document,
+        vscode.window.activeTextEditor.document
       );
       let node = await scopeFinder.getScopeNode(selection.start);
       debugChannel.appendLine(`Graffiti.AddToGraph(): ${node}`);
@@ -121,7 +122,7 @@ export class ScopeSymbolProvider {
       if (node != null) {
         let hovers = await scopeFinder.getHover(selection.anchor);
         let hover = (hovers[0]?.contents as vscode.MarkdownString[])?.map(
-          (it) => it.value,
+          (it) => it.value
         );
 
         const update = graffiti.createUpdate(scopeFinder.document, node, {
@@ -135,7 +136,7 @@ export class ScopeSymbolProvider {
       // FIXME
       let selection = vscode.window.activeTextEditor.selection;
       const scopeFinder = new ScopeFinder(
-        vscode.window.activeTextEditor.document,
+        vscode.window.activeTextEditor.document
       );
       let node = await scopeFinder.getScopeNode(selection.start);
       let currentLine = selection.start.line;
@@ -147,9 +148,10 @@ export class ScopeSymbolProvider {
     });
 
     vscode.commands.registerCommand("graffiti.ConnectToServer", async () => {
+      const server = getLastConnectedServerFromFile() ?? "localhost:8501";
       const address = await vscode.window.showInputBox({
         prompt: "Enter server address",
-        value: "localhost:8501",
+        value: server,
       });
 
       if (!address) return;
@@ -182,7 +184,7 @@ export class ScopeSymbolProvider {
             graffitiObj = JSON.parse(text);
           } catch (e) {
             await vscode.window.showErrorMessage(
-              `Graffiti: failed to read graffiti file: ${e.message}`,
+              `Graffiti: failed to read graffiti file: ${e.message}`
             );
             return;
           }
@@ -190,14 +192,14 @@ export class ScopeSymbolProvider {
           if (await graffiti.updateSymbolsForGraffiti(graffitiObj)) {
             await vscode.workspace.fs.writeFile(
               vscode.Uri.parse(fileUri[0].path + ".new"),
-              new TextEncoder().encode(JSON.stringify(graffitiObj, null, 4)),
+              new TextEncoder().encode(JSON.stringify(graffitiObj, null, 4))
             );
             await vscode.window.showInformationMessage(
-              `Graffiti: Converted the file successfully`,
+              `Graffiti: Converted the file successfully`
             );
           }
         }
-      },
+      }
     );
   }
 
@@ -251,7 +253,7 @@ export class ScopeSymbolProvider {
         this._status.show();
       },
       delay ? delay : 32,
-      this._cancelToken.token,
+      this._cancelToken.token
     );
   }
 
@@ -262,7 +264,7 @@ export class ScopeSymbolProvider {
     let node = item.node;
     vscode.window.activeTextEditor.revealRange(
       node.range,
-      vscode.TextEditorRevealType.Default,
+      vscode.TextEditorRevealType.Default
     );
 
     let pos = node.range.start;
