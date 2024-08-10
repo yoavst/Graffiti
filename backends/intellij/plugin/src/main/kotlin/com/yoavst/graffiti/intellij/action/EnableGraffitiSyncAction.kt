@@ -76,14 +76,22 @@ class EnableGraffitiSyncAction : AnAction() {
 
                     if (data.has("project")) {
                         if (data["project"].asString.startsWith("VSCode:")) {
-                            ApplicationManager.getApplication().invokeLater { threadCodeForVscodeUi(project, data["address"].asString) }
+                            ApplicationManager.getApplication().invokeLater {
+                                getOpenProjects().forEach {
+                                    threadCodeForVscodeUi(it, data["address"].asString)
+                                }
+                            }
                             continue
                         }
                         if (!data["project"].asString.startsWith("Intellij:")) {
                             continue
                         }
                     }
-                    ApplicationManager.getApplication().invokeLater { threadCodeForUi(project, data["address"].asString) }
+                    ApplicationManager.getApplication().invokeLater {
+                        getOpenProjects().forEach {
+                            threadCodeForUi(it, data["address"].asString)
+                        }
+                    }
                 }
             }
         } catch (e: Exception) {

@@ -4,6 +4,7 @@ import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.PsiElement
@@ -57,3 +58,6 @@ fun getOffset(text: String, line: Int): Int {
     }
     return curIndex + 1 - line
 }
+
+fun getOpenProjects(): List<Project> =
+    ProjectManager.getInstance().openProjects.filterNot { it.isDisposed }
