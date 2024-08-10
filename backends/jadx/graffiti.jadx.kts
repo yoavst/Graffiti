@@ -76,13 +76,16 @@ fun connectToServer() {
 	socket?.close()
 	socket = null
 
-	val addressAndPort = JOptionPane.showInputDialog("What is the address of the grafiti server?", "localhost:8501")
+	 val defaultServer = getLastConnectedServer() ?: "localhost:8501"
+
+	val addressAndPort = JOptionPane.showInputDialog("What is the address of the grafiti server?", defaultServer)
 	if (addressAndPort.isNullOrEmpty())
 		return
 
 	val (addr, port) = addressAndPort.split(":")
 
 	socket = Socket(addr, port.toInt())
+	saveLastConnectedServerToFile("$addr:$port")
 
 	thread(start = true, isDaemon = true) {
 		threadCode()
@@ -331,10 +334,33 @@ fun sendUpdate(data: Any) {
 }
 
 // region authentication
-fun getTokenBaseDir() = File(System.getProperty("user.home"), ".graffiti")
+fun getGraffitiFolder() = File(System.getProperty("user.home"), ".graffiti")
+
+fun getLastConnectedServerFile(): File {
+    val baseDir = getGraffitiFolder()
+    baseDir.mkdirs()
+    return File(baseDir, "server")
+}
+
+fun getLastConnectedServer(): String? {
+    val serverFile = getLastConnectedServerFile()
+    if (!serverFile.exists()) return null
+    val server = serverFile.readText().trim()
+    try {
+        val (_, port) = server.split(":")
+        port.toInt()
+        return server
+    } catch (e: Exception) {
+        return null
+    }
+}
+
+fun saveLastConnectedServerToFile(server: String) {
+    getLastConnectedServerFile().writeText(server)
+}
 
 fun getTokenPath(): File {
-	val baseDir = getTokenBaseDir()
+	val baseDir = getGraffitiFolder()
 	baseDir.mkdirs()
 	return File(baseDir, "token")
 }
