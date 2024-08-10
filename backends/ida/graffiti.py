@@ -13,7 +13,11 @@ import idautils
 import ida_funcs
 import ida_segment
 
-from authentication import get_token_or_else
+from authentication import (
+    get_token_or_else,
+    get_last_connected_server,
+    save_last_connected_server_to_file,
+)
 
 
 HAVE_WIN32_LIBS = False
@@ -240,9 +244,9 @@ class EnableSyncHandler(idaapi.action_handler_t):
         if sock is not None:
             sock.close()
             sock = None
-
+        server = get_last_connected_server() or "localhost:8501"
         addr = ida_kernwin.ask_str(
-            "localhost:8501", 2, "What is the address of the grafiti server?"
+            server, 2, "What is the address of the grafiti server?"
         )
         if not addr:
             return
@@ -250,6 +254,7 @@ class EnableSyncHandler(idaapi.action_handler_t):
         addr, port = addr.split(":")
         sock = socket.socket()
         sock.connect((addr, int(port)))
+        save_last_connected_server_to_file(addr + ":" + port)
 
         db_path = ida_nalt.get_input_file_path()
         db_filename = os.path.basename(db_path)
