@@ -1,3 +1,14 @@
+## 1.17.0
+
+### Backends
+
+- [Feature] Save last connected to server
+
+### Frontend
+
+- [Dep] Update mermaid to 10.9.1
+- [Bug] Fix suggestting ws instead of wss
+
 ## 1.16.0
 
 ### Jetbrains
