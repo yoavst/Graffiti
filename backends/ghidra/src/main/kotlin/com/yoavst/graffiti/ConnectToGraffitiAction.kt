@@ -22,6 +22,7 @@ class ConnectToGraffitiAction(private val plugin: GraffitiPlugin) : DockingActio
     override fun actionPerformed(actionContext: ActionContext) {
         val (address, port) = getAddressAndPort() ?: return
         if (SocketHolder.connect(address, port)) {
+            saveLastConnectedServerToFile("$address:$port")
             GraffitiPlugin.ghidraScriptHelper.popup("Connected to graffiti at $address:$port (might require authentication if enabled on server)")
             thread(start = true, isDaemon = true) {
                 threadCode()
@@ -94,11 +95,12 @@ class ConnectToGraffitiAction(private val plugin: GraffitiPlugin) : DockingActio
     }
 
     private fun getAddressAndPort(): Pair<String, Int>? {
+        val server = getLastConnectedServer() ?: "localhost:8501"
         return try {
             val addressAndPort = GraffitiPlugin.ghidraScriptHelper.askString(
                 "Graffiti",
                 "Enter address and port for connection",
-                "localhost:8501"
+                server
             ).trim()
             addressAndPort.split(":").let { (address, port) -> address to port.toInt() }
         } catch (_: CancelledException) {

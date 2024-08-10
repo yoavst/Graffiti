@@ -4,13 +4,38 @@ import ghidra.util.Msg
 import java.io.File
 import java.util.*
 
-private fun getTokenBaseDir() = File(System.getProperty("user.home"), ".graffiti")
+private fun getGraffitiFolder() = File(System.getProperty("user.home"), ".graffiti")
+
+private fun getLastConnectedServerFile(): File {
+    val baseDir = getGraffitiFolder()
+    baseDir.mkdirs()
+    return File(baseDir, "server")
+}
+
+fun getLastConnectedServer(): String? {
+    val serverFile = getLastConnectedServerFile()
+    if (!serverFile.exists()) return null
+    val server = serverFile.readText().trim()
+    try {
+        val (_, port) = server.split(":")
+        port.toInt()
+        return server
+    } catch (e: Exception) {
+        return null
+    }
+}
+
+fun saveLastConnectedServerToFile(server: String) {
+    getLastConnectedServerFile().writeText(server)
+}
+
 
 private fun getTokenPath(): File {
-    val baseDir = getTokenBaseDir()
+    val baseDir = getGraffitiFolder()
     baseDir.mkdirs()
     return File(baseDir, "token")
 }
+
 private fun validateToken(token: String): Boolean = try {
     UUID.fromString(token).version() == 4
 } catch (ignored: IllegalArgumentException){
