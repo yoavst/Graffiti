@@ -2,15 +2,42 @@ import os.path
 from uuid import UUID
 
 
-def _get_token_base_dir():
+def _get_graffiti_base_dir():
     return os.path.join(os.path.expanduser("~"), ".graffiti")
 
 
-def _get_token_path():
-    base_dir = _get_token_base_dir()
+def _get_last_connected_server_path():
+    base_dir = _get_graffiti_base_dir()
     if not os.path.exists(base_dir):
         os.makedirs(base_dir)
-    return os.path.join(_get_token_base_dir(), "token")
+    return os.path.join(_get_graffiti_base_dir(), "server")
+
+
+def get_last_connected_server():
+    if os.path.exists(_get_last_connected_server_path()):
+        with open(_get_last_connected_server_path(), "r") as f:
+            server = f.read().strip()
+            if not server:
+                print("last connected server file is empty!")
+            else:
+                try:
+                    _, port = server.split(":")
+                    int(port)
+                    return server
+                except Exception:
+                    return
+
+
+def save_last_connected_server_to_file(server):
+    with open(_get_last_connected_server_path(), "w") as f:
+        f.write(server)
+
+
+def _get_token_path():
+    base_dir = _get_graffiti_base_dir()
+    if not os.path.exists(base_dir):
+        os.makedirs(base_dir)
+    return os.path.join(_get_graffiti_base_dir(), "token")
 
 
 def _validate_token(token):

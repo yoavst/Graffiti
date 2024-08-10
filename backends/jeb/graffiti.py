@@ -1,4 +1,4 @@
-#?description=Enable graffiti support in project
+# ?description=Enable graffiti support in project
 
 import sys
 import traceback
@@ -19,13 +19,18 @@ from org.python.core.util import StringUtil
 import jarray
 
 from graphUtils import send_update, create_rename
-from authentication import get_token_or_else
+from authentication import (
+    get_token_or_else,
+    get_last_connected_server,
+    save_last_connected_server_to_file,
+)
 
 
 class graffiti(IScript):
     def run(self, ctx):
+        server = get_last_connected_server() or "localhost:8501"
         addr_and_port = ctx.displayQuestionBox(
-            "Input", "Enter address and port for connection", "localhost:8501"
+            "Input", "Enter address and port for connection", server
         )
         if not addr_and_port or not addr_and_port.strip():
             print("Aborting")
@@ -56,6 +61,7 @@ class GraffitiListener(IEventListener):
         self.ctx = ctx
         self.IN_SCRIPT = 1
         self.sock = Socket(addr, port)
+        save_last_connected_server_to_file(addr + ":" + str(port))
         self.thread = Thread(GraffitiReadOnBackgroundRunnable(ctx, self.sock))
 
         self.thread.start()
