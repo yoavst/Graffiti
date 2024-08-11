@@ -70,7 +70,7 @@ export function createUpdate(
     },
   };
   if (updateParams.edgeText) {
-    base["node"]["edge"] = { label: updateParams.edgeText };
+    base["edge"] = { label: updateParams.edgeText };
   }
   if (updateParams.hover) {
     const hover = updateParams.hover.filter((x) => x.trim());
