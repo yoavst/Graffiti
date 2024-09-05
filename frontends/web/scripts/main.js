@@ -68,7 +68,7 @@ const GRAFFITI_UTILS = [
   },
   {
     name: "Server",
-    filename: "graffiti_v{}_server.py",
+    filename: "graffiti_v{}_server.pyz",
     icon: "images/platforms/python.svg",
     color: "#C9B44C",
   },

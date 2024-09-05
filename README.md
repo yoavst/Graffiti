@@ -37,15 +37,9 @@ The server can run it two modes:
 - Single user mode - for local user.
 - Multi user mode - for domains or multiple users on the same server.
 
-To run the server, first install the single dependency - websockets library:
+Then, just run `python3 server.pyz`. If you want to use multi-user mode, add the `--multi-user-mode` flag.
 
-```python
-pip3 install websockets==10.3
-```
-
-Then, just run `python3 server.py`. If you want to use multi-user mode, add the `--multi-user-mode` flag.
-
-Note: if you want to run the unpacked version from source, run `python3 -m server.graffiti`.
+Note: if you want to run the unpacked version from source, run `python3 -m server.graffiti`. Make sure to install the requirements before.
 
 ### Backend
 

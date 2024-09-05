@@ -128,4 +128,8 @@ server:
 	@echo "Updating the version in pyproject.toml"
 	sed -i 's/version = "[^"]*"/version = "$(VERSION)"/' server/pyproject.toml
 	@echo "Building the graffiti Server"
-	python3 -m pybunch -d server -e graffiti -so -o out/graffiti_v$(VERSION)_server.py
+	mkdir tmp
+	python3 -m pip install websockets==10.3.0 --target tmp
+	cp -R server/graffiti tmp/
+	python3 -m zipapp tmp -m "graffiti.__main__:main_cli" -p "/usr/bin/env python3" -o out/graffiti_v$(VERSION)_server.pyz
+	rm -rf tmp
