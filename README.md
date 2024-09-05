@@ -18,32 +18,53 @@ Create customized callgraph directly from your favorite editor.
 
 ## Setup
 
-The setup consits of three components: server, backend and frontend. See [Architecture section](#architecture) for more info.
+The setup consits of three components: server, website, IDE Connect. See [Architecture section](#architecture) for more info.
 
-### Frontend
+1. **Server** - Download and run `server.pyz` using python3: `python3 server.pyz` .
+2. **Website** - Open [graffiti.quest](https://graffiti.quest) in your browser.
+   - You can also serve the files from `graffiti_frontend_web_with_deps.zip` with your favorite http server.
+3. **IDE Connect** -
+   - press `?` on the website to open the help screen.
+   - Download the artifact for your chosen IDE.
+   - Click the `Docs` button for your chosen IDE to see specific installation details.
 
-you can use [graffiti.quest](https://graffiti.quest). It serves the latest version of the web frontend.  
-You can also self-host it by serving the frontend statically:
+Now you need the configure the website and the IDE plugin to connect through the server.
 
-```bash
-cd frontend/Web
-python3 -m http.server 80
-```
+1. **Website** - Click the connect button on the top right of the screen. The background will change to green on successful attempt.
+   ![Click the connect button](docs/images/screenshots/website_how_to_connect.png)
+2. **IDE** - Follow the explanation in the usage section of the `?` docs.
+   ![Connect from IDE](docs/images/screenshots/ide_how_to_connect.png)
 
-### Server
+## Usage
 
-The server can run it two modes:
+Graffiti represents a graph of entries from the code. The rule of thumb is:
 
-- Single user mode - for local user.
-- Multi user mode - for domains or multiple users on the same server.
+> A new node will be added as a child of the currently selected node in the website
 
-Then, just run `python3 server.pyz`. If you want to use multi-user mode, add the `--multi-user-mode` flag.
+You can select a node in the graph by clicking on it. Pressing escape will unselect the node.
 
-Note: if you want to run the unpacked version from source, run `python3 -m server.graffiti`. Make sure to install the requirements before.
+### Adding a new node
 
-### Backend
+To add a node, go to your chosen IDE and position your cursor inside a function (or field in supported platforms).
+Now, use the following shortcuts to add the current function to the graph
 
-Graffiti supports multiple backends, as can be seen [here](#backends). Open the frontend on your browser and press "shift+?". It will show installation and usage instruction for each supported backend.
+- Ctrl+Shift+A - Add a new node to the graph.
+- Ctrl+Shift+X - Add a new node to the graph with a custom text on the edge.
+
+In some of the IDEs we also support adding a line node - a node representing specific line in the source file/binary.  
+Some IDEs also support adding all the xrefs of a symbol.
+
+![Adding node to graph](docs/images/screenshots/add_to_graph.png)
+
+### Jumping to the source
+
+If you right click on a node, it will open the symbol in your connected IDE.
+
+![Jumping to source](docs/images/screenshots/jump_to_source.png)
+
+### And much more
+
+To learn about advance features of graffiti, use the `?` screen to read the docs of the Web UI. You can also you the command palette at `ctrl+shift+p` to explore all the available commands.
 
 ## Backends
 
@@ -63,13 +84,6 @@ Graffiti supports multiple backends, as can be seen [here](#backends). Open the 
 | Sourcegraph | Java, C, C++, Go, Kotlin                | ✅           | ✅             | -              | ❌            | ✅                | ❌        | Websocket   |
 | Github      | Java, C, C++, Go, Kotlin                | ✅           | ✅             | -              | ❌            | ✅                | ❌        | Websocket   |
 | Gitlab      | Java, C, C++, Go, Kotlin                | ✅           | ✅             | -              | ❌            | ✅                | ❌        | Websocket   |
-
-The common shortcuts are:
-
-- Ctrl+Shift+A - Add a new node to the graph.
-- Ctrl+Shift+X - Add a new node to the graph with a custom text on the edge.
-
-Your cursor should be inside the function (or field in supported platforms) you want to add to the graph.
 
 You can build all the backends using `make`, or build specific backend by running its own task.
 

@@ -743,7 +743,7 @@ function initiateConnectionUrl() {
 
 function initiateHotkeys() {
   hotkeys(
-    "esc,ctrl+z,ctrl+shift+z,ctrl+y,ctrl+s,ctrl+alt+s,ctrl+o,ctrl+i,ctrl+alt+shift+i,ctrl+q,ctrl+f,ctrl+shift+f,ctrl+k,ctrl+e,ctrl+shift+q,ctrl+shift+p,delete,home,ctrl+home,shift+`,shift+/,ctrl+shift+/,ctrl+a,1,2,3,4,5,6,7,8,9",
+    "esc,ctrl+z,ctrl+shift+z,ctrl+y,ctrl+s,ctrl+alt+s,ctrl+o,ctrl+i,ctrl+alt+shift+i,ctrl+q,ctrl+f,ctrl+shift+f,ctrl+k,ctrl+e,ctrl+shift+q,ctrl+shift+p,delete,home,ctrl+home,shift+`,/,shift+/,ctrl+shift+/,ctrl+a,1,2,3,4,5,6,7,8,9",
     function (event, handler) {
       window.commandPalette.close();
       switch (handler.key) {
@@ -791,6 +791,7 @@ function initiateHotkeys() {
           event_center();
           return false;
         case "shift+/":
+        case "/":
           event_help();
           return false;
         case "ctrl+shift+/":
