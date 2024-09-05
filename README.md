@@ -30,9 +30,9 @@ The setup consits of three components: server, website, IDE Connect. See [Archit
 
 Now you need the configure the website and the IDE plugin to connect through the server.
 
-1. **Website** - Click the connect button on the top right of the screen. The background will change to green on successful attempt.
+1. **Website** - Click the connect button on the top right of the screen. The background will change to green on successful attempt.  
    ![Click the connect button](docs/images/screenshots/website_how_to_connect.png)
-2. **IDE** - Follow the explanation in the usage section of the `?` docs.
+2. **IDE** - Follow the explanation in the usage section of the `?` docs.  
    ![Connect from IDE](docs/images/screenshots/ide_how_to_connect.png)
 
 ## Usage
