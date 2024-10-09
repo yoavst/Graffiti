@@ -146,6 +146,17 @@ class CommandPalette {
         },
       },
       {
+        id: "DeleteSubtree",
+        title:
+          "Delete the subtree of the currently selected node in the current graph",
+        hotkey: "Ctrl+Delete",
+        icon: iconFor("delete"),
+        section: "General",
+        handler: () => {
+          event_deleteSubtree();
+        },
+      },
+      {
         id: "Focus",
         title: "Zoom to the selected node in the current graph",
         hotkey: "Home",

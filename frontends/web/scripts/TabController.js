@@ -1148,9 +1148,21 @@ config:
   }
 
   deleteNode(removedNode) {
-    const removedNodeId = removedNode.id;
     // Start undo session
     this.addUndoMarker();
+    // remove the node, edges, comments
+    this.#deleteNodeInternal(removedNode);
+
+    // update history
+    this.redoHistory = [];
+
+    this.cachedMermaid = null;
+
+    this.draw();
+  }
+
+  #deleteNodeInternal(removedNode) {
+    const removedNodeId = removedNode.id;
     // Remove the node
     this.nodes.remove(removedNode.id);
     // Update undo history for node
@@ -1174,17 +1186,10 @@ config:
       }
     }
 
-    // update history
-    this.redoHistory = [];
-
     // remember to clear selected node
     if (this._selectedNode == removedNode) {
       this._selectedNode = null;
     }
-
-    this.cachedMermaid = null;
-
-    this.draw();
   }
 
   updateNodes(selection, updateObj, version) {
@@ -1359,7 +1364,9 @@ config:
       const targetNodes = this.getSearchResults().map((node) => {
         node.handler = () => {
           this.addUndoMarker();
-          this.addEdge(createFromTo(this.selectedNode.id, node.id, true));
+          this.addEdge(
+            createFromTo(this.selectedNode.id, parseInt(node.id), true)
+          );
         };
         return node;
       });
@@ -1433,6 +1440,63 @@ config:
         }
       });
     }
+  }
+
+  deleteSubtree() {
+    const _this = this;
+    const startNode = this._selectedNode?.id;
+    if (startNode == null) {
+      logEvent("No selected node");
+      return;
+    }
+
+    const adjList = new Map();
+    this.nodes.forEach((node) => adjList.set(node.id, new Set()));
+    this.edges.forEach((edge) => adjList.get(edge.from).add(edge.to));
+
+    const visited = new Set();
+    const recStack = new Set();
+    const subDAG = new Set();
+
+    const dfs = (node) => {
+      if (recStack.has(node)) {
+        // If we revisit the start node, it indicates a cycle involving the start node
+        if (node === startNode) {
+          logEvent(
+            `Cycle detected involving the start node ${_this._selectedNode.label.replace(
+              "\n",
+              ""
+            )}`
+          );
+        }
+        return;
+      }
+
+      if (!visited.has(node)) {
+        visited.add(node);
+        recStack.add(node);
+        subDAG.add(node);
+
+        const neighbors = adjList.get(node) || [];
+        neighbors.forEach((neighbor) => dfs(neighbor));
+
+        recStack.delete(node);
+      }
+    };
+
+    dfs(startNode);
+
+    this.addUndoMarker();
+    subDAG.forEach((nodeId) => {
+      const node = this.nodes.get(nodeId);
+      // If we got to a comment, it might have been already deleted
+      if (node) {
+        this.#deleteNodeInternal(node);
+      }
+    });
+    this.redoHistory = [];
+    this.cachedMermaid = null;
+    this.draw();
   }
 }
 

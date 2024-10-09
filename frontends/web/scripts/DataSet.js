@@ -93,6 +93,10 @@ class DataSet {
     return this.elements.filter(filter);
   }
 
+  forEach(func) {
+    this.elements.forEach(func);
+  }
+
   size() {
     return this.elements.length;
   }
