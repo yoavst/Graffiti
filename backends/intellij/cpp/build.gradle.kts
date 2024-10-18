@@ -1,29 +1,31 @@
 plugins {
     kotlin("jvm") version "2.0.0"
-    id("org.jetbrains.intellij") version "1.17.4"
+    id("org.jetbrains.intellij.platform") version "2.1.0"
     id("java-library")
 }
 
 repositories {
     mavenCentral()
+    intellijPlatform {
+        defaultRepositories()
+    }
 }
 
 dependencies {
     implementation(kotlin("stdlib"))
     implementation(project(":base"))
+    intellijPlatform {
+        clion("2024.2.1")
+        bundledPlugin("com.intellij.clion")
+        instrumentationTools()
+    }
 }
 
-intellij {
-    version.set("2022.1.1")
-    type.set("CL")
-    plugins.set(listOf("com.intellij.clion", "com.intellij.cidr.lang", "com.intellij.cidr.base"))
-    updateSinceUntilBuild.set(false)
+intellijPlatform {
+    buildSearchableOptions.set(false)
 }
 
 tasks {
-    buildSearchableOptions {
-        enabled = false
-    }
     runIde {
         enabled = false
     }

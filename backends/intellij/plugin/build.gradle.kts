@@ -1,6 +1,6 @@
 plugins {
     kotlin("jvm") version "2.0.0"
-    id("org.jetbrains.intellij") version "1.17.4"
+    id("org.jetbrains.intellij.platform") version "2.1.0"
     java
 }
 
@@ -9,6 +9,9 @@ version = "1.17.0"
 
 repositories {
     mavenCentral()
+    intellijPlatform {
+        defaultRepositories()
+    }
 }
 
 dependencies {
@@ -21,11 +24,18 @@ dependencies {
     implementation(project(":cpp"))
     implementation(project(":go"))
     implementation(project(":python"))
+
+    intellijPlatform {
+        intellijIdeaCommunity("2024.2.3")
+        instrumentationTools()
+        pluginVerifier()
+    }
 }
 
-// See https://github.com/JetBrains/gradle-intellij-plugin/
-intellij {
-    version.set("2022.3.1")
-    type.set("IC")
-    updateSinceUntilBuild.set(false)
+intellijPlatform {
+    pluginConfiguration {
+        ideaVersion {
+            sinceBuild = "223.*"
+        }
+    }
 }

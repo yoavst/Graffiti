@@ -1,27 +1,30 @@
 plugins {
     kotlin("jvm") version "2.0.0"
-    id("org.jetbrains.intellij") version "1.17.4"
+    id("org.jetbrains.intellij.platform") version "2.1.0"
     id("java-library")
 }
 
 repositories {
     mavenCentral()
+    intellijPlatform {
+        defaultRepositories()
+    }
 }
 
 dependencies {
     implementation(kotlin("stdlib"))
-}
-
-intellij {
-    version.set("2022.3.1")
-    type.set("IC")
-}
-
-tasks{
-    buildSearchableOptions {
-        enabled = false
+    intellijPlatform {
+        intellijIdeaCommunity("2022.3")
+        instrumentationTools()
     }
-    runIde{
+}
+
+intellijPlatform {
+    buildSearchableOptions.set(false)
+}
+
+tasks {
+    runIde {
         enabled = false
     }
 }

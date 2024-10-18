@@ -2,7 +2,6 @@
     <id>com.yoavst.graffiti.intellij</id>
     <name>Graffiti</name>
     <vendor email="yoav.sternberg@gmail.com" url="https://yoavst.com">Yoav Sternberg</vendor>
-    <idea-version since-build="213"/>
     <description><![CDATA[
     Graffiti support for Intellij, Clion and PHPStorm. Supports Java, Kotlin, C/C++ and PHP.
     ]]></description>
