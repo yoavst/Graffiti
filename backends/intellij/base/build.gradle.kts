@@ -13,7 +13,7 @@ dependencies {
 }
 
 intellij {
-    version.set("2022.1.1")
+    version.set("2022.3.1")
     type.set("IC")
 }
 

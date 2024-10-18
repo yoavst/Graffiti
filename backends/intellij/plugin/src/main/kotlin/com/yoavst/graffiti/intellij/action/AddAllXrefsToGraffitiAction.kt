@@ -1,5 +1,6 @@
 package com.yoavst.graffiti.intellij.action
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -16,6 +17,10 @@ open class AddAllXrefsToGraffitiAction : AnAction() {
 
     override fun update(event: AnActionEvent) {
         event.presentation.isEnabledAndVisible = (event.project != null && event.getData(CommonDataKeys.EDITOR) != null)
+    }
+
+    override fun getActionUpdateThread(): ActionUpdateThread {
+        return ActionUpdateThread.BGT
     }
 
     override fun actionPerformed(event: AnActionEvent) {
