@@ -1,6 +1,6 @@
 plugins {
     kotlin("jvm") version "2.0.0"
-    id("org.jetbrains.intellij.platform") version "2.1.0"
+    id("org.jetbrains.intellij.platform.base") version "2.1.0"
     id("java-library")
 }
 
@@ -18,15 +18,5 @@ dependencies {
         pycharmCommunity("2024.2.3")
         bundledPlugin("PythonCore")
         instrumentationTools()
-    }
-}
-
-intellijPlatform {
-    buildSearchableOptions.set(false)
-}
-
-tasks {
-    runIde {
-        enabled = false
     }
 }

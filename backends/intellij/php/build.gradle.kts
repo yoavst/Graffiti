@@ -1,6 +1,6 @@
 plugins {
     kotlin("jvm") version "2.0.0"
-    id("org.jetbrains.intellij.platform") version "2.1.0"
+    id("org.jetbrains.intellij.platform.base") version "2.1.0"
     id("java-library")
 }
 
@@ -18,15 +18,5 @@ dependencies {
         intellijIdeaCommunity("2024.2.3")
         plugin("com.jetbrains.php:242.23339.16")
         instrumentationTools()
-    }
-}
-
-intellijPlatform {
-    buildSearchableOptions.set(false)
-}
-
-tasks {
-    runIde {
-        enabled = false
     }
 }
