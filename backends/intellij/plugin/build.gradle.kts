@@ -17,18 +17,19 @@ repositories {
 dependencies {
     implementation(kotlin("stdlib"))
     implementation("com.google.code.gson:gson:2.9.0")
-    implementation(project(":base"))
-    implementation(project(":java"))
-    implementation(project(":kotlin"))
-    implementation(project(":php"))
-    implementation(project(":cpp"))
-    implementation(project(":go"))
-    implementation(project(":python"))
 
     intellijPlatform {
         intellijIdeaCommunity("2024.2.3")
         instrumentationTools()
         pluginVerifier()
+
+        pluginModule(implementation(project(":base")))
+        pluginModule(implementation(project(":java")))
+        pluginModule(implementation(project(":kotlin")))
+        pluginModule(implementation(project(":php")))
+        pluginModule(implementation(project(":cpp")))
+        pluginModule(implementation(project(":go")))
+        pluginModule(implementation(project(":python")))
     }
 }
 

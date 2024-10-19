@@ -15,7 +15,7 @@ dependencies {
     implementation(kotlin("stdlib"))
     implementation(project(":base"))
     intellijPlatform {
-        intellijIdeaUltimate("2024.2.3")
+        intellijIdeaCommunity("2024.2.3")
         plugin("org.jetbrains.plugins.go:242.23339.11")
         instrumentationTools()
     }
