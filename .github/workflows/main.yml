@@ -59,7 +59,7 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
         with:
-          gradle-version: 7.6
+          gradle-version: 8.10.2
         if: matrix.target.type == 'java'
 
       - uses: er28-0652/setup-ghidra@master
