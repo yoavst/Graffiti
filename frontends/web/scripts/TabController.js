@@ -1498,6 +1498,14 @@ config:
     this.cachedMermaid = null;
     this.draw();
   }
+
+  copyNodeText() {
+    if (this._selectedNode == null) {
+      logEvent("No selected node");
+      return;
+    }
+    navigator.clipboard.writeText(this._selectedNode.overrideLabel ?? this._selectedNode.label);
+  }
 }
 
 const NODE_COMPUTED_PROPERTIES = "computedProperties";

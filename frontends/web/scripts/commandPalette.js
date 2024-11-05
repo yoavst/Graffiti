@@ -432,6 +432,16 @@ class CommandPalette {
           event_overrideLabel();
         },
       },
+      {
+        id: "CopyNodeText",
+        title: "Copy the text of the selected node to the clipboard",
+        hotkey: "Ctrl+c",
+        icon: iconFor("copy"),
+        section: "General",
+        handler: () => {
+          event_copyNodeText();
+        }
+      }
     ];
   }
 }
