@@ -15,6 +15,8 @@ enum operationType {
     removeGroup = 'removeGroup',
     addNodeToGroup = 'addNodeToGroup',
     removeNodeFromGroup = 'removeNodeFromGroup',
+    changeGroupColoring = 'changeGroupColoring',
+    changeGroupExpandedState = 'changeGroupExpandedState',
     changeGraphName = 'changeGraphName',
 }
 
@@ -110,6 +112,19 @@ export interface ChangeGraphName extends BaseOperation {
     newName: string
 }
 
+export interface ChangeGroupColoring extends BaseOperation {
+    type: operationType.changeGroupColoring
+    groupId: elementId
+    oldColoring: Coloring
+    newColoring: Coloring
+}
+
+export interface ChangeGroupExpandedState extends BaseOperation {
+    type: operationType.changeGroupExpandedState
+    groupId: elementId
+    isExpanded: boolean
+}
+
 export type Operation =
     | AddNode
     | RemoveNode
@@ -125,6 +140,8 @@ export type Operation =
     | RemoveGroup
     | AddNodeToGroup
     | RemoveNodeFromGroup
+    | ChangeGroupColoring
+    | ChangeGroupExpandedState
     | ChangeGraphName
 
 /**
@@ -201,6 +218,19 @@ export function inverse(op: Operation): Operation {
                 type: operationType.addNodeToGroup,
                 groupId: op.groupId,
                 nodeId: op.nodeId,
+            }
+        case operationType.changeGroupColoring:
+            return {
+                type: operationType.changeGroupColoring,
+                groupId: op.groupId,
+                oldColoring: op.newColoring,
+                newColoring: op.oldColoring,
+            }
+        case operationType.changeGroupExpandedState:
+            return {
+                type: operationType.changeGroupExpandedState,
+                groupId: op.groupId,
+                isExpanded: !op.isExpanded,
             }
         case operationType.changeGraphName:
             return {
@@ -343,6 +373,32 @@ export function applyRaw(graph: Graph, op: Operation): Graph {
                 ]),
             }
         }
+        case operationType.changeGroupColoring: {
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            const group = graph.groups.get(op.groupId)!
+            return {
+                ...graph,
+                groups: graph.groups.updateOnly([
+                    {
+                        ...group,
+                        coloring: op.newColoring,
+                    },
+                ]),
+            }
+        }
+        case operationType.changeGroupExpandedState: {
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            const group = graph.groups.get(op.groupId)!
+            return {
+                ...graph,
+                groups: graph.groups.updateOnly([
+                    {
+                        ...group,
+                        isExpanded: op.isExpanded,
+                    },
+                ]),
+            }
+        }
         case operationType.changeGraphName:
             return {
                 ...graph,
@@ -402,6 +458,8 @@ export function apply(
         case operationType.addGroup:
         case operationType.addNodeToGroup:
         case operationType.removeNodeFromGroup:
+        case operationType.changeGroupExpandedState:
+        case operationType.changeGroupColoring:
         case operationType.changeGraphName:
             return [applyRaw(graph, op), [op]]
     }

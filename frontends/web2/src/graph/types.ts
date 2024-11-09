@@ -87,6 +87,8 @@ export interface Node extends GraphElement {
 export interface Group extends GraphElement {
     type: elementType.group
     nodes: DataSet<Node>
+    coloring: Coloring
+    isExpanded: boolean
 }
 
 export type EdgeSide = Node | Group
