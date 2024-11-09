@@ -109,3 +109,35 @@ export interface Graph {
     groups: DataSet<Group>
     edges: DataSet<Edge>
 }
+
+export function compute(node: Node): Node {
+    const extraProperties = { ...node.extraProperties }
+    let label = node.label
+    for (const { name, format, replacements } of node.computedProperties) {
+        const replacementsValues: unknown[] = replacements.map(
+            (name) =>
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
+                ((node as any)[name] as unknown) ?? node.extraProperties[name]
+        )
+        const newValue = formatString(format, replacementsValues)
+        if (name === 'label') {
+            label = newValue
+        } else {
+            extraProperties[name] = newValue
+        }
+    }
+    return {
+        ...node,
+        label,
+        extraProperties,
+    }
+}
+
+function formatString(formatStr: string, replacements: unknown[]): string {
+    let str = formatStr
+    // eslint-disable-next-line @typescript-eslint/no-for-in-array
+    for (const key in replacements) {
+        str = str.replace(new RegExp('\\{' + key + '\\}', 'gi'), String(replacements[key]))
+    }
+    return str
+}
