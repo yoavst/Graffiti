@@ -132,6 +132,12 @@ export default class DataSet<T> {
         return this.elements.toSeq().filter(filter)
     }
 
+    public find(filter: (element: T) => boolean): T | null {
+        const result = this.filter(filter)
+        //FIXME:
+    }
+
+
     public forEach(func: (element: T) => void): void {
         this.elements.forEach(func)
     }

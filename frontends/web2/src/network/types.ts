@@ -12,20 +12,14 @@ export interface BaseMessage {
     type: messageType
 }
 
-export interface EdgeParams {
-    isExistingToNew?: boolean
-}
-
 export interface AddNodeWithEdge extends BaseMessage {
     type: messageType.addNodeWithEdge
     node: ExtraNodeProperties & { computedProperties: readonly ComputedProperty[] }
-    edge?: EdgeParams
 }
 
 export interface AddNodesWithEdges extends BaseMessage {
     type: messageType.addNodesWithEdges
     nodes: readonly [ExtraNodeProperties & { computedProperties: readonly ComputedProperty[] }]
-    edge?: EdgeParams
     direction?: direction
 }
 

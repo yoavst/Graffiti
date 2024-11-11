@@ -13,7 +13,10 @@ export interface GraphWithUndo {
     redo: List<readonly Operation[]>
 }
 
-export function apply(graphStack: GraphWithUndo, ...operations: readonly Operation[]): GraphWithUndo {
+export function apply(
+    graphStack: GraphWithUndo,
+    ...operations: readonly Operation[]
+): GraphWithUndo {
     let microOps: Operation[] = []
     let graph = graphStack.current
     for (const operation of operations) {
