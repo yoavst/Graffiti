@@ -76,6 +76,7 @@ To learn about advance features of graffiti, use the `?` screen to read the docs
 | PHPStorm    | PHP                                     | ✅           | ✅             | ❌             | ✅            | ✅                | ✅        | TCP         |
 | PyCharm     | Python                                  | ✅           | ✅             | ❌             | ✅            | ✅                | ✅        | TCP         |
 | GoLand      | Go                                      | ✅           | ✅             | ❌             | ✅            | ✅                | ✅        | TCP         |
+| Rubymine    | Ruby                                    | ✅           | ✅             | ❌             | ❌            | ✅                | ✅        | TCP         |
 | VSCode      | Depends on available language server    | ✅           | ✅             | ❌             | ❌            | ✅                | ❌        | TCP         |
 | IDA         | \*                                      | ✅           | ✅             | ✅             | -             | ✅                | ✅        | TCP         |
 | Ghidra      | \*                                      | ✅           | ✅             | ✅             | -             | ✅                | ❌        | TCP         |

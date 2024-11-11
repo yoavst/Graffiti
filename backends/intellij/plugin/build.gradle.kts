@@ -30,6 +30,7 @@ dependencies {
         pluginModule(implementation(project(":cpp")))
         pluginModule(implementation(project(":go")))
         pluginModule(implementation(project(":python")))
+        pluginModule(implementation(project(":ruby")))
     }
 }
 

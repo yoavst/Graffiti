@@ -43,6 +43,11 @@ interface Language {
                 languages[lang.name] = lang
             }
 
+            if (isPluginEnabled("org.jetbrains.plugins.ruby")) {
+                val lang = newLang("com.yoavst.graffiti.intellij.lang.Ruby")
+                languages[lang.name] = lang
+            }
+
             this.languages = languages
         }
 
