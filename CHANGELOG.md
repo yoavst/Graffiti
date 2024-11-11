@@ -1,3 +1,23 @@
+## 1.18.0
+
+### Jetbrains
+
+- [Feature] Add ruby support
+- [Build] Update to the new intellij plugin system
+
+### VSCode
+
+- [Bug] Fix edge text bug
+
+### Frontend
+
+- [Feature] Add shortcut to delete subtree of node
+- [Feature] Ctrl+C now copies the text of the selected node (thanks to @gergesh)
+
+### Server
+
+- [Build] Now the artifact contains all its dependencies
+
 ## 1.17.0
 
 ### Backends

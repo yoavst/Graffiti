@@ -1,7 +1,7 @@
 {
     "name": "Graffiti for OpenGrok and SourceGraph",
     "description": "Graffiti support for opengrok and sourcegraph",
-    "version": "1.17.0",
+    "version": "1.18.0",
     "manifest_version": 3,
     "icons": {
         "512": "images/icon.png"
