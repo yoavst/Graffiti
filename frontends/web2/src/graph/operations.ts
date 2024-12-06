@@ -1,6 +1,6 @@
 import { Coloring, Edge, elementId, elementType, Graph, Group, Node } from './types'
 
-enum operationType {
+export enum operationType {
     addNode = 'addNode',
     addEdge = 'addEdge',
     removeEdge = 'removeEdge',

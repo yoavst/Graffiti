@@ -11,7 +11,9 @@ export default class DataSet<T> {
         this.elementToId = elementToId
     }
 
-    public get(id: dataSetId): T | undefined {
+    public get(id: dataSetId | undefined): T | undefined {
+        if (id === undefined) return undefined
+
         const index = binarySearch(this.elements, id, this.elementToId)
 
         if (index < 0) {
@@ -133,10 +135,8 @@ export default class DataSet<T> {
     }
 
     public find(filter: (element: T) => boolean): T | null {
-        const result = this.filter(filter)
-        //FIXME:
+        return this.elements.find(filter) ?? null
     }
-
 
     public forEach(func: (element: T) => void): void {
         this.elements.forEach(func)
@@ -144,6 +144,11 @@ export default class DataSet<T> {
 
     public get size(): number {
         return this.elements.size
+    }
+
+    public get maxId(): dataSetId {
+        const lastElement = this.elements.last()
+        return lastElement !== undefined ? this.elementToId(lastElement) : 0
     }
 
     public toJSON(): T[] {

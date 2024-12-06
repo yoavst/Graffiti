@@ -2,9 +2,14 @@ import { useState } from 'react'
 import reactLogo from './assets/react.svg'
 import viteLogo from '/vite.svg'
 import './App.css'
+import useLocalStorageState from 'use-local-storage-state'
 
 function App() {
-    const [count, setCount] = useState(0)
+    const [count, setCount] = useLocalStorageState<number>('key', { defaultValue: 0 })
+
+    if (count > 5) {
+        setCount(0)
+    }
 
     return (
         <>
