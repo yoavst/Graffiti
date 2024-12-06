@@ -757,94 +757,95 @@ function initiateHotkeys() {
   hotkeys(
     "esc,ctrl+z,ctrl+shift+z,ctrl+y,ctrl+s,ctrl+alt+s,ctrl+o,ctrl+i,ctrl+alt+shift+i,ctrl+q,ctrl+f,ctrl+shift+f,ctrl+k,ctrl+e,ctrl+shift+q,ctrl+shift+p,delete,ctrl+delete,ctrl+c,home,ctrl+home,shift+`,/,shift+/,ctrl+shift+/,ctrl+a,1,2,3,4,5,6,7,8,9",
     function (event, handler) {
-      window.commandPalette.close();
-      switch (handler.key) {
-        case "esc":
-          event_deselect();
-          return false;
-        case "ctrl+z":
-          event_undo();
-          return false;
-        case "ctrl+shift+z":
-        case "ctrl+y":
-          event_redo();
-          return false;
-        case "ctrl+s":
-          event_export();
-          return false;
-        case "ctrl+alt+s":
-          event_exportAll();
-          return false;
-        case "ctrl+o":
-          event_import();
-          return false;
-        case "ctrl+i":
-          event_toggleArrowTarget();
-          return false;
-        case "ctrl+alt+shift+i":
-          event_toggleFocusTarget();
-          return false;
-        case "ctrl+k":
-          event_showManageTokenDialog();
-          return false;
-        case "ctrl+q":
-          event_addComment();
-          return false;
-        case "ctrl+shift+q":
-          event_addTextNode();
-          return false;
-        case "delete":
-          event_delete();
-          return false;
-        case "ctrl+delete":
-          event_deleteSubtree();
-          return false;
-        case "ctrl+c":
-          event_copyNodeText();
-          return false;
-        case "home":
-          event_focusOnSelected();
-          return false;
-        case "ctrl+home":
-          event_center();
-          return false;
-        case "shift+/":
-        case "/":
-          event_help();
-          return false;
-        case "ctrl+shift+/":
-          event_toggleHelp();
-          return false;
-        case "shift+`":
-          event_toggleRenderer();
-          return false;
-        case "ctrl+f":
-          event_search();
-          return false;
-        case "ctrl+shift+f":
-          event_searchAll();
-          return false;
-        case "ctrl+shift+p":
-          event_commandPalette();
-          return false;
-        case "ctrl+a":
-          event_addTabFromNode();
-          return false;
-        case "ctrl+e":
-          event_overrideLabel();
-          return false;
-        case "1":
-        case "2":
-        case "3":
-        case "4":
-        case "5":
-        case "6":
-        case "7":
-        case "8":
-        case "9":
-          themeIndex = parseInt(event.key) - 1;
-          event_setTheme(themeIndex);
-          return;
+      if (!window.commandPalette.isOpen()) {
+        switch (handler.key) {
+          case "esc":
+            event_deselect();
+            return false;
+          case "ctrl+z":
+            event_undo();
+            return false;
+          case "ctrl+shift+z":
+          case "ctrl+y":
+            event_redo();
+            return false;
+          case "ctrl+s":
+            event_export();
+            return false;
+          case "ctrl+alt+s":
+            event_exportAll();
+            return false;
+          case "ctrl+o":
+            event_import();
+            return false;
+          case "ctrl+i":
+            event_toggleArrowTarget();
+            return false;
+          case "ctrl+alt+shift+i":
+            event_toggleFocusTarget();
+            return false;
+          case "ctrl+k":
+            event_showManageTokenDialog();
+            return false;
+          case "ctrl+q":
+            event_addComment();
+            return false;
+          case "ctrl+shift+q":
+            event_addTextNode();
+            return false;
+          case "delete":
+            event_delete();
+            return false;
+          case "ctrl+delete":
+            event_deleteSubtree();
+            return false;
+          case "ctrl+c":
+            event_copyNodeText();
+            return false;
+          case "home":
+            event_focusOnSelected();
+            return false;
+          case "ctrl+home":
+            event_center();
+            return false;
+          case "shift+/":
+          case "/":
+            event_help();
+            return false;
+          case "ctrl+shift+/":
+            event_toggleHelp();
+            return false;
+          case "shift+`":
+            event_toggleRenderer();
+            return false;
+          case "ctrl+f":
+            event_search();
+            return false;
+          case "ctrl+shift+f":
+            event_searchAll();
+            return false;
+          case "ctrl+shift+p":
+            event_commandPalette();
+            return false;
+          case "ctrl+a":
+            event_addTabFromNode();
+            return false;
+          case "ctrl+e":
+            event_overrideLabel();
+            return false;
+          case "1":
+          case "2":
+          case "3":
+          case "4":
+          case "5":
+          case "6":
+          case "7":
+          case "8":
+          case "9":
+            themeIndex = parseInt(event.key) - 1;
+            event_setTheme(themeIndex);
+            return false;
+        }
       }
     }
   );

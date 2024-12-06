@@ -18,6 +18,10 @@ class CommandPalette {
     this.ninjaElement.close();
   }
 
+  isOpen() {
+    return !!this.ninjaElement.shadowRoot.querySelector('.visible')
+  }
+
   #getTabsCommands() {
     const tabs = this.tabsController.map((name, _, index) => {
       return {
