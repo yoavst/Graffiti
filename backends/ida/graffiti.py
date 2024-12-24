@@ -166,12 +166,12 @@ class AddXrefsHandler(AddToGraphHandler):
         db_path = ida_nalt.get_input_file_path()
         db_filename = os.path.basename(db_path)
 
-        nodes = []
+        nodes = dict()
         for xref in idautils.XrefsTo(ctx.cur_func.start_ea):
             f = ida_funcs.get_func(xref.frm)
             if f is None:
                 # Raw address
-                nodes.append(raw_node_from_ea(xref.frm, db_filename))
+                nodes[str(xref.frm)] = raw_node_from_ea(xref.frm, db_filename)
             else:
                 original_func_name = idc.get_func_name(f.start_ea)
                 demangled_func_name = idc.demangle_name(
@@ -199,10 +199,10 @@ class AddXrefsHandler(AddToGraphHandler):
                             "replacements": ["baseName", "line"],
                         }
                     ]
-                nodes.append(node)
+                nodes[node["address"]] = node
 
         if nodes:
-            return {"type": "addDataBulk", "nodes": nodes, "direction": "n2e"}
+            return {"type": "addDataBulk", "nodes": list(nodes.values()), "direction": "n2e"}
 
 
 def raw_node_from_ea(ea, db_filename):
