@@ -77,7 +77,7 @@ jobs:
           gradle-version: 8.10.2
         if: matrix.target.type == 'java'
 
-      - uses: er28-0652/setup-ghidra@master
+      - uses: antoniovazquezblanco/setup-ghidra@v2.0.6
         with:
           version: "11.0.3"
         if: matrix.target.name == 'ghidra'
