@@ -1,3 +1,22 @@
+## 1.19.0
+
+## JADX
+
+- [Feautre] Now we provide a plugin instead of a script
+
+## Ghidra
+
+- [Build] Use latest ghidra setup action (thanks to @antoniovazquezblanco)
+
+## Frontend
+
+- [Feature] More noticable help button (Thanks to @yonlif)
+- [Bug] Don't run keyboard shortcuts if command palette is open
+
+## IDA
+
+- [Bug] Don't add multiple arrows for "add xrefs" action
+
 ## 1.18.0
 
 ### Jetbrains
