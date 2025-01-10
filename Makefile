@@ -33,7 +33,16 @@ ida:
 
 jadx:
 	@echo "Building Graffiti for Jadx"
-	cp backends/jadx/graffiti.jadx.kts out/graffiti_v$(VERSION).jadx.kts
+	
+	@echo "Updating the version in build.gradle.kts"
+	sed -i 's/version = "[^"]*"/version = "$(VERSION)"/' backends/jadx/build.gradle.kts
+
+	@echo "Compiling the plugin"
+	cd backends/jadx && ./gradlew dist
+
+	@echo "Copying the file"
+	cp backends/jadx/build/dist/jadx-$(VERSION).jar out/graffiti_v$(VERSION)_for_jadx.jar
+
 
 jeb_packed_%:
 	@echo Packing $*

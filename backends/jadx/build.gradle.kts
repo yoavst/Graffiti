@@ -38,7 +38,7 @@ kotlin {
     }
 }
 
-version = System.getenv("VERSION") ?: "dev"
+version = "1.18.0"
 
 tasks {
     val shadowJar = withType(ShadowJar::class) {

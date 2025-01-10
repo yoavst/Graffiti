@@ -54,7 +54,7 @@ jobs:
           - { name: ida, type: pybunch }
           - { name: vscode, type: typescript }
           - { name: websites, type: typescript }
-          - { name: jadx, type: pack }
+          - { name: jadx, type: java }
           - { name: server, type: python }
     steps:
       - name: Checkout repository
