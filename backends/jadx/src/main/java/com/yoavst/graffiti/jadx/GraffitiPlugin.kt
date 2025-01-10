@@ -7,6 +7,8 @@ import jadx.api.plugins.JadxPlugin
 import jadx.api.plugins.JadxPluginContext
 import jadx.api.plugins.JadxPluginInfo
 import jadx.api.plugins.JadxPluginInfoBuilder
+import jadx.api.plugins.events.JadxEvents
+import jadx.core.dex.nodes.ClassNode
 import jadx.core.dex.nodes.FieldNode
 import jadx.core.dex.nodes.MethodNode
 import java.io.DataInputStream
@@ -48,6 +50,40 @@ class GraffitiPlugin : JadxPlugin {
             )
 
             addMenuAction("Graffiti: Connect to server", ::connectToServer)
+        }
+
+        jadx.events().addListener(JadxEvents.NODE_RENAMED_BY_USER) { rename ->
+            rename.node.let { renamedNode ->
+                if (renamedNode is ClassNode) {
+                    sendUpdate(
+                        mutableMapOf(
+                            "type" to "updateNodes",
+                            "selection" to arrayOf(arrayOf("classAddress", renamedNode.classInfo.fullName)),
+                            "update" to mutableMapOf("class" to rename.newName)
+                        )
+                    )
+                } else {
+                    val update = when (rename.node) {
+                        is FieldNode -> mutableMapOf(
+                            "field" to rename.newName
+                        )
+
+                        is MethodNode -> mutableMapOf(
+                            "method" to rename.newName
+                        )
+
+                        else -> return@addListener
+                    }
+                    sendUpdate(
+                        mutableMapOf(
+                            "type" to "updateNodes",
+                            "selection" to arrayOf(arrayOf("address", rename.node.toAddress())),
+                            "update" to update
+                        )
+                    )
+                }
+            }
+            log.info { "Rename from '${rename.oldName}' to '${rename.newName}' for node ${rename.node}" }
         }
     }
 
@@ -137,8 +173,12 @@ class GraffitiPlugin : JadxPlugin {
                 log.warning { "${if (isMethod) "Method" else "Field"} not found: $target" }
                 return
             }
+        val resolvedNode = jadx.decompiler.getJavaNodeByRef(node) ?: run {
+            log.warning { "${if (isMethod) "Method" else "Field"} not found: $target" }
+            return
+        }
 
-        jadx.guiContext!!.open(node)
+        jadx.guiContext!!.open(resolvedNode.codeNodeRef)
     }
 
     private fun addToGraph(node: ICodeNodeRef) {
