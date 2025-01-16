@@ -353,6 +353,7 @@ footer > * {
 /* Style for each list item */
 .material-item {
   display: flex;
+  break-inside: avoid;
   align-items: center;
   background-color: #fff;
   padding: 12px 20px;
