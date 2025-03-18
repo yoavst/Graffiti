@@ -20,7 +20,7 @@ dependencies {
 
     intellijPlatform {
         intellijIdeaCommunity("2024.2.3")
-        instrumentationTools()
+        
         pluginVerifier()
 
         pluginModule(implementation(project(":base")))
@@ -38,6 +38,7 @@ intellijPlatform {
     pluginConfiguration {
         ideaVersion {
             sinceBuild = "223.*"
+            untilBuild = provider { null }
         }
     }
 }

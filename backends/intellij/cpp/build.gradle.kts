@@ -17,6 +17,6 @@ dependencies {
     intellijPlatform {
         clion("2024.2.1")
         bundledPlugin("com.intellij.clion")
-        instrumentationTools()
+        
     }
 }

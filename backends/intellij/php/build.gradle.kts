@@ -17,6 +17,6 @@ dependencies {
     intellijPlatform {
         intellijIdeaCommunity("2024.2.3")
         plugin("com.jetbrains.php:242.23339.16")
-        instrumentationTools()
+        
     }
 }

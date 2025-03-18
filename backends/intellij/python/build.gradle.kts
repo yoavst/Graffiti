@@ -17,6 +17,6 @@ dependencies {
     intellijPlatform {
         pycharmCommunity("2024.2.3")
         bundledPlugin("PythonCore")
-        instrumentationTools()
+        
     }
 }

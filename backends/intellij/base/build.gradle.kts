@@ -15,6 +15,6 @@ dependencies {
     implementation(kotlin("stdlib"))
     intellijPlatform {
         intellijIdeaCommunity("2022.3")
-        instrumentationTools()
+        
     }
 }
