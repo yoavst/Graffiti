@@ -202,7 +202,69 @@ class AddXrefsHandler(AddToGraphHandler):
                 nodes[node["address"]] = node
 
         if nodes:
-            return {"type": "addDataBulk", "nodes": list(nodes.values()), "direction": "n2e"}
+            return {
+                "type": "addDataBulk",
+                "nodes": list(nodes.values()),
+                "direction": "n2e",
+            }
+
+
+class AddPacXrefsHandler(AddToGraphHandler):
+    def __init__(self):
+        AddToGraphHandler.__init__(self)
+
+    def create_payload(self, ctx):
+        db_path = ida_nalt.get_input_file_path()
+        db_filename = os.path.basename(db_path)
+
+        nodes = dict()
+        from netnode import Netnode
+
+        n = Netnode("$ pacxplorer_io")
+        n["input"] = ctx.cur_func.start_ea  # address of virtual functions
+        idaapi.load_and_run_plugin("pacxplorer", 6)
+        r = n.get("output")
+        if r is None:
+            print("Graffiti: No PAC xrefs found for this function")
+            return None
+
+        res = json.loads(r)
+        for xref_item in res:
+            frm = xref_item[0]
+            f = ida_funcs.get_func(frm)
+            if f is None:
+                # Raw
+                nodes[str(frm)] = raw_node_from_ea(frm, db_filename)
+            else:
+                original_func_name = idc.get_func_name(f.start_ea)
+                demangled_func_name = idc.demangle_name(
+                    original_func_name, idc.INF_SHORT_DN
+                )
+                func_name = demangled_func_name or original_func_name
+
+                node = {
+                    "project": "IDA: " + db_filename,
+                    "baseName": func_name,
+                    "baseAddress": str(f.start_ea),
+                }
+
+                node["address"] = str(frm)
+                node["line"] = "{0:x}".format(frm - f.start_ea)
+                node["computedProperties"] = [
+                    {
+                        "name": "label",
+                        "format": "{0}+{1}",
+                        "replacements": ["baseName", "line"],
+                    }
+                ]
+                nodes[node["address"]] = node
+
+        if nodes:
+            return {
+                "type": "addDataBulk",
+                "nodes": list(nodes.values()),
+                "direction": "n2e",
+            }
 
 
 def raw_node_from_ea(ea, db_filename):
@@ -391,6 +453,9 @@ class GraffitiUIHooks(idaapi.UI_Hooks):
             idaapi.attach_action_to_popup(
                 form, popup, "graffiti:addXrefLinesToGraph", "Graffiti/"
             )
+            idaapi.attach_action_to_popup(
+                form, popup, "graffiti:addPacXrefLinesToGraph", "Graffiti/"
+            )
 
 
 class GrafitiIDBHooks(idaapi.IDB_Hooks):
@@ -459,6 +524,14 @@ class GraffitiPlugin(idaapi.plugin_t, idaapi.UI_Hooks):
             "Add line xrefs to graph",
         )
 
+        add_pac_xrefs_lines_to_graph_action_desc = idaapi.action_desc_t(
+            "graffiti:addPacXrefLinesToGraph",
+            "Graffiti: Add PAC line xrefs to graph",  # The action text.
+            AddPacXrefsHandler(),  # The action handler.
+            "Ctrl+Alt+P",  # Optional: the action shortcut
+            "Add PAC line xrefs to graph",
+        )
+
         enable_graffiti_sync_action_desc = idaapi.action_desc_t(
             "graffiti:ConnectToServer",
             "Graffiti: Connect to server",  # The action text.
@@ -478,6 +551,8 @@ class GraffitiPlugin(idaapi.plugin_t, idaapi.UI_Hooks):
         idaapi.register_action(add_xrefs_to_graph_action_desc)
         idaapi.unregister_action("graffiti:addXrefLinesToGraph")
         idaapi.register_action(add_xrefs_lines_to_graph_action_desc)
+        idaapi.unregister_action("graffiti:addPacXrefLinesToGraph")
+        idaapi.register_action(add_pac_xrefs_lines_to_graph_action_desc)
         idaapi.unregister_action("graffiti:ConnectToServer")
         idaapi.register_action(enable_graffiti_sync_action_desc)
 
