@@ -133,6 +133,9 @@ async def main():
                     print("Current status:")
                     print(repr(dispatcher))
 
+                # Run forever until Ctrl+C
+                await asyncio.Event().wait()
+
 
 def main_cli():
     try:
