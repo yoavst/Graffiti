@@ -1,3 +1,21 @@
+## 1.20.0
+
+## Server
+
+- [Bug] don't hang without stdin
+
+## Intellij
+
+- [Support] Support new intellij version
+
+## Jadx
+
+- [Bug] Add missing event handling for rename
+
+## IDA
+
+- [Feature] Support add line pac xrefs (for iOS, with cellebrite plugin).
+
 ## 1.19.0
 
 ## JADX
