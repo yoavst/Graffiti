@@ -67,6 +67,14 @@ def lengthy_send(sock, data):
 sock = None
 
 
+def _get_demangled_name(ea):
+    current_func_name = idc.get_func_name(ea)
+    demangled_func_name = idc.demangle_name(current_func_name, idc.INF_SHORT_DN)
+    if demangled_func_name:
+        demangled_func_name = demangled_func_name.split("(")[0]
+    return demangled_func_name or current_func_name
+
+
 class AddToGraphHandler(idaapi.action_handler_t):
     def __init__(self, force_func=True):
         idaapi.action_handler_t.__init__(self)
@@ -94,9 +102,7 @@ class AddToGraphHandler(idaapi.action_handler_t):
     def create_payload(self, ctx):
         if ctx.cur_func:
             # Get the name of the current function
-            current_func_name = idc.get_func_name(ctx.cur_func.start_ea)
-            demangled_func_name = idc.demangle_name(current_func_name, idc.INF_SHORT_DN)
-            func_name = demangled_func_name or current_func_name
+            func_name = _get_demangled_name(ctx.cur_func.start_ea)
 
             # Get the name of the current IDA database
             db_path = ida_nalt.get_input_file_path()
@@ -173,11 +179,7 @@ class AddXrefsHandler(AddToGraphHandler):
                 # Raw address
                 nodes[str(xref.frm)] = raw_node_from_ea(xref.frm, db_filename)
             else:
-                original_func_name = idc.get_func_name(f.start_ea)
-                demangled_func_name = idc.demangle_name(
-                    original_func_name, idc.INF_SHORT_DN
-                )
-                func_name = demangled_func_name or original_func_name
+                func_name = _get_demangled_name(f.start_ea)
 
                 node = {
                     "project": "IDA: " + db_filename,
@@ -236,11 +238,7 @@ class AddPacXrefsHandler(AddToGraphHandler):
                 # Raw
                 nodes[str(frm)] = raw_node_from_ea(frm, db_filename)
             else:
-                original_func_name = idc.get_func_name(f.start_ea)
-                demangled_func_name = idc.demangle_name(
-                    original_func_name, idc.INF_SHORT_DN
-                )
-                func_name = demangled_func_name or original_func_name
+                func_name = _get_demangled_name(f.start_ea)
 
                 node = {
                     "project": "IDA: " + db_filename,
