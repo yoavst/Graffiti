@@ -1504,7 +1504,11 @@ config:
       logEvent("No selected node");
       return;
     }
-    navigator.clipboard.writeText(this._selectedNode.overrideLabel ?? this._selectedNode.label);
+    let text = this._selectedNode.overrideLabel ?? this._selectedNode.label;
+    if (!this._selectedNode.extra.isComment && !this._selectedNode.extra.isMarkdown) {
+      text = text.replace("\n", "");
+    }
+    navigator.clipboard.writeText(text);
   }
 }
 
