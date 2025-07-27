@@ -69,7 +69,7 @@ sock = None
 
 def _get_demangled_name(ea):
     current_func_name = idc.get_func_name(ea)
-    demangled_func_name = idc.demangle_name(current_func_name, idc.INF_SHORT_DN)
+    demangled_func_name = idc.demangle_name(current_func_name, idc.get_inf_attr(idc.INF_SHORT_DEMNAMES))
     if demangled_func_name:
         demangled_func_name = demangled_func_name.split("(")[0]
     return demangled_func_name or current_func_name
