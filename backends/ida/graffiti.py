@@ -343,8 +343,13 @@ def bring_ida_to_foreground():
         # UnMinimize
         WindowMinimized = 0x00000001  # https://www.riverbankcomputing.com/static/Docs/PyQt5/api/qtcore/qt.html#WindowState
         cur_state = window.windowState()
-        new_state = cur_state & (~WindowMinimized)
-        window.setWindowState(new_state)
+        if isinstance(cur_state, int):
+            new_state = cur_state & (~WindowMinimized)
+            window.setWindowState(new_state)
+        else:
+            # IDA 9.2
+            from PySide6.QtCore import Qt
+            window.setWindowState(cur_state & (~Qt.WindowState.WindowMinimized))
 
         # Switch desktop / give keyboard control
 
