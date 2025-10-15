@@ -69,7 +69,7 @@ sock = None
 
 def _get_demangled_name(ea):
     current_func_name = idc.get_func_name(ea)
-    demangled_func_name = idc.demangle_name(current_func_name, idc.INF_SHORT_DN)
+    demangled_func_name = idc.demangle_name(current_func_name, idc.get_inf_attr(idc.INF_SHORT_DEMNAMES))
     if demangled_func_name:
         demangled_func_name = demangled_func_name.split("(")[0]
     return demangled_func_name or current_func_name
@@ -343,8 +343,13 @@ def bring_ida_to_foreground():
         # UnMinimize
         WindowMinimized = 0x00000001  # https://www.riverbankcomputing.com/static/Docs/PyQt5/api/qtcore/qt.html#WindowState
         cur_state = window.windowState()
-        new_state = cur_state & (~WindowMinimized)
-        window.setWindowState(new_state)
+        if isinstance(cur_state, int):
+            new_state = cur_state & (~WindowMinimized)
+            window.setWindowState(new_state)
+        else:
+            # IDA 9.2
+            from PySide6.QtCore import Qt
+            window.setWindowState(cur_state & (~Qt.WindowState.WindowMinimized))
 
         # Switch desktop / give keyboard control
 
