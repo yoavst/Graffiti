@@ -744,7 +744,7 @@ function initiateConnectionUrl() {
   const protocol =
     location.protocol == "https:" && !shouldForceWs() ? "wss" : "ws";
   const isDomain = strToBool(localStorage.getItem("isDomainMode"));
-  const domain = isDomain ? location.host : "localhost";
+  const domain = isDomain ? location.hostname : "localhost";
   const connectionUrl = `${protocol}://${domain}:8503`;
 
   urlInput.placeholder = connectionUrl;
