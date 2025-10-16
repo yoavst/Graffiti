@@ -489,7 +489,7 @@ config:
 
     const srcElement = this.#getDomElementFromId(src)
     const destElement = this.#getDomElementFromId(dest)
-    if (forceSrc || (!forceDest && this.#getDistance(event, srcElement) < this.#getDistance(event, destElement))) {
+    if (forceSrc || (!forceDest && this.#getDistance(event, srcElement) >= this.#getDistance(event, destElement))) {
       this.selectNode(src, false, true);
     } else {
       this.selectNode(dest, false, true);
