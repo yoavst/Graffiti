@@ -115,13 +115,15 @@ class TabController {
     this.zoom.zoomAbs(0, 0, 1);
   }
 
-  resetScrollingToSelected() {
+  resetScrollingToSelected(preserveZoom = false) {
     if (this._selectedNode == null) {
       this.resetScrolling();
     } else {
       this.selectNode(this._selectedNode.id, false, true);
       this.container.style.visibility = "hidden";
-      this.zoom.zoomAbs(0, 0, 1);
+      if (!preserveZoom) {
+        this.zoom.zoomAbs(0, 0, 1);
+      }
 
       setTimeout(() => {
         const selectedElement = this.#getDomElementFromId(
@@ -158,7 +160,7 @@ class TabController {
           const [newX, newY, newWidth] = this.#getRectPosition(selectedElement);
           const [zoomX, zoomY] = [newX - viewportRectX, newY - viewportRectY];
 
-          const ratio = Math.max(viewportHeight / 3 / newWidth, 3);
+          const ratio = preserveZoom ? this.zoom.getTransform().scale : Math.max(viewportHeight / 6 / newWidth, 3);
           this.zoom.zoomAbs(zoomX, zoomY, ratio);
 
           setTimeout(() => {
@@ -495,7 +497,7 @@ config:
       this.selectNode(dest, false, true);
     }
     if (shouldScroll) {
-      this.resetScrollingToSelected();
+      this.resetScrollingToSelected(true);
     }
   }
 
