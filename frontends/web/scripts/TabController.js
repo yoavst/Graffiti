@@ -483,12 +483,19 @@ config:
     }
   }
 
-  onEdgeClick(src, dst) {
-    const selectedId = this._selectedNode?.id;
-    if (selectedId == src) {
-      this.selectNode(dst, false, true);
-    } else if (selectedId == dst) {
+  onEdgeClick(src, dest, event, shouldScroll) {
+    const forceSrc = event.altKey
+    const forceDest = event.shiftKey
+
+    const srcElement = this.#getDomElementFromId(src)
+    const destElement = this.#getDomElementFromId(dest)
+    if (forceSrc || (!forceDest && this.#getDistance(event, srcElement) < this.#getDistance(event, destElement))) {
       this.selectNode(src, false, true);
+    } else {
+      this.selectNode(dest, false, true);
+    }
+    if (shouldScroll) {
+      this.resetScrollingToSelected();
     }
   }
 
@@ -721,7 +728,11 @@ config:
               const dst = parseInt(
                 classes.filter((it) => it.startsWith("LE-N"))[0].substring(4)
               );
-              _this.onEdgeRightClick(src, dst);
+              if (event.ctrlKey) {
+                _this.onEdgeClick(src, dst, event, true);
+              } else {
+                _this.onEdgeRightClick(src, dst);
+              }
               event.preventDefault();
               event.stopPropagation();
             });
@@ -733,7 +744,7 @@ config:
               const dst = parseInt(
                 classes.filter((it) => it.startsWith("LE-N"))[0].substring(4)
               );
-              _this.onEdgeClick(src, dst);
+              _this.onEdgeClick(src, dst, event, event.ctrlKey);
               event.preventDefault();
               event.stopPropagation();
             });
@@ -754,6 +765,16 @@ config:
           }
         }
       });
+  }
+
+  #getDistance(event, element) {
+    const rect = element.getBoundingClientRect();
+    const elemCenterX = rect.left + rect.width / 2;
+    const elemCenterY = rect.top + rect.height / 2;
+
+    const dx = event.clientX - elemCenterX;
+    const dy = event.clientY - elemCenterY;
+    return Math.sqrt(dx * dx + dy * dy);
   }
 
   reset(shouldSupportUndo = false) {
