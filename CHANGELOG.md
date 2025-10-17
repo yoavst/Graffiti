@@ -1,37 +1,50 @@
+## 1.21.0
+
+### IDA
+
+- [Bug] Don't copy parameters on demangled name
+
+### Web
+- [Feature] Jump to node by edge now works much better, and does not require selecting a node. It also preserves zoom level.
+- [Feature] Change the edge's shape by middle clicking on it
+- [Bug] Clicking on an edge is now much more simple.
+- [Bug] Don't copy newline when using ctrl+c
+- [Bug] If hosted on specific port, don't add this port to suggesting server address
+
 ## 1.20.0
 
-## Server
+### Server
 
 - [Bug] don't hang without stdin
 
-## Intellij
+### Intellij
 
 - [Support] Support new intellij version
 
-## Jadx
+### Jadx
 
 - [Bug] Add missing event handling for rename
 
-## IDA
+### IDA
 
 - [Feature] Support add line pac xrefs (for iOS, with cellebrite plugin).
 
 ## 1.19.0
 
-## JADX
+### JADX
 
 - [Feautre] Now we provide a plugin instead of a script
 
-## Ghidra
+### Ghidra
 
 - [Build] Use latest ghidra setup action (thanks to @antoniovazquezblanco)
 
-## Frontend
+### Frontend
 
 - [Feature] More noticable help button (Thanks to @yonlif)
 - [Bug] Don't run keyboard shortcuts if command palette is open
 
-## IDA
+### IDA
 
 - [Bug] Don't add multiple arrows for "add xrefs" action
 

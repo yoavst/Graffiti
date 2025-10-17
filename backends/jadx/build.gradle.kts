@@ -38,7 +38,7 @@ kotlin {
     }
 }
 
-version = "1.20.0"
+version = "1.21.0"
 
 tasks {
     val shadowJar = withType(ShadowJar::class) {
