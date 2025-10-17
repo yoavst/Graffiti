@@ -160,7 +160,7 @@ class TabController {
           const [newX, newY, newWidth] = this.#getRectPosition(selectedElement);
           const [zoomX, zoomY] = [newX - viewportRectX, newY - viewportRectY];
 
-          const ratio = preserveZoom ? this.zoom.getTransform().scale : Math.max(viewportHeight / 6 / newWidth, 3);
+          const ratio = preserveZoom ? this.zoom.getTransform().scale : Math.max(viewportHeight / 6 / newWidth, 2);
           this.zoom.zoomAbs(zoomX, zoomY, ratio);
 
           setTimeout(() => {
@@ -175,7 +175,7 @@ class TabController {
     // Group transformation
     const [transformX, transformY] = this.#getSvgTransform(element);
 
-    const rects = element.querySelectorAll(":scope > rect");
+    const rects = element.querySelectorAll(":scope > rect, rect");
     if (rects.length != 0) {
       // Inner rect relative position + size
       const innerRect = rects[0];
@@ -192,7 +192,7 @@ class TabController {
         rectHeight,
       ];
     }
-    const polygons = element.querySelectorAll(":scope > polygon");
+    const polygons = element.querySelectorAll(":scope > polygon, polygon");
     if (polygons.length != 0) {
       const innerPolygon = polygons[0];
       const bbox = innerPolygon.getBBox();
@@ -202,9 +202,7 @@ class TabController {
 
   #getRectPosition(element) {
     // Inner rect relative position + size
-    const innerRect = element.querySelectorAll(
-      ":scope > rect, :scope > polygon"
-    )[0];
+    const innerRect = element
     const boudingRect = innerRect.getBoundingClientRect();
     const [rectX, rectY] = [boudingRect.x, boudingRect.y];
     const [rectWidth, rectHeight] = [boudingRect.width, boudingRect.height];
@@ -279,6 +277,8 @@ config:
     theme: dark
     themeVariables:
         lineColor: '#c0c0c0'
+    flowchart:
+      ${gui ? "padding: 5" : ""}
 ---
 ` + s;
       }
@@ -394,9 +394,15 @@ config:
 
   modifyElkGraph(graph) {
     // Increase spacing for comments
-    graph.layoutOptions["org.eclipse.elk.spacing.commentNode"] = 30;
-    graph.layoutOptions["org.eclipse.elk.layered.considerModelOrder.strategy"] =
-      "PREFER_EDGES";
+    graph.layoutOptions = {
+      "elk.hierarchyHandling": "INCLUDE_CHILDREN",
+      "elk.layered.spacing.edgeNodeBetweenLayers": 30,
+      "elk.direction": "DOWN",
+      "org.eclipse.elk.spacing.commentNode": 30,
+      "org.eclipse.elk.layered.considerModelOrder.strategy": "PREFER_EDGES",
+      "org.eclipse.elk.padding": "[top=100, left=100, bottom=110, right=110]",
+      "org.eclipse.elk.nodeLabels.padding": "top=100, right=100, bottom=0, left=0"
+    }
 
     if (strToBool(localStorage.getItem("isCurvedEdges"))) {
       graph.layoutOptions["org.eclipse.elk.edgeRouting"] = "POLYLINE";
@@ -409,6 +415,9 @@ config:
     if (commentIds.size > 0) {
       graph.children.forEach((child) => {
         if (commentIds.has(child.id)) {
+          if (!('layoutOptions' in child)) {
+            child.layoutOptions = {};
+          }
           child.layoutOptions["org.eclipse.elk.commentBox"] = true;
         }
       });
@@ -716,20 +725,29 @@ config:
             .getElementsByTagName("diagram-div")[0]
             .shadowRoot.querySelectorAll(".flowchart-link"),
         ];
+
+        const getSrcDestFromEdge = (edge) => {
+          const dataId = edge.getAttribute("data-id");
+          const parts = dataId.split("_");
+          const src = parseInt(parts[1].substring(1));
+          const dest = parseInt(parts[2].substring(1));
+          return [src, dest];
+        }
+
         for (const edge of edgesArray) {
-          // fix pointer
-          edge.style.cursor = "pointer";
+          // Add a clone with a bigger stroke for easier clicking
+          const clone = edge.cloneNode();
+          clone.style.pointerEvents = 'stroke';
+          clone.style.cursor = 'pointer';
+          clone.style.strokeWidth = '20';
+          clone.style.stroke = 'transparent'
+          edge.parentNode.insertBefore(clone, edge);
+
           // add click event
           if (!edge.hasAttribute("has_listeners")) {
             edge.setAttribute("has_listeners", "true");
-            edge.addEventListener("contextmenu", (event) => {
-              const classes = [...edge.classList];
-              const src = parseInt(
-                classes.filter((it) => it.startsWith("LS-N"))[0].substring(4)
-              );
-              const dst = parseInt(
-                classes.filter((it) => it.startsWith("LE-N"))[0].substring(4)
-              );
+            clone.addEventListener("contextmenu", (event) => {
+              const [src, dst] = getSrcDestFromEdge(clone);
               if (event.ctrlKey) {
                 _this.onEdgeClick(src, dst, event, true);
               } else {
@@ -738,27 +756,15 @@ config:
               event.preventDefault();
               event.stopPropagation();
             });
-            edge.addEventListener("click", (event) => {
-              const classes = [...edge.classList];
-              const src = parseInt(
-                classes.filter((it) => it.startsWith("LS-N"))[0].substring(4)
-              );
-              const dst = parseInt(
-                classes.filter((it) => it.startsWith("LE-N"))[0].substring(4)
-              );
+            clone.addEventListener("click", (event) => {
+              const [src, dst] = getSrcDestFromEdge(clone);
               _this.onEdgeClick(src, dst, event, event.ctrlKey);
               event.preventDefault();
               event.stopPropagation();
             });
-            edge.addEventListener("auxclick", (event) => {
+            clone.addEventListener("auxclick", (event) => {
               if (event.button == 1) {
-                const classes = [...edge.classList];
-                const src = parseInt(
-                  classes.filter((it) => it.startsWith("LS-N"))[0].substring(4)
-                );
-                const dst = parseInt(
-                  classes.filter((it) => it.startsWith("LE-N"))[0].substring(4)
-                );
+                const [src, dst] = getSrcDestFromEdge(clone);
                 _this.onEdgeMiddleClick(src, dst);
                 event.preventDefault();
                 event.stopPropagation();
@@ -908,10 +914,11 @@ config:
           nodesContainer
         );
         const oldSelectedBorders =
-          oldSelectedElement.querySelector("rect, polygon");
+          oldSelectedElement.querySelector("rect, polygon, path");
 
         oldSelectedElement.style = "";
-        oldSelectedBorders.style = "";
+        oldSelectedBorders.style.stroke = "";
+        oldSelectedBorders.style.strokeWidth = "";
       }
       if (newId != null) {
         const newSelectedElement = this.#getDomElementFromId(
@@ -919,16 +926,15 @@ config:
           nodesContainer
         );
         const newSelectedBorders =
-          newSelectedElement.querySelector("rect, polygon");
+          newSelectedElement.querySelector("rect, polygon, path");
 
         newSelectedElement.style = "filter: brightness(90%);";
-        if (!searchSelect) {
-          const borderColor = isDarkMode() ? "#fff" : "#333";
-          newSelectedBorders.style = `stroke:${borderColor} !important; stroke-width:4px !important;`;
-        } else {
-          const borderColor = "#B71C1C";
-          newSelectedBorders.style = `stroke:${borderColor} !important; stroke-width:8px !important;`;
+        let strokeWidth = "4px";
+        if (searchSelect) {
+          newSelectedBorders.style.setProperty("stroke", "#B71C1C", "important");
+          strokeWidth = "8px";
         }
+          newSelectedBorders.style.setProperty("stroke-width", strokeWidth, "important");
       }
     }
   }
@@ -1620,7 +1626,9 @@ class MermaidDiv extends HTMLElement {
     const shadowRoot = this.attachShadow({ mode: "open" });
 
     const sheet = new CSSStyleSheet();
-    sheet.replaceSync("* { outline: 0px solid transparent !important;");
+    sheet.replaceSync(`
+      * { outline: 0px solid transparent !important; }
+    `);
     shadowRoot.adoptedStyleSheets = [sheet];
   }
 }
