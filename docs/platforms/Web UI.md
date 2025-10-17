@@ -9,6 +9,7 @@ Right click the button on the top right of the screen to connect to the local py
 - Right clicking a node will open it in the editor (as long it is connected)
 - You can use `Ctrl+Z` and `Ctrl+Shift+Z` to undo/redo your actions
 - Use `Ctrl+S` to save your graph to file. You can import it by dragging it to the screen.
+- Middle clicking on an edge will swap arrow type.
 - Use Ctrl+Shift+P to open the command palette for shortcuts and new actions
 
 ## Advance features
@@ -23,6 +24,7 @@ Right click the button on the top right of the screen to connect to the local py
 - Use `Ctrl+f` or `Ctrl+Shift+f` to search a node
 - Middle clicking a node will swap a node with the selected node (same parent). ctrl for same son, shift for id swap
 - You can drag and drop tabs to reorder them
+- Ctrl + Middle click on edge will swap source and dest.
 
 ## Deploy
 

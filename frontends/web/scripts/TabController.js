@@ -8,6 +8,7 @@ const OVERRIDE_NODE_LABEL = "overrideNodeLabel";
 const CHANGE_THEME = "changeTheme";
 const SWAP_EDGES = "swapEdges";
 const SWAP_IDS = "swapIds";
+const CHANGE_ARROW = "changeArrow";
 const MARKER = "marker";
 
 const THEMES = [
@@ -23,6 +24,9 @@ const THEMES = [
 ];
 const MARKDOWN_THEME = ["white", "black", "#e5e5e5"];
 const COMMENT_THEME = ["#bfbfbf", "black", "#858585"];
+
+const ARROWS = ["-->", "-.->", "--x"];
+const DEFAULT_ARROW = ARROWS[0];
 
 const HISTORY_MARKER = { type: MARKER, data: {} };
 
@@ -329,13 +333,18 @@ config:
       for (const edge of edges) {
         if (commentNodesSet.has(edge.to) || commentNodesSet.has(edge.from)) {
           s += `N${edge.from} --- N${edge.to}\n`;
-        } else if ("label" in edge) {
-          s += `N${edge.from}-->|"${escapeHtml(edge.label, gui)}"|N${
-            edge.to
-          }\n`;
         } else {
-          s += `N${edge.from} --> N${edge.to}\n`;
+          const arrow = edge.arrow ?? DEFAULT_ARROW;
+          if ("label" in edge) {
+            s += `N${edge.from}${arrow}|"${escapeHtml(edge.label, gui)}"|N${
+              edge.to
+            }\n`;
+          } else {
+            s += `N${edge.from} ${arrow} N${edge.to}\n`;
+          }
         }
+        
+        
       }
 
       // Add themes
@@ -559,19 +568,37 @@ config:
     });
   }
 
-  onEdgeMiddleClick(src, dst) {
+  onEdgeMiddleClick(src, dst, ctrlKey) {
     const edge = this.edges.filter(
       (item) => item.from == src && item.to == dst
     )[0];
 
-    this.redoHistory = [];
-    this.addUndoMarker();
-    this.undoHistory.push({ type: REMOVE_EDGE, data: { ...edge } });
 
-    edge.from = dst;
-    edge.to = src;
+    if (ctrlKey) {
+      // Swap edge direction
+      this.redoHistory = [];
+      this.addUndoMarker();
+      this.undoHistory.push({ type: REMOVE_EDGE, data: { ...edge } });
 
-    this.undoHistory.push({ type: ADD_EDGE, data: { ...edge } });
+      edge.from = dst;
+      edge.to = src;
+
+      this.undoHistory.push({ type: ADD_EDGE, data: { ...edge } });
+    } else {
+      // Change arrow type
+      const edgeCurrentArrow = edge.arrow || DEFAULT_ARROW;
+      const currentArrowIndex = ARROWS.indexOf(edgeCurrentArrow);
+      const nextArrow = ARROWS[(currentArrowIndex + 1) % ARROWS.length];
+
+      this.redoHistory = [];
+      this.addUndoMarker();
+      this.undoHistory.push({
+        type: CHANGE_ARROW, data:
+          { id: edge.id, oldArrow: edgeCurrentArrow, newArrow: nextArrow }
+      });
+
+      edge.arrow = nextArrow;
+    }
 
     this.cachedMermaid = null;
     this.draw();
@@ -765,7 +792,7 @@ config:
             clone.addEventListener("auxclick", (event) => {
               if (event.button == 1) {
                 const [src, dst] = getSrcDestFromEdge(clone);
-                _this.onEdgeMiddleClick(src, dst);
+                _this.onEdgeMiddleClick(src, dst, event.ctrlKey);
                 event.preventDefault();
                 event.stopPropagation();
               }
@@ -1080,6 +1107,10 @@ config:
           const { id, oldLabel } = data;
           const edge = this.edges.get(id);
           this.#setLabelForEdge(edge, oldLabel);
+        } else if (type == CHANGE_ARROW) {
+          const { id, oldArrow } = data;
+          const edge = this.edges.get(id);
+          edge.arrow = oldArrow
         } else if (type == CHANGE_NODE_LABEL) {
           const { id, oldLabel } = data;
           const node = this.nodes.get(id);
@@ -1136,6 +1167,10 @@ config:
           const { id, newLabel } = data;
           const edge = this.edges.get(id);
           this.#setLabelForEdge(edge, newLabel);
+        } else if (type == CHANGE_ARROW) {
+          const { id, newArrow } = data;
+          const edge = this.edges.get(id);
+          edge.arrow = newArrow
         } else if (type == CHANGE_NODE_LABEL) {
           const { id, newLabel } = data;
           const node = this.nodes.get(id);
