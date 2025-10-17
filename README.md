@@ -127,22 +127,21 @@ To make it more user friendly, the backends cache the token under `~/.graffiti/t
 ## Patches
 
 ### Mermaid
-
-The project apply the following patch to support comments on the web frontend:
+The project uses this [patch](https://github.com/typora/typora-issues/issues/6174#issuecomment-2493578253) to include elk in the minified mermaid JS. In addition, we add the following patch  to support comments on the web frontend:
 
 ```diff
-diff --git a/packages/mermaid/src/diagrams/flowchart/elk/flowRenderer-elk.js b/packages/mermaid/src/diagrams/flowchart/elk/flowRenderer-elk.js
-index 5ed06723..dc0fde0e 100644
---- a/packages/mermaid/src/diagrams/flowchart/elk/flowRenderer-elk.js
-+++ b/packages/mermaid/src/diagrams/flowchart/elk/flowRenderer-elk.js
-@@ -902,6 +902,7 @@ export const draw = async function (text, id, _version, diagObj) {
+diff --git a/packages/mermaid-layout-elk/src/render.ts b/packages/mermaid-layout-elk/src/render.ts
+index 2cb12e035..95434bc72 100644
+--- a/packages/mermaid-layout-elk/src/render.ts
++++ b/packages/mermaid-layout-elk/src/render.ts
+@@ -867,6 +867,7 @@ export const render = async (
+       });
+     }
    });
-
-   insertChildren(graph.children, parentLookupDb);
-+  if (window.elk_beforeCallback) window.elk_beforeCallback(id, graph)
-   log.info('after layout', JSON.stringify(graph, null, 2));
-   const g = await elk.layout(graph);
-   drawNodes(0, 0, g.children, svg, subGraphsEl, diagObj, 0);
++  if ("elk_beforeCallback" in window) (window.elk_beforeCallback as any)(data4Layout.diagramId, elkGraph);
+ 
+   let g;
+   try {
 ```
 
 ### NinjaKeys
