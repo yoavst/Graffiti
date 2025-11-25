@@ -274,18 +274,16 @@ class TabController {
           : "flowchart TD\n"
         : "graph TD\n";
 
-      if (isDarkMode()) {
         s =
           `---
 config:
-    theme: dark
+    theme: ${isDarkMode ? "dark" : "default"}
     themeVariables:
         lineColor: '#c0c0c0'
     flowchart:
       ${gui ? "padding: 5" : ""}
 ---
 ` + s;
-      }
 
       // Add nodes
       for (const node of nodes) {
