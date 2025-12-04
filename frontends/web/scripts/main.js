@@ -701,7 +701,7 @@ function main() {
 
   // Initiate tabs
   const tabsController = new TabsController(
-    document.getElementsByClassName("tabs")[0],
+    document.getElementsByClassName("tab-list-wrapper")[0],
     document.getElementsByClassName("view")[0],
     document.getElementById("context-menu")
   );

@@ -106,23 +106,67 @@ body {
 }
 
 #addTab {
-  float: right;
+  /* don't float when using flex layout for .tabs; keep as fixed-size control */
+  float: none;
+  order: 2;
+  flex: 0 0 auto;
 }
 
 /* Style the tab */
 .tabs {
-  overflow: hidden;
+  /* Use flex so we can make the inner tab list horizontally scrollable
+     and avoid wrapping into additional rows. */
+  display: flex;
+  align-items: center;
   background-color: var(--primary-color);
+}
+
+/* The container that holds the tab buttons. It will stay on a single row
+   and allow horizontal scrolling when there are too many tabs. */
+.tab-list-wrapper {
+  order: 1;
+  display: flex;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  align-items: center;
+  flex: 1 1 auto;
+}
+
+/* Make sure individual buttons inside the wrapper don't float/wrap */
+.tab-list-wrapper button {
+  float: none;
+  display: inline-flex;
+}
+
+/* Hide the visible scrollbar but keep scrolling functional.
+   - Firefox: scrollbar-width: none;
+   - IE/Edge: -ms-overflow-style: none;
+   - WebKit: set scrollbar height to 0 so no line appears. */
+.tab-list-wrapper {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
+.tab-list-wrapper::-webkit-scrollbar {
+  height: 0;
+  background: transparent;
 }
 
 .tabs .divider {
   background-color: inherit;
-  float: left;
+  /* Use flex sizing instead of float so the divider keeps its intended
+     dimensions inside the .tabs flex container. */
+  float: none;
   border: white solid 2px;
   outline: none;
   cursor: grabbing;
   height: 48px;
   width: 20px;
+  min-width: 20px;
+  box-sizing: content-box;
+  flex: 0 0 20px; /* don't grow or shrink; keep fixed width */
+  align-self: stretch; /* allow it to span the container height if needed */
+  margin: 0 6px;
 }
 
 .tabs .divider.dragover {
