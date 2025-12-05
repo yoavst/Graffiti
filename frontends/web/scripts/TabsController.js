@@ -384,11 +384,27 @@ class TabsController {
     const query = (event.target && event.target.value)
       ? event.target.value.toLowerCase()
       : "";
+    const iconElement = this.tabsSearchView.querySelector(".tab-search-button img")
 
+    var has_matches = false;
     this.tabs.forEach(({ name, tabElement }) => {
       const matches = !query || name.toLowerCase().includes(query);
+      if (matches) {
+        has_matches = true;
+      }
       tabElement.style.display = matches ? "" : "none";
     });
+
+    // Update the search icon color based on whether there are matches.
+    if (!has_matches) {
+      iconElement.setAttribute('data-icon-state', "gray");
+    } else {
+      if (query) {
+        iconElement.setAttribute('data-icon-state', "green");
+      } else {
+        iconElement.setAttribute('data-icon-state', "white");
+      }
+    }
   }
 
   #addEmptyTab() {

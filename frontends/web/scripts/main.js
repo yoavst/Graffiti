@@ -702,7 +702,7 @@ function main() {
   // Initiate tabs
   const tabsController = new TabsController(
     document.getElementsByClassName("tab-list-wrapper")[0],
-    document.getElementsByClassName("tab-search-input")[0],
+    document.getElementsByClassName("tab-search")[0],
     document.getElementsByClassName("view")[0],
     document.getElementById("context-menu")
   );

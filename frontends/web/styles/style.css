@@ -128,7 +128,6 @@ body {
   display: flex;
   flex-wrap: nowrap;
   overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
   align-items: center;
   flex: 1 1 auto;
 }
@@ -137,19 +136,6 @@ body {
 .tab-list-wrapper button {
   float: none;
   display: inline-flex;
-}
-
-/* Hide the visible scrollbar but keep scrolling functional.
-   - Firefox: scrollbar-width: none;
-   - IE/Edge: -ms-overflow-style: none;
-   - WebKit: set scrollbar height to 0 so no line appears. */
-.tab-list-wrapper {
-  -ms-overflow-style: none; /* IE and Edge */
-  scrollbar-width: none; /* Firefox */
-}
-.tab-list-wrapper::-webkit-scrollbar {
-  height: 0;
-  background: transparent;
 }
 
 /* Collapsible search box inside the tabs area. It shows only the icon
@@ -166,7 +152,6 @@ body {
   transition: width 200ms ease;
   flex: 0 0 auto;
 }
-/* These three keep the search tab bar fun to use */
 .tab-search:focus-within {
   width: 200px;
 }
@@ -174,8 +159,19 @@ body {
   width: 200px;
   background-color: var(--primary-color-hover);
 }
-.tab-search-input:not(:placeholder-shown) {
-  width: 200px;
+
+.tab-search-button img {
+  filter: none; 
+}
+
+.tab-search-button img[data-icon-state="white"] {
+  filter: brightness(0) saturate(100%) invert(100%) sepia(11%) saturate(0%) hue-rotate(14deg) brightness(103%) contrast(100%)
+}
+.tab-search-button img[data-icon-state="gray"] {
+  filter: brightness(0) saturate(100%) invert(67%) sepia(82%) saturate(0%) hue-rotate(133deg) brightness(95%) contrast(93%)
+}
+.tab-search-button img[data-icon-state="green"] {
+  filter:  brightness(0) saturate(100%) invert(92%) sepia(15%) saturate(461%) hue-rotate(46deg) brightness(102%) contrast(102%);
 }
 
 .tab-search-button {
