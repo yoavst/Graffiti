@@ -163,12 +163,21 @@ body {
   border-radius: 6px;
   overflow: hidden;
   width: 36px;
-  transition: width 220ms ease;
+  transition: width 200ms ease;
   flex: 0 0 auto;
 }
+/* These three keep the search tab bar fun to use */
 .tab-search:focus-within {
-  width: 220px;
+  width: 200px;
 }
+.tab-search:hover {
+  width: 200px;
+  background-color: var(--primary-color-hover);
+}
+.tab-search-input:not(:placeholder-shown) {
+  width: 200px;
+}
+
 .tab-search-button {
   width: 36px;
   background: transparent;
