@@ -1,9 +1,10 @@
 const STORAGE_VERSION = 2;
 
 class TabsController {
-  constructor(tabsView, contentView, contextMenu) {
+  constructor(tabsView, tabsSearchView, contentView, contextMenu) {
     this.tabs = [];
     this.tabsView = tabsView;
+    this.tabsSearchView = tabsSearchView;
     this.contentView = contentView;
     this.contextMenu = contextMenu;
     this.contextMenuOpenedForTab = null;
@@ -306,6 +307,26 @@ class TabsController {
         }
       });
     };
+
+
+    this.tabsSearchView.addEventListener("input", (event) => {
+      // Hide context menu
+      realThis.contextMenuOpenedForTab = null;
+      realThis.contextMenu.classList.remove("visible");
+
+      setTimeout(() => {
+        realThis.onSearchTabs(event);
+      });
+    });
+    this.tabsSearchView.addEventListener("blur", (event) => {
+      // Hide context menu
+      realThis.contextMenuOpenedForTab = null;
+      realThis.contextMenu.classList.remove("visible");
+
+      setTimeout(() => {
+        realThis.clearTabSearch();
+      });
+    });
   }
 
   removeCurrentTab() {
@@ -359,6 +380,30 @@ class TabsController {
         html: projects.join("<br>"),
         confirmButtonText: "OK",
       });
+    }
+  }
+
+  onSearchTabs(event) {
+    // Read the current query from the provided search input element.
+    const query = (event.target && event.target.value)
+      ? event.target.value.toLowerCase()
+      : "";
+
+    this.tabs.forEach(({ name, tabElement }) => {
+      const matches = !query || name.toLowerCase().includes(query);
+      tabElement.style.display = matches ? "" : "none";
+      // TODO: If there is a divider immediately before this tab, hide/show it too
+    });
+  }
+
+  clearTabSearch() {
+    // Clearing the tab is not only a feature - 
+    // for now it solves the need to deal with dividers
+    if (this.tabsSearchView) {
+      // Set the value property to an empty string to clear the text
+      console.log('Clearing tab search input');
+      this.tabsSearchView.value = '';
+      this.tabsSearchView.dispatchEvent(new Event('input'));
     }
   }
 

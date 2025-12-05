@@ -152,6 +152,48 @@ body {
   background: transparent;
 }
 
+/* Collapsible search box inside the tabs area. It shows only the icon
+   when collapsed and expands to a fixed width when focused
+*/
+.tab-search {
+  order: 0;
+  display: inline-flex;
+  align-items: center;
+  background: transparent;
+  border-radius: 6px;
+  overflow: hidden;
+  width: 36px;
+  transition: width 220ms ease;
+  flex: 0 0 auto;
+}
+.tab-search:focus-within {
+  width: 220px;
+}
+.tab-search-button {
+  width: 36px;
+  background: transparent;
+  border: none;
+  color: var(--text-color);
+  font-size: 16px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.tab-search-input {
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text-color);
+  padding: 8px 10px;
+  font-size: 14px;
+  width: 100%;
+  min-width: 0;
+}
+.tab-search-input::placeholder {
+  color: rgba(255,255,255,0.7);
+}
+
 .tabs .divider {
   background-color: inherit;
   /* Use flex sizing instead of float so the divider keeps its intended

@@ -169,7 +169,14 @@
       <div class="clearfix">&nbsp;</div>
     </header>
     <div class="tabs">
+      <!-- Leftmost tab search: collapsed to icon, expands on focus -->
+      <div class="tab-search">
+        <button class="tab-search-button" aria-label="Search tabs">🔍</button>
+        <input class="tab-search-input" type="text" placeholder="tab search" />
+      </div>
+      <!-- Rightmost tab add -->
       <button id="addTab" onclick="event_addTab()">+</button>
+      <!-- Tab list at the middle -->
       <div class="tab-list-wrapper">
       </div>
     </div>
