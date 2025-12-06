@@ -110,14 +110,21 @@ body {
   float: none;
   order: 2;
   flex: 0 0 auto;
+  align-self: flex-start;
 }
 
 /* Style the tab */
 .tabs {
   /* Use flex so we can make the inner tab list horizontally scrollable
-     and avoid wrapping into additional rows. */
+    and avoid wrapping into additional rows. */
   display: flex;
-  align-items: center;
+  /* Keep children aligned to the top so controls don't vertically center
+    when the tab list grows to multiple rows. */
+  float: none;
+  order: 2;
+  flex: 0 0 auto;
+  align-self: flex-start;
+  align-items: flex-start;
   background-color: var(--primary-color);
 }
 
@@ -132,11 +139,37 @@ body {
   flex: 1 1 auto;
 }
 
+/* When `.multirow` is applied the tab list is allowed to wrap into
+   multiple rows instead of remaining on a single horizontally-scrollable
+   row. */
+.tab-list-wrapper.multirow {
+  flex-wrap: wrap;
+  overflow-x: visible;
+}
+
 /* Make sure individual buttons inside the wrapper don't float/wrap */
 .tab-list-wrapper button {
   float: none;
   display: inline-flex;
 }
+
+.tab-list-wrapper.multirow button {
+  flex: 0 0 auto;
+}
+
+
+/* Hide the visible scrollbar but keep scrolling functional.
+   - Firefox: scrollbar-width: none;
+   - IE/Edge: -ms-overflow-style: none;
+   - WebKit: set scrollbar height to 0 so no line appears. */
+/* .tab-list-wrapper {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.tab-list-wrapper::-webkit-scrollbar {
+  height: 0;
+  background: transparent;
+} */
 
 /* Collapsible search box inside the tabs area. It shows only the icon
    when collapsed and expands to a fixed width when focused
@@ -151,11 +184,31 @@ body {
   width: 36px;
   transition: width 200ms ease;
   flex: 0 0 auto;
+  align-self: flex-start;
 }
 .tab-search:focus-within {
   width: 200px;
 }
 .tab-search:hover {
+  width: 200px;
+  background-color: var(--primary-color-hover);
+}
+
+/* When the tab list is in multi-row mode, overlay the search control so
+   it doesn't push the add/arrow buttons. No reserved space is used. */
+.tabs.multirow-mode {
+  position: relative;
+}
+.tabs.multirow-mode .tab-search {
+  position: absolute;
+  left: 8px;
+  top: 6px;
+  width: 36px;
+  transform: none;
+  z-index: 2;
+}
+.tabs.multirow-mode .tab-search:focus-within,
+.tabs.multirow-mode .tab-search:hover {
   width: 200px;
   background-color: var(--primary-color-hover);
 }
@@ -185,6 +238,19 @@ body {
   align-items: center;
   justify-content: center;
 }
+
+/* Arrow button shown when tab list is scrollable */
+.tab-arrow-button {
+  float: none;
+  order: 2;
+  flex: 0 0 auto;
+  align-self: flex-start;
+}
+.tab-arrow-button img {
+  display: block;
+  filter: brightness(0) saturate(100%) invert(100%) sepia(11%) saturate(0%) hue-rotate(14deg) brightness(103%) contrast(100%)
+}
+
 .tab-search-input {
   background: transparent;
   border: none;

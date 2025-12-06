@@ -10,6 +10,7 @@ class TabsController {
     this.contextMenuOpenedForTab = null;
     this.selectedTab = null;
     this.tabIdCounter = 0;
+    this.updateTabArrowVisibility = () => {};
 
     this.#initiateContextMenu();
   }
@@ -323,8 +324,46 @@ class TabsController {
         realThis.onSearchTabs(event);
       });
     });
+
+    const tabsScrollBtn = document.getElementsByClassName("tab-arrow-button")[0];
+    if (!tabsScrollBtn || !this.tabsView) return;
+
+    console.log("Initiating tab arrow visibility controller");
+    this.updateTabArrowVisibility = () => {
+      // If the content is wider than the visible area, show the button.
+      const overflowing = this.tabsView.scrollWidth > this.tabsView.clientWidth + 1;
+      const inMultiRow = this.tabsView.classList.contains("multirow");
+      console.log("Updating tab arrow visibility:", { overflowing, inMultiRow });
+      tabsScrollBtn.style.display = overflowing | inMultiRow ? "" : "none";
+    };
+
+    // Initial update
+    setTimeout(this.updateTabArrowVisibility, 0);
+
+    // Update on window resize
+    window.addEventListener("resize", this.updateTabArrowVisibility);
+
+    // Observe changes to the tab list (tabs added/removed, style changes from search)
+    try {
+      const mo = new MutationObserver(() => this.updateTabArrowVisibility());
+      mo.observe(tabListWrapper, {
+        childList: true,
+        subtree: true,
+        attributes: true,
+        attributeFilter: ["style", "class"],
+      });
+    } catch (err) {
+      // MutationObserver shouldn't fail in modern browsers; fail silently.
+    }
   }
 
+  toggleTabBarMode() {
+    console.log("Toggling tab bar mode");
+    const tabListWrapper = this.tabsView;
+    tabListWrapper.classList.toggle("multirow");
+  }
+
+  
   removeCurrentTab() {
     this.#removeTab(this.selectedTab);
   }
@@ -405,6 +444,8 @@ class TabsController {
         iconElement.setAttribute('data-icon-state', "white");
       }
     }
+    // Search results may have changed tab list size; update arrow visibility.
+    this.updateTabArrowVisibility();
   }
 
   #addEmptyTab() {
