@@ -10,7 +10,6 @@ class TabsController {
     this.contextMenuOpenedForTab = null;
     this.selectedTab = null;
     this.tabIdCounter = 0;
-    this.updateTabArrowVisibility = () => {};
 
     this.#initiateContextMenu();
   }
@@ -325,7 +324,7 @@ class TabsController {
       });
     });
 
-    const tabsScrollBtn = document.getElementsByClassName("tab-arrow-button")[0];
+    const tabsScrollBtn = document.getElementsByClassName("tab-expand-button")[0];
     if (!tabsScrollBtn || !this.tabsView) return;
 
     console.log("Initiating tab arrow visibility controller");
@@ -358,9 +357,13 @@ class TabsController {
   }
 
   toggleTabBarMode() {
-    console.log("Toggling tab bar mode");
     const tabListWrapper = this.tabsView;
     tabListWrapper.classList.toggle("multirow");
+    const iconElement = document.getElementsByClassName("tab-expand-button")[0].querySelector("img");
+    iconElement.setAttribute(
+      "expand-icon-state",
+      tabListWrapper.classList.contains("multirow") ? "up" : "down"
+    );
   }
 
   
