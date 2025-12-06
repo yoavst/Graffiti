@@ -445,6 +445,16 @@ class CommandPalette {
         handler: () => {
           event_copyNodeText();
         }
+      },
+      {
+        id: "ExpandTabBar",
+        title: "Expand tab bar to show all tabs or collapse it",
+        hotkey: "Ctrl+t",
+        icon: iconFor("upside_down_triangle"),
+        section: "Tabs",
+        handler: () => {
+          event_toggleTabBarMode();
+        }
       }
     ];
   }

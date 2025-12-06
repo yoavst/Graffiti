@@ -324,15 +324,14 @@ class TabsController {
       });
     });
 
+    // TODO: maybe fetch that in a nicer way for class params
     const tabsScrollBtn = document.getElementsByClassName("tab-expand-button")[0];
     if (!tabsScrollBtn || !this.tabsView) return;
 
-    console.log("Initiating tab arrow visibility controller");
     this.updateTabArrowVisibility = () => {
       // If the content is wider than the visible area, show the button.
       const overflowing = this.tabsView.scrollWidth > this.tabsView.clientWidth + 1;
       const inMultiRow = this.tabsView.classList.contains("multirow");
-      console.log("Updating tab arrow visibility:", { overflowing, inMultiRow });
       tabsScrollBtn.style.display = overflowing | inMultiRow ? "" : "none";
     };
 
