@@ -105,24 +105,157 @@ body {
   background: #343434;
 }
 
-#addTab {
-  float: right;
+.add-tab-button {
+  /* don't float when using flex layout for .tabs; keep as fixed-size control */
+  float: none;
+  order: 2;
+  flex: 0 0 auto;
+  align-self: flex-start;
+  height: 52px;
+  width: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* Style the tab */
 .tabs {
-  overflow: hidden;
+  display: flex;
+  float: none;
+  order: 2;
+  flex: 0 0 auto;
   background-color: var(--primary-color);
+}
+
+/* The container that holds the tab buttons. It will stay on a single row
+   and allow horizontal scrolling when there are too many tabs. */
+.tab-list-wrapper {
+  order: 1;
+  display: flex;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  flex: 1 1 auto;
+}
+
+/* When `.multirow` is applied the tab list is allowed to wrap into
+   multiple rows instead of remaining on a single horizontally-scrollable
+   row. */
+.tab-list-wrapper.multirow {
+  flex-wrap: wrap;
+  overflow-x: visible;
+}
+
+/* Make sure individual buttons inside the wrapper don't float/wrap */
+.tab-list-wrapper button {
+  float: none;
+  display: inline-flex;
+}
+
+.tab-list-wrapper.multirow button {
+  flex: 0 0 auto;
+}
+
+/* Collapsible search box inside the tabs area. It shows only the icon
+   when collapsed and expands to a fixed width when focused
+*/
+.tab-search {
+  order: 0;
+  display: inline-flex;
+  align-items: center;
+  background: transparent;
+  border-radius: 6px;
+  overflow: hidden;
+  width: 36px;
+  transition: width 200ms ease;
+  flex: 0 0 auto;
+  align-self: flex-start;
+}
+.tab-search:focus-within {
+  width: 200px;
+}
+.tab-search:hover {
+  width: 200px;
+  background-color: var(--primary-color-hover);
+}
+
+.tab-search-button img {
+  filter: none; 
+}
+
+.tab-search-button img[data-icon-state="white"] {
+  filter: brightness(0) saturate(100%) invert(100%) sepia(11%) saturate(0%) hue-rotate(14deg) brightness(103%) contrast(100%)
+}
+.tab-search-button img[data-icon-state="gray"] {
+  filter: brightness(0) saturate(100%) invert(67%) sepia(82%) saturate(0%) hue-rotate(133deg) brightness(95%) contrast(93%)
+}
+.tab-search-button img[data-icon-state="green"] {
+  filter:  brightness(0) saturate(100%) invert(92%) sepia(15%) saturate(461%) hue-rotate(46deg) brightness(102%) contrast(102%);
+}
+
+.tab-search-button {
+  width: 36px;
+  background: transparent;
+  border: none;
+  color: var(--text-color);
+  font-size: 16px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Arrow button shown when tab list is scrollable */
+.tab-expand-button {
+  float: none;
+  order: 2;
+  flex: 0 0 auto;
+  align-self: flex-start;
+  width: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.tab-expand-button img {
+  display: block;
+  transform: none;
+  filter: brightness(0) saturate(100%) invert(100%) sepia(11%) saturate(0%) hue-rotate(14deg) brightness(103%) contrast(100%)
+}
+.tab-expand-button img[expand-icon-state="down"] {
+  transform: none;
+}
+.tab-expand-button img[expand-icon-state="up"] {
+  transform: scaleY(-1);;
+}
+
+.tab-search-input {
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text-color);
+  padding: 8px 10px;
+  font-size: 14px;
+  width: 100%;
+  min-width: 0;
+}
+.tab-search-input::placeholder {
+  color: rgba(255,255,255,0.7);
 }
 
 .tabs .divider {
   background-color: inherit;
-  float: left;
+  /* Use flex sizing instead of float so the divider keeps its intended
+     dimensions inside the .tabs flex container. */
+  float: none;
   border: white solid 2px;
   outline: none;
   cursor: grabbing;
   height: 48px;
   width: 20px;
+  min-width: 20px;
+  box-sizing: content-box;
+  flex: 0 0 20px; /* don't grow or shrink; keep fixed width */
+  align-self: stretch; /* allow it to span the container height if needed */
+  margin: 0 6px;
 }
 
 .tabs .divider.dragover {

@@ -169,7 +169,24 @@
       <div class="clearfix">&nbsp;</div>
     </header>
     <div class="tabs">
-      <button id="addTab" onclick="event_addTab()">+</button>
+      <!-- Leftmost tab search: collapsed to icon, expands on focus -->
+      <div class="tab-search">
+        <button class="tab-search-button" aria-label="Search tabs"  title="Search tabs">
+           <img data-icon-state="white"
+            src="images/icons/icon_search.svg"
+          />
+        </button>
+        <input class="tab-search-input" type="text" placeholder="Tab Search" />
+      </div>
+      <!-- Rightmost tab add -->
+      <!-- Arrow appears when tab list is horizontally scrollable -->
+      <button id="tabExpand" class="tab-expand-button" onclick="event_toggleTabBarMode()" title="Show all tabs">
+        <img src="images/icons/icon_upside_down_triangle.svg" expand-icon-state="down" alt="Show all tabs" />
+      </button>
+      <button id="addTab" class="add-tab-button" onclick="event_addTab()">+</button>
+      <!-- Tab list at the middle -->
+      <div class="tab-list-wrapper">
+      </div>
     </div>
     <div id="context-menu">
       <div class="item" id="renameTab">Rename</div>

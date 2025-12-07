@@ -634,6 +634,10 @@ function event_showChangelog() {
     });
 }
 
+function event_toggleTabBarMode() {
+  tabsController.toggleTabBarMode();
+}
+
 function event_showManageTokenDialog(isFromAuthEvent = false) {
   const currentToken = localStorage.getItem(LOCAL_STORAGE_TOKEN_KEY);
   const isWindows = navigator.userAgent.includes("Windows NT");
@@ -701,7 +705,8 @@ function main() {
 
   // Initiate tabs
   const tabsController = new TabsController(
-    document.getElementsByClassName("tabs")[0],
+    document.getElementsByClassName("tab-list-wrapper")[0],
+    document.getElementsByClassName("tab-search")[0],
     document.getElementsByClassName("view")[0],
     document.getElementById("context-menu")
   );
@@ -755,7 +760,7 @@ function initiateConnectionUrl() {
 
 function initiateHotkeys() {
   hotkeys(
-    "esc,ctrl+z,ctrl+shift+z,ctrl+y,ctrl+s,ctrl+alt+s,ctrl+o,ctrl+i,ctrl+alt+shift+i,ctrl+q,ctrl+f,ctrl+shift+f,ctrl+k,ctrl+e,ctrl+shift+q,ctrl+shift+p,delete,ctrl+delete,ctrl+c,home,ctrl+home,shift+`,/,shift+/,ctrl+shift+/,ctrl+a,1,2,3,4,5,6,7,8,9",
+    "esc,ctrl+z,ctrl+shift+z,ctrl+y,ctrl+s,ctrl+alt+s,ctrl+o,ctrl+i,ctrl+alt+shift+i,ctrl+q,ctrl+f,ctrl+shift+f,ctrl+k,ctrl+e,ctrl+shift+q,ctrl+shift+p,ctrl+t,delete,ctrl+delete,ctrl+c,home,ctrl+home,shift+`,/,shift+/,ctrl+shift+/,ctrl+a,1,2,3,4,5,6,7,8,9",
     function (event, handler) {
       if (!window.commandPalette.isOpen()) {
         switch (handler.key) {
@@ -792,6 +797,9 @@ function initiateHotkeys() {
             return false;
           case "ctrl+shift+q":
             event_addTextNode();
+            return false;
+          case "ctrl+t":
+            event_toggleTabBarMode();
             return false;
           case "delete":
             event_delete();

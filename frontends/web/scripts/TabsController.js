@@ -1,9 +1,10 @@
 const STORAGE_VERSION = 2;
 
 class TabsController {
-  constructor(tabsView, contentView, contextMenu) {
+  constructor(tabsView, tabsSearchView, contentView, contextMenu) {
     this.tabs = [];
     this.tabsView = tabsView;
+    this.tabsSearchView = tabsSearchView;
     this.contentView = contentView;
     this.contextMenu = contextMenu;
     this.contextMenuOpenedForTab = null;
@@ -83,8 +84,13 @@ class TabsController {
   #addDividers(tabId) {
     let index = 0;
     for (const { tabElement } of this.tabs) {
-      const dividerElement = this.#createDivider(index, tabId);
-      this.tabsView.insertBefore(dividerElement, tabElement);
+      // Only add divider before visible tabs
+      // This creates a better UX when searching tabs
+      // but dragging from LTR or RTL is inconsistent
+      if (tabElement.style.display !== "none") {
+        const dividerElement = this.#createDivider(index, tabId);
+        this.tabsView.insertBefore(dividerElement, tabElement);
+      }
       index++;
     }
     this.tabsView.appendChild(this.#createDivider(index, tabId));
@@ -306,8 +312,61 @@ class TabsController {
         }
       });
     };
+
+
+    this.tabsSearchView.addEventListener("input", (event) => {
+      // Hide context menu
+      realThis.contextMenuOpenedForTab = null;
+      realThis.contextMenu.classList.remove("visible");
+
+      setTimeout(() => {
+        realThis.onSearchTabs(event);
+      });
+    });
+
+    // TODO: maybe fetch that in a nicer way for class params
+    const tabsScrollBtn = document.getElementsByClassName("tab-expand-button")[0];
+    if (!tabsScrollBtn || !this.tabsView) return;
+
+    this.updateTabArrowVisibility = () => {
+      // If the content is wider than the visible area, show the button.
+      const overflowing = this.tabsView.scrollWidth > this.tabsView.clientWidth + 1;
+      const inMultiRow = this.tabsView.classList.contains("multirow");
+      tabsScrollBtn.style.display = overflowing | inMultiRow ? "" : "none";
+    };
+
+    // Initial update
+    setTimeout(this.updateTabArrowVisibility, 0);
+
+    // Update on window resize
+    window.addEventListener("resize", this.updateTabArrowVisibility);
+
+    // Observe changes to the tab list (tabs added/removed, style changes from search)
+    try {
+      const mo = new MutationObserver(() => this.updateTabArrowVisibility());
+      mo.observe(tabListWrapper, {
+        childList: true,
+        subtree: true,
+        attributes: true,
+        attributeFilter: ["style", "class"],
+      });
+    } catch (err) {
+      // MutationObserver shouldn't fail in modern browsers; fail silently.
+    }
   }
 
+  toggleTabBarMode() {
+    const tabListWrapper = this.tabsView;
+    tabListWrapper.classList.toggle("multirow");
+    const iconElement = document.getElementsByClassName("tab-expand-button")[0].querySelector("img");
+    iconElement.setAttribute(
+      "expand-icon-state",
+      tabListWrapper.classList.contains("multirow") ? "up" : "down"
+    );
+    this.updateTabArrowVisibility();
+  }
+
+  
   removeCurrentTab() {
     this.#removeTab(this.selectedTab);
   }
@@ -360,6 +419,36 @@ class TabsController {
         confirmButtonText: "OK",
       });
     }
+  }
+
+  onSearchTabs(event) {
+    // Read the current query from the provided search input element.
+    const query = (event.target && event.target.value)
+      ? event.target.value.toLowerCase()
+      : "";
+    const iconElement = this.tabsSearchView.querySelector(".tab-search-button img")
+
+    var has_matches = false;
+    this.tabs.forEach(({ name, tabElement }) => {
+      const matches = !query || name.toLowerCase().includes(query);
+      if (matches) {
+        has_matches = true;
+      }
+      tabElement.style.display = matches ? "" : "none";
+    });
+
+    // Update the search icon color based on whether there are matches.
+    if (!has_matches) {
+      iconElement.setAttribute('data-icon-state', "gray");
+    } else {
+      if (query) {
+        iconElement.setAttribute('data-icon-state', "green");
+      } else {
+        iconElement.setAttribute('data-icon-state', "white");
+      }
+    }
+    // Search results may have changed tab list size; update arrow visibility.
+    this.updateTabArrowVisibility();
   }
 
   #addEmptyTab() {
