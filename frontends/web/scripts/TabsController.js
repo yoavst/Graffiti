@@ -363,6 +363,7 @@ class TabsController {
       "expand-icon-state",
       tabListWrapper.classList.contains("multirow") ? "up" : "down"
     );
+    this.updateTabArrowVisibility();
   }
 
   
