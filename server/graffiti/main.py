@@ -16,6 +16,7 @@ logging.basicConfig()
 logging.root.setLevel(logging.INFO)
 
 
+DEFAULT_SOURCE_ADDR = "0.0.0.0"
 DEFAULT_IDE_TCP_PORT = 8501
 DEFAULT_IDE_WEBSOCKET_PORT = 8502
 DEFAULT_FRONTEND_WEBSOCKET_PORT = 8503
@@ -98,6 +99,11 @@ async def main():
         metavar="[1-65535]",
     )
     parser.add_argument(
+        "--source-addr",
+        help=f"The source address for listening sockets (default: {DEFAULT_SOURCE_ADDR})",
+        default=DEFAULT_SOURCE_ADDR
+    )
+    parser.add_argument(
         "--frontend-tls-context",
         help="Chain and leaf to support WSS for frontend connection",
         default=None,
@@ -126,9 +132,9 @@ async def main():
     print(
         f"Serving - frontend at {args.frontend_port} , TCP backend at {args.backend_tcp_port} , Websocket backend at {args.backend_websocket_port}"
     )
-    async with serve_websocket(adapter.handle_frontend_ws, "0.0.0.0", args.frontend_port, ssl_context):
-        async with await asyncio.start_server(adapter.handle_backend_tcp, "0.0.0.0", args.backend_tcp_port):
-            async with serve_websocket(adapter.handle_backend_ws, "0.0.0.0", args.backend_websocket_port):
+    async with serve_websocket(adapter.handle_frontend_ws, args.source_addr, args.frontend_port, ssl_context):
+        async with await asyncio.start_server(adapter.handle_backend_tcp, args.source_addr, args.backend_tcp_port):
+            async with serve_websocket(adapter.handle_backend_ws, args.source_addr, args.backend_websocket_port):
                 async for _ in get_stdin_lines():
                     print("Current status:")
                     print(repr(dispatcher))
