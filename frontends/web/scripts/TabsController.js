@@ -290,8 +290,15 @@ class TabsController {
       const contextMenuOpenedForTab = realThis.contextMenuOpenedForTab;
       realThis.contextMenuOpenedForTab = null;
       realThis.contextMenu.classList.remove("visible");
-
-      realThis.#removeTab(contextMenuOpenedForTab);
+      Swal.fire({
+          title: "Remove tab",
+          text: `Are you sure you want to remove tab "${contextMenuOpenedForTab.name}"?`,
+          showCancelButton: true,
+        }).then(({ value = null }) => {
+          if (value != null) {
+            realThis.#removeTab(contextMenuOpenedForTab);
+          }
+        });
     };
 
     this.contextMenu.querySelector("#sources").onclick = function () {
