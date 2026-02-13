@@ -513,7 +513,7 @@ function event_searchAll() {
 function event_removeCurrentTab() {
   Swal.fire({
     title: "Remove tab",
-    text: "Are you sure you want to remove the current tab",
+    text: "Are you sure you want to remove the current tab?",
     showCancelButton: true,
   }).then(({ value = null }) => {
     if (value) {
