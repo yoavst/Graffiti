@@ -9,6 +9,7 @@ import {
   applyTransaction,
   makeGraphDoc,
   makeHistory,
+  pushMarker,
   redo as redoFn,
   undo as undoFn,
   type History,
@@ -76,6 +77,11 @@ export function makeTabActions(
   return {
     apply(op) {
       const rt = getRuntime();
+      // Treat every single-op apply as its own undo unit. Without this
+      // marker, consecutive apply() calls (e.g. add a node via WS, then
+      // change its theme via the inspector) all collapse into the previous
+      // transaction's undo group, so Ctrl+Z would unwind both at once.
+      pushMarker(rt.history);
       const inv = applyAndRecord(rt.doc, rt.history, op);
       bumpTick();
       schedulePersist();

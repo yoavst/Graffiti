@@ -8,6 +8,7 @@ import { handleMcp } from './mcp';
 import type { TabActions, TabRuntime } from '@/state/graph';
 import type { WSClient } from '../websocket';
 import type { JotaiStore } from '@/state/store';
+import { tabsAtom } from '@/state/workspaces';
 
 export interface DispatchEnv {
   store: JotaiStore;
@@ -35,12 +36,16 @@ export function dispatchInbound(env: DispatchEnv, raw: unknown) {
       if (!parsed.success) return console.warn('addData parse failed', parsed.error);
       const target = env.getCurrentTab();
       if (!target) return;
+      const pendingNodeTheme = env.store
+        .get(tabsAtom)
+        .find((t) => t.id === target.tabId)?.pendingNodeTheme;
       handleAddData(
         {
           rt: target.rt,
           actions: target.actions,
           isExistingToNew: env.isExistingToNew(),
           isNewWillBeSelected: env.isNewWillBeSelected(),
+          pendingNodeTheme,
         },
         parsed.data,
       );
@@ -51,12 +56,16 @@ export function dispatchInbound(env: DispatchEnv, raw: unknown) {
       if (!parsed.success) return console.warn('addDataBulk parse failed', parsed.error);
       const target = env.getCurrentTab();
       if (!target) return;
+      const pendingNodeTheme = env.store
+        .get(tabsAtom)
+        .find((t) => t.id === target.tabId)?.pendingNodeTheme;
       handleAddDataBulk(
         {
           rt: target.rt,
           actions: target.actions,
           isExistingToNew: env.isExistingToNew(),
           isNewWillBeSelected: env.isNewWillBeSelected(),
+          pendingNodeTheme,
         },
         parsed.data,
       );

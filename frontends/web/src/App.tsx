@@ -19,6 +19,7 @@ import { Inspector } from './ui/Inspector';
 import { SplitView } from './ui/SplitView';
 import { TokenDialog } from './ui/dialogs/TokenDialog';
 import { HelpDialog } from './ui/dialogs/HelpDialog';
+import { DialogHost } from './ui/dialogs/Dialogs';
 import { useHotkeys } from './commands/hotkeys';
 import { setCurrentTab } from './state/registry';
 import { CommandPalette } from './ui/CommandPalette';
@@ -206,6 +207,7 @@ function Inner() {
       />
       {tokenOpen && <TokenDialog onClose={() => setTokenOpen(false)} />}
       {helpOpen && <HelpDialog onClose={() => setHelpOpen(false)} />}
+      <DialogHost />
       {dragHover && (
         <div className="pointer-events-none fixed inset-0 z-40 flex items-center justify-center bg-(--color-accent)/20 text-2xl font-semibold text-(--color-accent) ring-4 ring-(--color-accent) ring-inset">
           Drop to import

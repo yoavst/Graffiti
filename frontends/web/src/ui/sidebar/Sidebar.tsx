@@ -13,6 +13,7 @@ import { db, pickColor, type TabRow, type TabGroupRow } from '@/persistence/db';
 import { newId } from '@/util/ids';
 import { sidebarVisibleAtom } from '@/state/settings';
 import { ContextMenu, type ContextMenuState } from '@/ui/ContextMenu';
+import { dialogs } from '@/ui/dialogs/Dialogs';
 
 // Tab groups are no longer surfaced in the UI: every workspace is treated as
 // having a single implicit "default" group. The DB still has a tabGroupId
@@ -42,6 +43,7 @@ export function Sidebar() {
   const tabs = useAtomValue(tabsAtom);
   const [currentWsId, setCurrentWsId] = useAtom(currentWorkspaceIdAtom);
   const [currentTabId, setCurrentTabId] = useAtom(currentTabIdAtom);
+  const sidePaneTabId = useAtomValue(sidePaneTabIdAtom);
   const setWorkspaces = useSetAtom(workspacesAtom);
   const setGroups = useSetAtom(tabGroupsAtom);
   const setTabs = useSetAtom(tabsAtom);
@@ -78,11 +80,34 @@ export function Sidebar() {
     if (g.workspaceId !== currentWsId) setCurrentWsId(g.workspaceId);
   }, [currentTabId, tabs, groups, currentWsId, setCurrentWsId]);
 
+  const query = search.trim().toLowerCase();
+
+  // While a search is active, persist auto-expansion: any workspace that is
+  // currently collapsed but has matching tabs becomes uncollapsed in the
+  // shared state. That way, when the user clears the search the expansion
+  // state they saw during the search sticks rather than snapping back.
+  useEffect(() => {
+    if (!query) return;
+    setCollapsed((c) => {
+      let next = c;
+      for (const w of workspaces) {
+        if (!c[w.id]) continue;
+        const wsTabs = tabsByWorkspace.get(w.id) ?? [];
+        const hasMatch = wsTabs.some((t) => t.name.toLowerCase().includes(query));
+        if (hasMatch) {
+          if (next === c) next = { ...c };
+          next[w.id] = false;
+        }
+      }
+      return next;
+    });
+  }, [query, workspaces, tabsByWorkspace]);
+
   if (!visible) {
     return (
-      <div className="flex w-8 flex-col items-center border-r border-(--color-border) bg-(--color-bg-2) p-1">
+      <div className="flex w-9 flex-col items-center border-r border-(--color-border) bg-(--color-bg-2) p-1">
         <button
-          className="rounded px-1 text-xs"
+          className="rounded px-1.5 py-0.5 text-base"
           onClick={() => setVisible(true)}
           title="Show sidebar"
         >
@@ -100,7 +125,7 @@ export function Sidebar() {
   }
 
   async function addWorkspace() {
-    const name = prompt('Workspace name')?.trim();
+    const name = (await dialogs.prompt('Workspace name', { title: 'New workspace' }))?.trim();
     if (!name) return;
     const now = Date.now();
     const w = {
@@ -125,7 +150,8 @@ export function Sidebar() {
   }
 
   async function addTab(workspaceId: string) {
-    const name = prompt('Tab name')?.trim() || 'untitled';
+    const name =
+      (await dialogs.prompt('Tab name', { title: 'New tab' }))?.trim() || 'untitled';
     const group = await ensureDefaultGroup(workspaceId);
     const existing = await db.tabs.where('tabGroupId').equals(group.id).toArray();
     const nextOrder = existing.reduce((m, t) => Math.max(m, t.orderIndex + 1), 0);
@@ -147,24 +173,30 @@ export function Sidebar() {
     setCurrentTabId(t.id);
   }
 
-  const query = search.trim().toLowerCase();
-
   return (
-    <aside className="flex w-64 flex-col border-r border-(--color-border) bg-(--color-bg-2) text-sm">
-      <div className="flex items-center justify-between border-b border-(--color-border) px-2 py-1">
-        <span className="font-semibold uppercase text-xs text-(--color-fg-dim)">Workspaces</span>
+    <aside className="flex w-72 flex-col border-r border-(--color-border) bg-[#33363c] text-base">
+      <div className="flex items-center justify-between border-b border-(--color-border) px-3 py-2">
+        <span className="text-sm font-semibold uppercase text-(--color-fg-dim)">Workspaces</span>
         <div className="flex gap-1">
-          <button className="text-xs" onClick={addWorkspace} title="Add workspace">
+          <button
+            className="rounded px-2 py-1 text-base hover:bg-black/20"
+            onClick={addWorkspace}
+            title="Add workspace"
+          >
             +
           </button>
-          <button className="text-xs" onClick={() => setVisible(false)} title="Hide sidebar">
+          <button
+            className="rounded px-2 py-1 text-base hover:bg-black/20"
+            onClick={() => setVisible(false)}
+            title="Hide sidebar"
+          >
             ◂
           </button>
         </div>
       </div>
-      <div className="border-b border-(--color-border) px-2 py-1">
+      <div className="border-b border-(--color-border) px-2 py-2">
         <input
-          className="w-full rounded border border-(--color-border) bg-(--color-bg-3) px-2 py-0.5 text-xs"
+          className="w-full rounded border border-(--color-border) bg-(--color-bg-3) px-2 py-1.5 text-sm"
           placeholder="search tabs"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
@@ -176,11 +208,16 @@ export function Sidebar() {
           const filtered = query
             ? wsTabs.filter((t) => t.name.toLowerCase().includes(query))
             : wsTabs;
-          // While searching, force-expand workspaces that have any matches so
-          // the user can see results without manually opening each one.
+          // Hide entire workspace blocks while searching if they have no
+          // matching tabs — much cleaner than leaving empty headers behind.
+          if (query && filtered.length === 0) return null;
           const isCurrent = w.id === currentWsId;
           const userCollapsed = !!collapsed[w.id];
-          const isExpanded = query ? filtered.length > 0 : !userCollapsed;
+          // While searching, force-expand workspaces that have any matches
+          // even before the persistence effect runs (avoids a flash of
+          // collapsed state on the first keystroke).
+          const isExpanded =
+            query && filtered.length > 0 ? true : !userCollapsed;
           return (
             <WorkspaceItem
               key={w.id}
@@ -190,11 +227,11 @@ export function Sidebar() {
               tabs={filtered}
               tabCount={wsTabs.length}
               currentTabId={currentTabId}
+              sidePaneTabId={sidePaneTabId}
               allWorkspaces={workspaces}
               onToggle={() =>
                 setCollapsed((c) => ({ ...c, [w.id]: !c[w.id] }))
               }
-              onActivate={() => setCurrentWsId(w.id)}
               onAddTab={() => void addTab(w.id)}
               onSelectTab={(t) => {
                 if (!isCurrent) setCurrentWsId(w.id);
@@ -216,9 +253,9 @@ function WorkspaceItem({
   tabs,
   tabCount,
   currentTabId,
+  sidePaneTabId,
   allWorkspaces,
   onToggle,
-  onActivate,
   onAddTab,
   onSelectTab,
   onChanged,
@@ -229,15 +266,20 @@ function WorkspaceItem({
   tabs: TabRow[];
   tabCount: number;
   currentTabId: string | null;
+  sidePaneTabId: string | null;
   allWorkspaces: import('@/persistence/db').WorkspaceRow[];
   onToggle: () => void;
-  onActivate: () => void;
   onAddTab: () => void;
   onSelectTab: (t: TabRow) => void;
   onChanged: () => void | Promise<void>;
 }) {
   async function rename() {
-    const name = prompt('Rename workspace', workspace.name)?.trim();
+    const name = (
+      await dialogs.prompt('Rename workspace', {
+        title: 'Rename workspace',
+        initial: workspace.name,
+      })
+    )?.trim();
     if (!name || name === workspace.name) return;
     await db.workspaces.update(workspace.id, { name });
     await onChanged();
@@ -245,16 +287,14 @@ function WorkspaceItem({
 
   async function remove() {
     if (allWorkspaces.length <= 1) {
-      alert("Can't delete the only workspace.");
+      await dialogs.alert("Can't delete the only workspace.", { title: 'Delete workspace' });
       return;
     }
-    if (
-      !confirm(
-        `Delete workspace "${workspace.name}" and all its ${tabCount} tabs? This cannot be undone.`,
-      )
-    ) {
-      return;
-    }
+    const ok = await dialogs.confirm(
+      `Delete workspace "${workspace.name}" and all its ${tabCount} tabs? This cannot be undone.`,
+      { title: 'Delete workspace', destructive: true, confirmLabel: 'Delete' },
+    );
+    if (!ok) return;
     const groups = await db.tabGroups.where('workspaceId').equals(workspace.id).toArray();
     const groupIds = groups.map((g) => g.id);
     const tabsToDelete = await db.tabs.where('tabGroupId').anyOf(groupIds).toArray();
@@ -273,32 +313,44 @@ function WorkspaceItem({
   return (
     <div className="border-b border-(--color-border)">
       <div
-        className={`group flex items-center gap-1 px-2 py-1 ${isCurrent ? 'bg-(--color-bg-3)' : ''}`}
+        className={`group flex items-center gap-1 px-2 py-1.5 ${isCurrent ? 'bg-(--color-accent)/12' : ''}`}
       >
         <button
-          className="px-0.5 text-xs opacity-60 hover:opacity-100"
+          className="rounded px-1 py-0.5 text-sm opacity-60 hover:opacity-100"
           onClick={onToggle}
           title={isExpanded ? 'Collapse' : 'Expand'}
         >
           {isExpanded ? '▾' : '▸'}
         </button>
         <button
-          className="flex-1 truncate text-left font-medium"
-          onClick={onActivate}
+          className="flex-1 truncate text-left text-sm font-medium"
+          onClick={onToggle}
           onDoubleClick={() => void rename()}
-          title={isCurrent ? 'Active workspace' : 'Click to switch to this workspace'}
+          title="Click to expand/collapse, double-click to rename"
         >
           {workspace.name}
         </button>
-        <span className="text-[10px] opacity-50">{tabCount}</span>
+        <span className="text-xs opacity-50">{tabCount}</span>
         <div className="flex gap-0.5 opacity-0 group-hover:opacity-100">
-          <button className="text-xs" onClick={onAddTab} title="Add tab">
+          <button
+            className="rounded px-1.5 py-0.5 text-sm hover:bg-(--color-bg-2)"
+            onClick={onAddTab}
+            title="Add tab"
+          >
             +
           </button>
-          <button className="text-xs" onClick={() => void rename()} title="Rename workspace">
+          <button
+            className="rounded px-1.5 py-0.5 text-sm hover:bg-(--color-bg-2)"
+            onClick={() => void rename()}
+            title="Rename workspace"
+          >
             ✎
           </button>
-          <button className="text-xs" onClick={() => void remove()} title="Delete workspace">
+          <button
+            className="rounded px-1.5 py-0.5 text-sm hover:bg-(--color-bg-2)"
+            onClick={() => void remove()}
+            title="Delete workspace"
+          >
             🗑
           </button>
         </div>
@@ -306,13 +358,14 @@ function WorkspaceItem({
       {isExpanded && (
         <div className="pb-1 pl-4 pr-2">
           {tabs.length === 0 && (
-            <div className="px-2 py-1 text-[10px] opacity-50">no tabs</div>
+            <div className="px-2 py-1 text-xs opacity-50">no tabs</div>
           )}
           {tabs.map((t) => (
             <SidebarTab
               key={t.id}
               tab={t}
               isCurrent={t.id === currentTabId}
+              isInSidePane={t.id === sidePaneTabId}
               onSelect={() => onSelectTab(t)}
               allWorkspaces={allWorkspaces}
               onChanged={onChanged}
@@ -327,12 +380,14 @@ function WorkspaceItem({
 function SidebarTab({
   tab,
   isCurrent,
+  isInSidePane,
   onSelect,
   allWorkspaces,
   onChanged,
 }: {
   tab: TabRow;
   isCurrent: boolean;
+  isInSidePane: boolean;
   onSelect: () => void;
   allWorkspaces: import('@/persistence/db').WorkspaceRow[];
   onChanged: () => void | Promise<void>;
@@ -341,14 +396,21 @@ function SidebarTab({
   const [menu, setMenu] = useState<ContextMenuState | null>(null);
 
   async function rename() {
-    const name = prompt('Rename tab', tab.name)?.trim();
+    const name = (
+      await dialogs.prompt('Rename tab', { title: 'Rename tab', initial: tab.name })
+    )?.trim();
     if (!name || name === tab.name) return;
     await db.tabs.update(tab.id, { name });
     await onChanged();
   }
 
   async function remove() {
-    if (!confirm(`Remove tab "${tab.name}"?`)) return;
+    const ok = await dialogs.confirm(`Remove tab "${tab.name}"?`, {
+      title: 'Remove tab',
+      destructive: true,
+      confirmLabel: 'Remove',
+    });
+    if (!ok) return;
     await db.tabs.delete(tab.id);
     await db.graphs.delete(tab.id);
     await onChanged();
@@ -364,9 +426,13 @@ function SidebarTab({
       }
     }
     if (projects.size === 0) {
-      alert(`Tab "${tab.name}" has no linked projects.`);
+      await dialogs.alert(`Tab "${tab.name}" has no linked projects.`, {
+        title: 'Linked projects',
+      });
     } else {
-      alert(`Linked projects in "${tab.name}":\n\n${[...projects].join('\n')}`);
+      await dialogs.alert([...projects].join('\n'), {
+        title: `Linked projects in "${tab.name}"`,
+      });
     }
   }
 
@@ -395,9 +461,12 @@ function SidebarTab({
       y: e.clientY,
       items: [
         { label: 'Rename', onSelect: () => void rename() },
-        { label: 'Open in side pane', onSelect: () => setSidePane(tab.id) },
+        {
+          label: isInSidePane ? 'Close side pane' : 'Open in side pane',
+          onSelect: () => setSidePane(isInSidePane ? null : tab.id),
+        },
         ...(moveSubmenu.length > 0
-          ? [{ label: 'Move to workspace', onSelect: () => {}, submenu: moveSubmenu }]
+          ? [{ label: 'Move to workspace', onSelect: () => { }, submenu: moveSubmenu }]
           : []),
         { label: 'Linked projects', onSelect: () => void showLinkedProjects() },
         { label: 'Remove', destructive: true, onSelect: () => void remove() },
@@ -405,16 +474,33 @@ function SidebarTab({
     });
   }
 
+  // Encode pane membership in the tab background. Stronger tint for the
+  // primary pane, lighter tint for the side pane, strongest when both.
+  const paneTint =
+    isCurrent && isInSidePane
+      ? 'bg-(--color-accent)/30 font-medium'
+      : isCurrent
+        ? 'bg-(--color-accent)/20 font-medium'
+        : isInSidePane
+          ? 'bg-(--color-accent)/10'
+          : 'hover:bg-black/20';
+  const paneTitle =
+    isCurrent && isInSidePane
+      ? 'Open in both panes'
+      : isCurrent
+        ? 'Open in primary pane'
+        : isInSidePane
+          ? 'Open in side pane'
+          : tab.name;
+
   return (
     <>
       <button
-        className={`group/tab flex w-full items-center gap-1 truncate text-xs px-1 py-0.5 rounded text-left ${
-          isCurrent ? 'bg-(--color-bg-3)' : 'hover:bg-(--color-bg-3)'
-        }`}
+        className={`group/tab flex w-full items-center gap-1.5 truncate rounded px-1.5 py-1 text-left text-sm ${paneTint}`}
         onClick={onSelect}
         onDoubleClick={() => void rename()}
         onContextMenu={(e) => void openMenu(e)}
-        title={tab.name}
+        title={paneTitle}
       >
         <span className="flex-1 truncate">{tab.name}</span>
       </button>

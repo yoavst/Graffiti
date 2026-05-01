@@ -19,9 +19,9 @@ export function Inspector() {
 
   if (!tab || !visible) {
     return (
-      <div className="flex w-8 flex-col items-center border-l border-(--color-border) bg-(--color-bg-2) p-1">
+      <div className="flex w-9 flex-col items-center border-l border-(--color-border) bg-(--color-bg-2) p-1">
         <button
-          className="rounded px-1 text-xs"
+          className="rounded px-1.5 py-0.5 text-base"
           onClick={() => setVisible(true)}
           title="Show inspector"
         >
@@ -37,16 +37,20 @@ export function Inspector() {
     rt.selectedEdgeId != null ? rt.doc.edges.find((e) => e.id === rt.selectedEdgeId) : null;
 
   return (
-    <aside className="flex w-72 flex-col border-l border-(--color-border) bg-(--color-bg-2) text-sm">
-      <div className="flex items-center justify-between border-b border-(--color-border) px-2 py-1">
-        <span className="text-xs uppercase text-(--color-fg-dim)">
+    <aside className="flex w-72 flex-col border-l border-(--color-border) bg-(--color-bg-2) text-base">
+      <div className="flex items-center justify-between border-b border-(--color-border) px-3 py-2">
+        <span className="text-sm font-semibold uppercase text-(--color-fg-dim)">
           {selectedNode ? 'Node' : selectedEdge ? 'Edge' : 'Tab notes'}
         </span>
-        <button onClick={() => setVisible(false)} title="Hide inspector" className="text-xs">
+        <button
+          onClick={() => setVisible(false)}
+          title="Hide inspector"
+          className="rounded px-2 py-1 text-base hover:bg-(--color-bg-3)"
+        >
           ▸
         </button>
       </div>
-      <div className="flex-1 overflow-auto p-2">
+      <div className="flex-1 overflow-auto p-3">
         {selectedNode ? (
           <NodeInspector key={`${tab.id}-${selectedNode.id}`} tabId={tab.id} />
         ) : selectedEdge ? (
@@ -57,7 +61,7 @@ export function Inspector() {
       </div>
       {selectedNode && selectedNode.extra.address && ws && (
         <button
-          className="m-2 rounded bg-(--color-accent) px-2 py-1 text-xs text-black"
+          className="m-3 rounded bg-(--color-accent) px-3 py-1.5 text-sm font-medium text-black hover:opacity-90"
           onClick={() => {
             const payload = jumpToPayload(selectedNode);
             if (payload) ws.send(payload);
@@ -93,14 +97,14 @@ function NodeInspector({ tabId }: { tabId: string }) {
   }
 
   return (
-    <div className="flex flex-col gap-2">
-      <div className="text-xs opacity-60">id: {node.id}</div>
+    <div className="flex flex-col gap-3">
+      <div className="text-sm opacity-60">id: {node.id}</div>
 
       <div>
-        <label className="text-xs opacity-60">Theme</label>
-        <div className="mt-1 flex flex-wrap gap-1">
+        <label className="text-sm opacity-70">Theme</label>
+        <div className="mt-1.5 flex flex-wrap gap-1.5">
           <button
-            className="h-5 w-5 rounded-full border border-(--color-border) text-[9px]"
+            className="h-7 w-7 rounded-full border border-(--color-border) text-xs"
             onClick={() =>
               actions.apply({
                 type: 'setNodeTheme',
@@ -115,7 +119,7 @@ function NodeInspector({ tabId }: { tabId: string }) {
           {THEMES.map((th, i) => (
             <button
               key={i}
-              className="h-5 w-5 rounded-full border border-(--color-border)"
+              className="h-7 w-7 rounded-full border border-(--color-border)"
               style={{ background: th.bg }}
               onClick={() =>
                 actions.apply({
@@ -133,11 +137,11 @@ function NodeInspector({ tabId }: { tabId: string }) {
       <div>
         {node.extra.computedProperties ? (
           <>
-            <label className="text-xs opacity-60 flex items-center justify-between">
+            <label className="text-sm opacity-70 flex items-center justify-between">
               <span>Override label</span>
               {node.overrideLabel !== undefined && (
                 <button
-                  className="text-[10px] underline opacity-70 hover:opacity-100"
+                  className="text-xs underline opacity-70 hover:opacity-100"
                   onClick={() =>
                     actions.apply({
                       type: 'setOverrideLabel',
@@ -152,7 +156,7 @@ function NodeInspector({ tabId }: { tabId: string }) {
               )}
             </label>
             <textarea
-              className="w-full rounded border border-(--color-border) bg-(--color-bg-3) p-1 text-xs"
+              className="w-full rounded border border-(--color-border) bg-(--color-bg-3) p-2 text-sm"
               // Pre-fill with the actual label when no override is set, so
               // the user can edit just a small part. Setting it to the same
               // value as the underlying label clears the override.
@@ -169,15 +173,15 @@ function NodeInspector({ tabId }: { tabId: string }) {
               }}
               rows={2}
             />
-            <div className="text-[10px] opacity-50 mt-1">
+            <div className="text-xs opacity-50 mt-1">
               The original label is computed from properties; an override sticks until reset.
             </div>
           </>
         ) : (
           <>
-            <label className="text-xs opacity-60">Label</label>
+            <label className="text-sm opacity-70">Label</label>
             <textarea
-              className="w-full rounded border border-(--color-border) bg-(--color-bg-3) p-1 text-xs"
+              className="w-full rounded border border-(--color-border) bg-(--color-bg-3) p-2 text-sm"
               value={node.label}
               onChange={(e) =>
                 actions.apply({
@@ -194,7 +198,7 @@ function NodeInspector({ tabId }: { tabId: string }) {
       </div>
 
       <div className="border-t border-(--color-border) pt-2">
-        <div className="text-xs opacity-60 mb-1">Properties</div>
+        <div className="text-sm opacity-70 mb-1.5">Properties</div>
         {Object.entries(node.extra)
           // `label` has its own editor above; editing it here would be
           // overwritten by computedProperties recompute. Hide it.
@@ -362,9 +366,8 @@ function EdgeInspector({ tabId }: { tabId: string }) {
                 key={c.id}
                 title={c.label}
                 onClick={() => setColor(c.value)}
-                className={`h-5 w-5 rounded-full border ${
-                  active ? 'ring-2 ring-(--color-accent)' : 'border-(--color-border)'
-                } ${c.value === undefined ? 'text-[8px]' : ''}`}
+                className={`h-5 w-5 rounded-full border ${active ? 'ring-2 ring-(--color-accent)' : 'border-(--color-border)'
+                  } ${c.value === undefined ? 'text-[8px]' : ''}`}
                 style={{ background: c.value ?? 'transparent' }}
               >
                 {c.value === undefined ? 'A' : ''}
@@ -395,7 +398,7 @@ function NotesEditor({ tabId, initial }: { tabId: string; initial: string }) {
   }
   return (
     <div className="flex flex-col gap-2">
-      <div className="text-xs opacity-60">Per-graph notes (markdown)</div>
+      <div className="text-xs opacity-60">Per-graph notes</div>
       <textarea
         className="min-h-64 flex-1 rounded border border-(--color-border) bg-(--color-bg-3) p-2 text-xs"
         value={v}

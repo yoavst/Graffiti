@@ -8,6 +8,25 @@ import {
   sidePaneTabIdAtom,
   tabsAtom,
 } from '@/state/workspaces';
+import type { TabRow } from '@/persistence/db';
+import { PenColorSwatch } from '@/ui/PenColorSwatch';
+
+function PaneTitle({ tab, label }: { tab: TabRow | undefined; label: string }) {
+  return (
+    <div className="pointer-events-none absolute left-2 top-2 z-10 flex items-center gap-1 rounded bg-(--color-bg-2)/80 px-2 py-0.5 text-xs text-(--color-fg-dim) backdrop-blur">
+      <span className="uppercase opacity-70">{label}</span>
+      <span className="text-(--color-fg)">{tab?.name ?? '—'}</span>
+    </div>
+  );
+}
+
+function PanePenColor({ tabId }: { tabId: string }) {
+  return (
+    <div className="absolute right-2 top-2 z-10">
+      <PenColorSwatch tabId={tabId} />
+    </div>
+  );
+}
 
 export function SplitView() {
   const [primary] = useAtom(currentTabIdAtom);
@@ -18,6 +37,8 @@ export function SplitView() {
   if (!primary) return <div className="flex-1" />;
 
   const hasSide = !!(side && tabs.find((t) => t.id === side));
+  const primaryTab = tabs.find((t) => t.id === primary);
+  const sideTab = side ? tabs.find((t) => t.id === side) : undefined;
 
   return (
     <div className="flex flex-col flex-1 min-h-0">
@@ -27,6 +48,8 @@ export function SplitView() {
         }`}
         onMouseDownCapture={() => setActivePane('primary')}
       >
+        {hasSide && <PaneTitle tab={primaryTab} label="primary" />}
+        <PanePenColor tabId={primary} />
         <Suspense fallback={null}>
           <TabHost tabId={primary} onActivate={() => setActivePane('primary')} />
         </Suspense>
@@ -38,16 +61,20 @@ export function SplitView() {
           }`}
           onMouseDownCapture={() => setActivePane('side')}
         >
-          <button
-            className="absolute right-1 top-1 z-20 rounded bg-(--color-bg-2) px-1 text-xs"
-            onClick={() => {
-              setSide(null);
-              setActivePane('primary');
-            }}
-            title="Close side pane"
-          >
-            ×
-          </button>
+          <PaneTitle tab={sideTab} label="side" />
+          <div className="absolute right-2 top-2 z-20 flex items-center gap-1">
+            <PenColorSwatch tabId={side!} />
+            <button
+              className="rounded bg-(--color-bg-2) px-2 py-0.5 text-sm hover:bg-(--color-bg-3)"
+              onClick={() => {
+                setSide(null);
+                setActivePane('primary');
+              }}
+              title="Close side pane"
+            >
+              ×
+            </button>
+          </div>
           <Suspense fallback={null}>
             <TabHost tabId={side!} onActivate={() => setActivePane('side')} />
           </Suspense>

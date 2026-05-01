@@ -6,6 +6,7 @@ import {
   MiniMap,
   ReactFlow,
   ReactFlowProvider,
+  useNodesInitialized,
   useReactFlow,
   type Edge,
   type Node,
@@ -58,8 +59,11 @@ const layoutCache = new Map<string, LayoutCacheEntry>();
 const viewportCache = new Map<string, { x: number; y: number; zoom: number }>();
 
 function CanvasInner({ tabId, actions, rt, layoutEngine, initialViewport, onJumpToIde, onActivate }: CanvasProps) {
+  // The doc is mutated in place by the reducer (push/splice), so
+  // `rt.doc.nodes` keeps the same reference even when nodes are added or
+  // removed. We can't use it as a useEffect dep — instead we drive recompute
+  // via the per-tab `tick` atom, which is bumped after every mutation.
   const tick = useAtomValue(tabTickAtom(tabId));
-  void tick; // we read it just to subscribe
   const curved = useAtomValue(isCurvedEdgesAtom);
   const dark = useAtomValue(darkModeAtom);
   const flow = useReactFlow();
@@ -132,34 +136,24 @@ function CanvasInner({ tabId, actions, rt, layoutEngine, initialViewport, onJump
     };
     // `flow` and `initialViewport` excluded by design — read via refs.
     // `positions` excluded so its own setPositions doesn't re-trigger us.
+    // We watch `tick` (bumped after every reducer mutation) instead of the
+    // doc arrays directly because the reducer mutates them in place.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [rt.doc.nodes, rt.doc.edges, layoutEngine, curved, tabId]);
+  }, [tick, layoutEngine, curved, tabId]);
 
-  // Auto-fit AFTER the new positions have been committed to React Flow.
-  // Runs whenever `positions` changes; only fires fitView once per mount
-  // (when wantsAutoFitRef was set by the layout effect) and uses an extra
-  // rAF so React Flow has its internal store updated for the new nodes.
-  //
-  // We clamp the zoom range so:
-  // - Tiny graphs don't zoom in past 1.25 (text would balloon).
-  // - Large graphs don't zoom out below 1.0 (text would become unreadable).
-  // For graphs bigger than the viewport, fitView still picks a viewport
-  // position that's centered on the graph's bounding-box midpoint, so the
-  // user lands in the middle of the graph rather than at a random corner.
+  // Auto-fit AFTER the new positions have landed AND React Flow has
+  // measured the new node DOM. We rely on useNodesInitialized so the
+  // bounding box fitView uses is identical to what the user would get by
+  // clicking the Controls "fit view" button manually. fitView is called
+  // with no options so the framing matches that button exactly.
+  const initialized = useNodesInitialized();
   useEffect(() => {
     if (!wantsAutoFitRef.current) return;
     if (positions.size === 0) return;
+    if (!initialized) return;
     wantsAutoFitRef.current = false;
-    const id = requestAnimationFrame(() => {
-      flowRef.current.fitView({
-        padding: 0.2,
-        duration: 200,
-        minZoom: 1.0,
-        maxZoom: 1.25,
-      });
-    });
-    return () => cancelAnimationFrame(id);
-  }, [positions]);
+    flowRef.current.fitView();
+  }, [positions, initialized]);
 
   // Build React Flow node/edge arrays. Nodes that don't have a layout
   // position yet (newly added since the last layout) are hidden so they

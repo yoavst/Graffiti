@@ -17,7 +17,6 @@ import { wsClientAtom } from '@/state/wsClient';
 import { dispatchInbound } from '@/network/protocol/dispatch';
 import { getStore } from '@/state/store';
 import { getCurrentTab, getTabFull } from '@/state/registry';
-import { PenColorSwatch } from './PenColorSwatch';
 
 export function Header({ onOpenToken, onOpenHelp }: { onOpenToken: () => void; onOpenHelp: () => void }) {
   const [url, setUrl] = useAtom(connectionUrlAtom);
@@ -39,23 +38,30 @@ export function Header({ onOpenToken, onOpenHelp }: { onOpenToken: () => void; o
   function doConnect() {
     if (client) client.close();
     const u = url.trim() || defaultSocketUrl(isDomain);
-    const c = connect(u, {
+    // We resolve `c` lazily inside the message handler so that handlers like
+    // MCP can send replies (env.ws). The toggle reads also go through the
+    // store rather than React-captured locals so the latest values are used
+    // even if the user flips a checkbox after connecting.
+    let c: ReturnType<typeof connect> | null = null;
+    c = connect(u, {
       onStatus: (s) => {
         setStatus(s);
         if (s === 'connected') setLastUrl(u);
       },
-      onMessage: (msg) =>
+      onMessage: (msg) => {
+        const store = getStore();
         dispatchInbound(
           {
-            store: getStore(),
+            store,
             getCurrentTab: () => getCurrentTab(),
             getTab: getTabFull,
-            ws: client,
-            isExistingToNew: () => existingToNew,
-            isNewWillBeSelected: () => newWillBeSelected,
+            ws: c,
+            isExistingToNew: () => store.get(isExistingToNewAtom),
+            isNewWillBeSelected: () => store.get(isNewWillBeSelectedAtom),
           },
           msg,
-        ),
+        );
+      },
       onAuthRequired: () => {
         if (!token) {
           onOpenToken();
@@ -82,8 +88,6 @@ export function Header({ onOpenToken, onOpenHelp }: { onOpenToken: () => void; o
     <header className="flex items-center gap-2 border-b border-(--color-border) bg-(--color-bg-2) px-3 py-2">
       <img src="/icon.png" alt="Graffiti" className="h-7 w-7" />
       <h1 className="text-lg font-semibold mr-3">Graffiti</h1>
-
-      <PenColorSwatch />
 
       <div className="flex-1" />
 

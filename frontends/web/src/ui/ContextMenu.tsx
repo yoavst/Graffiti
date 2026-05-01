@@ -2,7 +2,7 @@
 // escape parent overflow:hidden boxes (like the tab bar).
 
 import { createPortal } from 'react-dom';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 
 export interface ContextMenuItem {
   label: string;
@@ -27,6 +27,9 @@ export function ContextMenu({
   onClose: () => void;
 }) {
   const ref = useRef<HTMLDivElement>(null);
+  // Computed final position. Initially the requested coords; corrected after
+  // we measure the rendered menu so it never leaks past the viewport edges.
+  const [pos, setPos] = useState<{ x: number; y: number } | null>(null);
 
   useEffect(() => {
     if (!state) return;
@@ -44,18 +47,39 @@ export function ContextMenu({
     };
   }, [state, onClose]);
 
-  if (!state) return null;
+  // Reset position when state changes so the next opening starts hidden.
+  useEffect(() => {
+    setPos(null);
+  }, [state]);
 
-  // Clamp inside viewport.
-  const w = 200;
-  const x = Math.min(state.x, window.innerWidth - w - 4);
-  const y = state.y;
+  // Measure the menu after first paint and clamp into the viewport. We hide
+  // until measured so the corrected position is what the user actually sees.
+  useLayoutEffect(() => {
+    if (!state || !ref.current) return;
+    const rect = ref.current.getBoundingClientRect();
+    const margin = 4;
+    let x = state.x;
+    let y = state.y;
+    if (x + rect.width > window.innerWidth - margin) {
+      x = Math.max(margin, window.innerWidth - rect.width - margin);
+    }
+    if (y + rect.height > window.innerHeight - margin) {
+      y = Math.max(margin, window.innerHeight - rect.height - margin);
+    }
+    setPos({ x, y });
+  }, [state]);
+
+  if (!state) return null;
 
   return createPortal(
     <div
       ref={ref}
       className="fixed z-[60] min-w-48 rounded border border-(--color-border) bg-(--color-bg-2) py-1 text-sm shadow-xl"
-      style={{ left: x, top: y }}
+      style={{
+        left: pos?.x ?? state.x,
+        top: pos?.y ?? state.y,
+        visibility: pos ? 'visible' : 'hidden',
+      }}
       onContextMenu={(e) => e.preventDefault()}
     >
       {state.items.map((it, i) => (

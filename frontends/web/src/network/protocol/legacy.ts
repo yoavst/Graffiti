@@ -27,13 +27,21 @@ interface AddCtx {
   isExistingToNew: boolean;
   /** True = the newly-added node becomes selected after the call. */
   isNewWillBeSelected: boolean;
+  /** Default theme to apply to newly-created nodes (the "pen color"). */
+  pendingNodeTheme?: number | 'auto';
 }
 
-function nodeFromIncoming(idCounter: number, incoming: IncomingNode): GNode {
+function nodeFromIncoming(
+  idCounter: number,
+  incoming: IncomingNode,
+  pendingTheme?: number | 'auto',
+): GNode {
   const extra: NodeExtra = { ...incoming } as NodeExtra;
   applyComputedProperties(extra);
   const label = (extra as { label?: string }).label ?? incoming.label ?? '(unnamed)';
-  return { id: idCounter, label, extra };
+  const node: GNode = { id: idCounter, label, extra };
+  if (typeof pendingTheme === 'number') node.theme = pendingTheme;
+  return node;
 }
 
 function edgeFromIncoming(
@@ -87,7 +95,7 @@ function addNodeAndEdge(
 
   // 2. Create the new node.
   const newNodeId = nextId(rt.doc);
-  const newNode = nodeFromIncoming(newNodeId, msgNode);
+  const newNode = nodeFromIncoming(newNodeId, msgNode, ctx.pendingNodeTheme);
   ops.push({ type: 'addNode', data: newNode });
 
   if (selected) {
