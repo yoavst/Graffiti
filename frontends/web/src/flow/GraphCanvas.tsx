@@ -22,7 +22,6 @@ import { LabeledEdge, type GraffitiEdgeData } from './edges/LabeledEdge';
 import { tabTickAtom, type TabActions, type TabRuntime } from '@/state/graph';
 import { layout, structuralHash } from '@/graph/layout';
 import { nodesToInput } from '@/graph/layout/types';
-import { db } from '@/persistence/db';
 import { darkModeAtom, isCurvedEdgesAtom } from '@/state/settings';
 
 const nodeTypes = {
@@ -37,7 +36,6 @@ interface CanvasProps {
   actions: TabActions;
   rt: TabRuntime;
   layoutEngine: 'elk' | 'dagre';
-  initialViewport?: { x: number; y: number; zoom: number };
   onJumpToIde?: (nodeId: number) => void;
   // Fired whenever the user interacts with this canvas (click on node/edge/
   // pane) so a parent can mark this pane as the "active" one for the
@@ -53,12 +51,13 @@ type LayoutCacheEntry = {
 const layoutCache = new Map<string, LayoutCacheEntry>();
 
 // In-memory viewport cache. Updated on every onMoveEnd and read on remount,
-// so switching back to a tab restores the exact pan/zoom the user left it
-// at. Persisted to Dexie too, but the atom isn't refreshed on each pan
-// (would re-render the whole UI), so we keep a hot copy here.
+// so switching back to a tab within the same session restores the exact
+// pan/zoom the user left it at. Intentionally not persisted: a fresh page
+// load resets to a centered fitView (matching the Controls "fit view"
+// button) the first time each tab is opened.
 const viewportCache = new Map<string, { x: number; y: number; zoom: number }>();
 
-function CanvasInner({ tabId, actions, rt, layoutEngine, initialViewport, onJumpToIde, onActivate }: CanvasProps) {
+function CanvasInner({ tabId, actions, rt, layoutEngine, onJumpToIde, onActivate }: CanvasProps) {
   // The doc is mutated in place by the reducer (push/splice), so
   // `rt.doc.nodes` keeps the same reference even when nodes are added or
   // removed. We can't use it as a useEffect dep — instead we drive recompute
@@ -79,11 +78,12 @@ function CanvasInner({ tabId, actions, rt, layoutEngine, initialViewport, onJump
   const hasLaidOutRef = useRef(layoutCache.has(tabId));
   const userInteractedRef = useRef(false);
   const wantsAutoFitRef = useRef(false);
-  // Resolve the viewport to restore on mount: prefer the live in-memory
-  // cache (most recent, even mid-session); fall back to the prop (which
-  // came from Dexie). Captured once via useRef so changing it later doesn't
-  // restart the layout effect.
-  const startViewport = viewportCache.get(tabId) ?? initialViewport;
+  // Viewport state is session-scoped: the in-memory cache survives tab
+  // switches but a fresh page load starts empty, so the user gets a
+  // centered fitView the first time they open a tab in a session.
+  // Captured once via useRef so changing it later doesn't restart the
+  // layout effect.
+  const startViewport = viewportCache.get(tabId);
   const startViewportRef = useRef(startViewport);
   const hadInitialViewportRef = useRef(!!startViewport);
 
@@ -250,15 +250,12 @@ function CanvasInner({ tabId, actions, rt, layoutEngine, initialViewport, onJump
     actions.select(null);
   }, [actions, onActivate]);
 
-  // Persist viewport changes (for VS-Code-style restore).
   const onMoveEnd = useCallback(
     (e: unknown, viewport: Viewport) => {
       // If the move was triggered by user interaction (mouse/touch), remember
       // it so we don't auto-fitView again on the next layout.
       if (e) userInteractedRef.current = true;
-      const v = { x: viewport.x, y: viewport.y, zoom: viewport.zoom };
-      viewportCache.set(tabId, v);
-      void db.tabs.update(tabId, { viewport: v });
+      viewportCache.set(tabId, { x: viewport.x, y: viewport.y, zoom: viewport.zoom });
     },
     [tabId],
   );

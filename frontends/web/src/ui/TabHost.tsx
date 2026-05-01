@@ -1,9 +1,10 @@
 // Render exactly one tab per pane.
 //
-// We persist the React Flow viewport on every move (in the canvas) and
-// restore it on remount, so switching tabs feels fast even though we
-// don't keep stale tabs around. The layout is also cached per tab so a
-// re-mount with the same node set doesn't re-run ELK.
+// The React Flow viewport is cached in memory per tab (in GraphCanvas) so
+// switching back to a tab restores the exact pan/zoom — but only within
+// a session. A page reload starts every tab centered (fitView). The
+// layout is also cached per tab so a re-mount with the same node set
+// doesn't re-run ELK.
 
 import { useAtomValue, useStore } from 'jotai';
 import { useEffect, useMemo, useState } from 'react';
@@ -87,7 +88,6 @@ function MountedTab({ tabId, tab, onActivate }: { tabId: string; tab: TabRow; on
         actions={actions}
         rt={rt}
         layoutEngine={tab.layout}
-        initialViewport={tab.viewport}
         onActivate={onActivate}
         onJumpToIde={(nodeId) => {
           const node = rt.doc.nodes.find((n) => n.id === nodeId);

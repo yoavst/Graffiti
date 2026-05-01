@@ -27,7 +27,6 @@ export interface TabRow {
   layout: 'elk' | 'dagre';
   notes?: string;
   pendingNodeTheme?: number | 'auto';
-  viewport?: { x: number; y: number; zoom: number };
   orderIndex: number;
   updatedAt: number;
 }

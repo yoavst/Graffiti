@@ -67,7 +67,6 @@ export async function migrateLegacyIfNeeded(): Promise<MigrationResult> {
     layout: p.doc.config?.elkRenderer === false ? 'dagre' : 'elk',
     notes: p.doc.config?.notes,
     pendingNodeTheme: p.doc.config?.pendingNodeTheme,
-    viewport: p.doc.config?.viewport,
     orderIndex: i,
     updatedAt: now,
   }));

@@ -120,7 +120,6 @@ async function persistImportedTab(
     layout: doc.config?.elkRenderer === false ? 'dagre' : 'elk',
     notes: doc.config?.notes,
     pendingNodeTheme: doc.config?.pendingNodeTheme,
-    viewport: doc.config?.viewport,
     orderIndex: existing.length,
     updatedAt: Date.now(),
   });
