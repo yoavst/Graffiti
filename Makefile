@@ -117,18 +117,22 @@ websites:
 	cd backends/websites/dist && zip -r ../../../out/graffiti_v$(VERSION)_for_opengrok_sourcegraph_github_gitlab.zip *
 
 web:
-	@echo "Building Graffiti for Web"
-	sed -i.bak "s/_VERSION_/$(VERSION)/g" frontends/web/index.html
-	cd frontends/web; find -L . -type f ! -name '*.bak' ! -path './out/*' -exec zip --symlinks ../../out/graffiti_v$(VERSION)_frontend_web.zip {} +
-	mv frontends/web/index.html.bak frontends/web/index.html
+	@echo "Building Graffiti for Web (Vite)"
+	cd frontends/web && npm ci && npm run build
+	# Substitute the build version in the generated assets (defines + index.html).
+	find frontends/web/dist -type f \( -name "*.html" -o -name "*.js" -o -name "*.css" \) -exec sed -i.bak "s/_VERSION_/$(VERSION)/g" {} \;
+	find frontends/web/dist -name "*.bak" -delete
+	cd frontends/web/dist && zip -r ../../../out/graffiti_v$(VERSION)_frontend_web.zip *
 
 web-collect:
-	@echo "Building Graffiti for Web again"
-	sed -i.bak "s/_VERSION_/$(VERSION)/g" frontends/web/index.html
-	ln -s `realpath out` frontends/web/out
-	cd frontends/web; find -L . -type f ! -name '*.bak' -exec zip ../../out/graffiti_v$(VERSION)_frontend_web_with_deps.zip {} +
-	mv frontends/web/index.html.bak frontends/web/index.html
-	rm frontends/web/out
+	@echo "Building Graffiti for Web with the rest of the artifacts in out/"
+	cd frontends/web && npm ci && npm run build
+	find frontends/web/dist -type f \( -name "*.html" -o -name "*.js" -o -name "*.css" \) -exec sed -i.bak "s/_VERSION_/$(VERSION)/g" {} \;
+	find frontends/web/dist -name "*.bak" -delete
+	# Bundle dist + out/ contents (other build artifacts) into one zip.
+	ln -s `realpath out` frontends/web/dist/out
+	cd frontends/web/dist && zip --symlinks -r ../../../out/graffiti_v$(VERSION)_frontend_web_with_deps.zip *
+	rm frontends/web/dist/out
 
 visio:
 	@echo "Building visio via makefile is not yet supported"

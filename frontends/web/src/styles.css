@@ -1,0 +1,100 @@
+@import 'tailwindcss';
+@import '@xyflow/react/dist/style.css';
+
+@theme {
+  --color-bg: #1e1f22;
+  --color-bg-2: #2b2d31;
+  --color-bg-3: #343434;
+  --color-fg: #e6e6e6;
+  --color-fg-dim: #b0b0b0;
+  --color-accent: #4cafef;
+  --color-danger: #e57373;
+  --color-success: #66bb6a;
+  --color-edge: #c0c0c0;
+  --color-border: #3d3d3d;
+}
+
+:root {
+  color-scheme: dark;
+  --primary-color: #1e1f22;
+  --primary-color-hover: #2b2d31;
+}
+
+:root.light {
+  color-scheme: light;
+  --primary-color: #ffffff;
+  --primary-color-hover: #f4f4f4;
+}
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  background: var(--color-bg);
+  color: var(--color-fg);
+}
+
+:root.light body {
+  background: #ffffff;
+  color: #1a1a1a;
+}
+
+button {
+  cursor: pointer;
+}
+
+/* React Flow overrides */
+.react-flow__node.graffiti {
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.react-flow__edge-path-selector {
+  fill: none;
+  stroke: transparent;
+  stroke-width: 20;
+}
+
+.react-flow__handle {
+  opacity: 0;
+}
+
+/* Dark-aware Controls (zoom +/-/fit/lock) */
+:root .react-flow__controls {
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.4);
+}
+:root .react-flow__controls-button {
+  background: var(--color-bg-2);
+  border-bottom: 1px solid var(--color-border);
+  color: var(--color-fg);
+  fill: var(--color-fg);
+}
+:root .react-flow__controls-button:hover {
+  background: var(--color-bg-3);
+}
+:root .react-flow__controls-button svg {
+  fill: var(--color-fg);
+}
+
+/* Light overrides */
+:root.light .react-flow__controls-button {
+  background: #ffffff;
+  border-bottom: 1px solid #e5e5e5;
+  color: #1a1a1a;
+  fill: #1a1a1a;
+}
+:root.light .react-flow__controls-button:hover {
+  background: #f4f4f4;
+}
+:root.light .react-flow__controls-button svg {
+  fill: #1a1a1a;
+}
+
+/* Dark-aware MiniMap */
+:root .react-flow__minimap {
+  background-color: var(--color-bg-2);
+}
+:root.light .react-flow__minimap {
+  background-color: #fafafa;
+}
