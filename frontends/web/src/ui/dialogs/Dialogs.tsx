@@ -3,7 +3,7 @@
 // component can pop a dialog without prop-drilling.
 
 import { atom, useAtom } from 'jotai';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
@@ -11,6 +11,7 @@ import DialogContentText from '@mui/material/DialogContentText';
 import DialogActions from '@mui/material/DialogActions';
 import Button from '@mui/material/Button';
 import TextField from '@mui/material/TextField';
+import { isModEnter } from '@/util/keyboard';
 
 type AlertSpec = {
   kind: 'alert';
@@ -154,6 +155,21 @@ function DialogShell({
 
   const destructive = spec.kind === 'confirm' && !!spec.destructive;
 
+  const promptInputRef = useRef<HTMLInputElement | HTMLTextAreaElement | null>(null);
+  const submitButtonRef = useRef<HTMLButtonElement | null>(null);
+
+  // Fade keeps content visibility:hidden until enter completes; autoFocus can
+  // run too early. Focus after the transition (MUI transition slot onEntered).
+  function focusPrimaryControlAfterEnter() {
+    requestAnimationFrame(() => {
+      if (spec.kind === 'prompt') {
+        promptInputRef.current?.focus();
+      } else {
+        submitButtonRef.current?.focus();
+      }
+    });
+  }
+
   // Rendering Paper as a <form> gives us free Enter-to-submit (browsers
   // submit on Enter inside the form, including from a single-line TextField).
   // Shift+Enter still inserts a newline in multiline mode, matching the old
@@ -162,6 +178,8 @@ function DialogShell({
     <Dialog
       open
       onClose={cancel}
+      disableAutoFocus
+      disableRestoreFocus
       fullWidth
       maxWidth="xs"
       slotProps={{
@@ -171,6 +189,14 @@ function DialogShell({
             e.preventDefault();
             confirm();
           },
+          onKeyDown: (e: React.KeyboardEvent) => {
+            if (!isModEnter(e)) return;
+            e.preventDefault();
+            confirm();
+          },
+        },
+        transition: {
+          onEntered: focusPrimaryControlAfterEnter,
         },
       }}
     >
@@ -182,7 +208,7 @@ function DialogShell({
               <DialogContentText sx={{ mb: 2 }}>{spec.message}</DialogContentText>
             )}
             <TextField
-              autoFocus
+              inputRef={promptInputRef}
               fullWidth
               size="small"
               variant="outlined"
@@ -211,10 +237,10 @@ function DialogShell({
           </Button>
         )}
         <Button
+          ref={submitButtonRef}
           type="submit"
           variant="contained"
           color={destructive ? 'error' : 'primary'}
-          autoFocus={spec.kind !== 'prompt'}
         >
           {confirmLabel}
         </Button>

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useAtom } from 'jotai';
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
@@ -9,10 +9,12 @@ import Button from '@mui/material/Button';
 import TextField from '@mui/material/TextField';
 import { authTokenAtom } from '@/state/connection';
 import { generateAuthToken, isValidUuidV4 } from '@/util/ids';
+import { isModEnter } from '@/util/keyboard';
 
 export function TokenDialog({ onClose }: { onClose: () => void }) {
   const [token, setToken] = useAtom(authTokenAtom);
   const [v, setV] = useState(token ?? '');
+  const tokenInputRef = useRef<HTMLInputElement | null>(null);
   const trimmed = v.trim();
   const valid = isValidUuidV4(trimmed);
   const showError = trimmed !== '' && !valid;
@@ -27,6 +29,8 @@ export function TokenDialog({ onClose }: { onClose: () => void }) {
     <Dialog
       open
       onClose={onClose}
+      disableAutoFocus
+      disableRestoreFocus
       fullWidth
       maxWidth="sm"
       slotProps={{
@@ -35,6 +39,16 @@ export function TokenDialog({ onClose }: { onClose: () => void }) {
           onSubmit: (e: React.FormEvent) => {
             e.preventDefault();
             save();
+          },
+          onKeyDown: (e: React.KeyboardEvent) => {
+            if (!isModEnter(e)) return;
+            e.preventDefault();
+            save();
+          },
+        },
+        transition: {
+          onEntered: () => {
+            requestAnimationFrame(() => tokenInputRef.current?.focus());
           },
         },
       }}
@@ -48,7 +62,7 @@ export function TokenDialog({ onClose }: { onClose: () => void }) {
         </DialogContentText>
         <div className="flex items-start gap-2">
           <TextField
-            autoFocus
+            inputRef={tokenInputRef}
             fullWidth
             size="small"
             value={v}

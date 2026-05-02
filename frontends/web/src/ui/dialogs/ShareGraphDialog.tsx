@@ -1,5 +1,5 @@
 import { useAtom, useStore } from 'jotai';
-import { Fragment, useCallback, useEffect, useState } from 'react';
+import { Fragment, useCallback, useEffect, useRef, useState } from 'react';
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
@@ -20,6 +20,7 @@ import { db } from '@/persistence/db';
 import { toMermaid } from '@/graph/mermaidExport';
 import { darkModeAtom } from '@/state/settings';
 import { dialogs } from '@/ui/dialogs/Dialogs';
+import { isModEnter } from '@/util/keyboard';
 
 const defaultDpi = 600;
 
@@ -29,6 +30,7 @@ export function ShareGraphDialog() {
   const [dpiStr, setDpiStr] = useState(String(defaultDpi));
   const [busy, setBusy] = useState(false);
   const [clipboardToast, setClipboardToast] = useState(false);
+  const dpiInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     if (open) setClipboardToast(false);
@@ -117,10 +119,32 @@ export function ShareGraphDialog() {
 
   return (
     <Fragment>
-      <Dialog open={open} onClose={close} fullWidth maxWidth="xs">
+      <Dialog
+        open={open}
+        onClose={close}
+        disableAutoFocus
+        disableRestoreFocus
+        fullWidth
+        maxWidth="xs"
+        slotProps={{
+          paper: {
+            onKeyDown: (e: React.KeyboardEvent) => {
+              if (!isModEnter(e) || busy) return;
+              e.preventDefault();
+              void runRasterOrSvg('jpeg');
+            },
+          },
+          transition: {
+            onEntered: () => {
+              requestAnimationFrame(() => dpiInputRef.current?.focus());
+            },
+          },
+        }}
+      >
         <DialogTitle sx={{ textAlign: 'center', fontWeight: 700 }}>Share graph</DialogTitle>
         <DialogContent>
           <TextField
+            inputRef={dpiInputRef}
             label="dpi"
             type="number"
             fullWidth

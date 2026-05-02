@@ -3,12 +3,28 @@ import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
 import Button from '@mui/material/Button';
+import { isModEnter } from '@/util/keyboard';
 
 export function HelpDialog({ onClose }: { onClose: () => void }) {
   const version =
     (globalThis as { __GRAFFITI_VERSION__?: string }).__GRAFFITI_VERSION__ ?? 'dev';
   return (
-    <Dialog open onClose={onClose} fullWidth maxWidth="sm">
+    <Dialog
+      open
+      onClose={onClose}
+      disableRestoreFocus
+      fullWidth
+      maxWidth="sm"
+      slotProps={{
+        paper: {
+          onKeyDown: (e: React.KeyboardEvent) => {
+            if (!isModEnter(e)) return;
+            e.preventDefault();
+            onClose();
+          },
+        },
+      }}
+    >
       <DialogTitle>Graffiti v{version}</DialogTitle>
       <DialogContent>
         <p className="text-sm opacity-80">
