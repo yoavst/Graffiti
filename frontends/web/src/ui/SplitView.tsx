@@ -10,21 +10,12 @@ import {
   tabsAtom,
 } from '@/state/workspaces';
 import type { TabRow } from '@/persistence/db';
-import { PenColorSwatch } from '@/ui/PenColorSwatch';
 
 function PaneTitle({ tab, label }: { tab: TabRow | undefined; label: string }) {
   return (
     <div className="pointer-events-none absolute left-2 top-2 z-10 flex items-center gap-1 rounded bg-(--color-bg-2)/80 px-2 py-0.5 text-xs text-(--color-fg-dim) backdrop-blur">
       <span className="uppercase opacity-70">{label}</span>
       <span className="text-(--color-fg)">{tab?.name ?? '—'}</span>
-    </div>
-  );
-}
-
-function PanePenColor({ tabId }: { tabId: string }) {
-  return (
-    <div className="absolute right-2 top-2 z-10">
-      <PenColorSwatch tabId={tabId} />
     </div>
   );
 }
@@ -50,7 +41,6 @@ export function SplitView() {
         onMouseDownCapture={() => setActivePane('primary')}
       >
         {hasSide && <PaneTitle tab={primaryTab} label="primary" />}
-        <PanePenColor tabId={primary} />
         <Suspense fallback={null}>
           <TabHost tabId={primary} onActivate={() => setActivePane('primary')} />
         </Suspense>
@@ -64,7 +54,6 @@ export function SplitView() {
         >
           <PaneTitle tab={sideTab} label="side" />
           <div className="absolute right-2 top-2 z-20 flex items-center gap-1">
-            <PenColorSwatch tabId={side!} />
             <button
               className="flex items-center rounded bg-(--color-bg-2) px-2 py-0.5 hover:bg-(--color-bg-3)"
               onClick={() => {

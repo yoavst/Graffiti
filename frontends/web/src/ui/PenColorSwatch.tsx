@@ -44,8 +44,8 @@ export function PenColorSwatch({ tabId }: { tabId: string }) {
         open={open}
         anchorEl={anchorRef.current}
         onClose={() => setOpen(false)}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-        transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+        transformOrigin={{ vertical: 'bottom', horizontal: 'center' }}
         slotProps={{ paper: { sx: { mt: 0.5, p: 1, display: 'flex', gap: 0.5 } } }}
       >
         <button

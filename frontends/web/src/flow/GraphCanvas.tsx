@@ -4,6 +4,7 @@ import {
   Controls,
   MarkerType,
   MiniMap,
+  Panel,
   ReactFlow,
   ReactFlowProvider,
   useNodesInitialized,
@@ -25,6 +26,7 @@ import { nodesToInput } from '@/graph/layout/types';
 import { darkModeAtom, isCurvedEdgesAtom } from '@/state/settings';
 import { registerFlowExportBridge } from '@/flow/flowExportBridge';
 import { HANDLE, handlesForEdgeToComment } from '@/flow/nodeHandles';
+import { PenColorSwatch } from '@/ui/PenColorSwatch';
 
 const nodeTypes = {
   code: CodeNode,
@@ -371,6 +373,17 @@ function CanvasInner({ tabId, actions, rt, layoutEngine, onJumpToIde, onActivate
         </defs>
       </svg>
       <Background gap={32} color={dark ? '#3d3d3d' : '#e5e5e5'} />
+      <Panel
+        position="bottom-left"
+        className="!m-0"
+        style={{
+          bottom: 'calc(15px + 78px + 8px)',
+          left: 15,
+          zIndex: 6,
+        }}
+      >
+        <PenColorSwatch tabId={tabId} />
+      </Panel>
       <Controls showInteractive={false} />
       <MiniMap
         pannable
