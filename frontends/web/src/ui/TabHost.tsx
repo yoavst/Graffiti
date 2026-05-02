@@ -15,8 +15,17 @@ import { registerTab, unregisterTab } from '@/state/registry';
 import { wsClientAtom } from '@/state/wsClient';
 import { jumpToPayload } from '@/network/protocol/legacy';
 import type { TabRow } from '@/persistence/db';
+import type { FlowPane } from '@/state/pendingNodeFocus';
 
-export function TabHost({ tabId, onActivate }: { tabId: string; onActivate?: () => void }) {
+export function TabHost({
+  tabId,
+  pane,
+  onActivate,
+}: {
+  tabId: string;
+  pane: FlowPane;
+  onActivate?: () => void;
+}) {
   const tabs = useAtomValue(tabsAtom);
   const tab = tabs.find((t) => t.id === tabId);
   if (!tab) {
@@ -27,10 +36,20 @@ export function TabHost({ tabId, onActivate }: { tabId: string; onActivate?: () 
     );
   }
   // key={tabId} → fresh React Flow + clean state on every tab switch.
-  return <MountedTab key={tabId} tabId={tabId} tab={tab} onActivate={onActivate} />;
+  return <MountedTab key={tabId} tabId={tabId} tab={tab} pane={pane} onActivate={onActivate} />;
 }
 
-function MountedTab({ tabId, tab, onActivate }: { tabId: string; tab: TabRow; onActivate?: () => void }) {
+function MountedTab({
+  tabId,
+  tab,
+  pane,
+  onActivate,
+}: {
+  tabId: string;
+  tab: TabRow;
+  pane: FlowPane;
+  onActivate?: () => void;
+}) {
   const store = useStore();
   const rt = useAtomValue(tabRuntimeAtom(tabId));
   const tick = useAtomValue(tabTickAtom(tabId));
@@ -85,6 +104,7 @@ function MountedTab({ tabId, tab, onActivate }: { tabId: string; tab: TabRow; on
     >
       <GraphCanvas
         tabId={tabId}
+        pane={pane}
         actions={actions}
         rt={rt}
         layoutEngine={tab.layout}

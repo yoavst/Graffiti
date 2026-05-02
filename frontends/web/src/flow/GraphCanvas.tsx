@@ -15,7 +15,7 @@ import {
   type EdgeMouseHandler,
   type Viewport,
 } from '@xyflow/react';
-import { useAtomValue } from 'jotai';
+import { useAtomValue, useSetAtom } from 'jotai';
 import { CodeNode, type GraffitiNodeData } from './nodes/CodeNode';
 import { MarkdownNode } from './nodes/MarkdownNode';
 import { CommentNode } from './nodes/CommentNode';
@@ -25,6 +25,11 @@ import { layout, structuralHash } from '@/graph/layout';
 import { nodesToInput } from '@/graph/layout/types';
 import { darkModeAtom, isCurvedEdgesAtom } from '@/state/settings';
 import { registerFlowExportBridge } from '@/flow/flowExportBridge';
+import {
+  pendingNodeFocusAtom,
+  type FlowPane,
+} from '@/state/pendingNodeFocus';
+import { registerFlowFitView } from '@/flow/flowFitViewBridge';
 import { HANDLE, handlesForEdgeToComment } from '@/flow/nodeHandles';
 import { PenColorSwatch } from '@/ui/PenColorSwatch';
 
@@ -37,6 +42,8 @@ const edgeTypes = { labeled: LabeledEdge };
 
 interface CanvasProps {
   tabId: string;
+  /** Which split pane hosts this canvas — required so duplicate tabs can receive the right focus. */
+  pane: FlowPane;
   actions: TabActions;
   rt: TabRuntime;
   layoutEngine: 'elk' | 'dagre';
@@ -61,12 +68,14 @@ const layoutCache = new Map<string, LayoutCacheEntry>();
 // button) the first time each tab is opened.
 const viewportCache = new Map<string, { x: number; y: number; zoom: number }>();
 
-function CanvasInner({ tabId, actions, rt, layoutEngine, onJumpToIde, onActivate }: CanvasProps) {
+function CanvasInner({ tabId, pane, actions, rt, layoutEngine, onJumpToIde, onActivate }: CanvasProps) {
   // The doc is mutated in place by the reducer (push/splice), so
   // `rt.doc.nodes` keeps the same reference even when nodes are added or
   // removed. We can't use it as a useEffect dep — instead we drive recompute
   // via the per-tab `tick` atom, which is bumped after every mutation.
   const tick = useAtomValue(tabTickAtom(tabId));
+  const globalPendingFocus = useAtomValue(pendingNodeFocusAtom);
+  const setPendingNodeFocus = useSetAtom(pendingNodeFocusAtom);
   const curved = useAtomValue(isCurvedEdgesAtom);
   const dark = useAtomValue(darkModeAtom);
   const flow = useReactFlow();
@@ -154,6 +163,39 @@ function CanvasInner({ tabId, actions, rt, layoutEngine, onJumpToIde, onActivate
   // clicking the Controls "fit view" button manually. fitView is called
   // with no options so the framing matches that button exactly.
   const initialized = useNodesInitialized();
+
+  /** Toolbar fit / Home: full graph or `fitView` on the selected node. With `forceNodeId`, skip `getNode` (it can lag `actions.select` in the same tick). */
+  const smartFitView = useCallback((forceNodeId?: number) => {
+    const f = flowRef.current;
+    const docRt = rtRef.current;
+    const sel = forceNodeId ?? docRt.selectedNodeId;
+    if (sel != null && docRt.doc.nodes.some((n) => n.id === sel)) {
+      if (forceNodeId != null) {
+        void f.fitView({
+          nodes: [{ id: String(sel) }],
+          padding: 0.12,
+          duration: 200,
+        });
+        return;
+      }
+      const rfNode = f.getNode(String(sel));
+      if (rfNode && !rfNode.hidden) {
+        void f.fitView({
+          nodes: [{ id: String(sel) }],
+          padding: 0.12,
+          duration: 200,
+        });
+        return;
+      }
+    }
+    void f.fitView();
+  }, []);
+
+  useLayoutEffect(() => {
+    registerFlowFitView(tabId, pane, () => smartFitView());
+    return () => registerFlowFitView(tabId, pane, null);
+  }, [tabId, pane, smartFitView]);
+
   useEffect(() => {
     if (!wantsAutoFitRef.current) return;
     if (positions.size === 0) return;
@@ -161,6 +203,28 @@ function CanvasInner({ tabId, actions, rt, layoutEngine, onJumpToIde, onActivate
     wantsAutoFitRef.current = false;
     flowRef.current.fitView();
   }, [positions, initialized]);
+
+  const pendingForThisPane = useMemo(() => {
+    if (!globalPendingFocus || globalPendingFocus.tabId !== tabId || globalPendingFocus.pane !== pane) {
+      return null;
+    }
+    return globalPendingFocus;
+  }, [globalPendingFocus, tabId, pane]);
+
+  const pendingNodeLayoutReady =
+    pendingForThisPane != null && positions.has(pendingForThisPane.nodeId) && initialized;
+
+  // Subscribes via `pendingNodeFocusAtom` — no `tick` dep; `fitView` stays imperative one frame after select.
+  useEffect(() => {
+    if (!pendingForThisPane || !pendingNodeLayoutReady) return;
+    const { nodeId, token } = pendingForThisPane;
+    actions.select(nodeId);
+    requestAnimationFrame(() => {
+      void Promise.resolve(smartFitView(nodeId)).finally(() => {
+        setPendingNodeFocus((c) => (c?.token === token ? null : c));
+      });
+    });
+  }, [pendingForThisPane, pendingNodeLayoutReady, actions, smartFitView, setPendingNodeFocus]);
 
   // Build React Flow node/edge arrays. Nodes that don't have a layout
   // position yet (newly added since the last layout) are hidden so they
@@ -170,8 +234,8 @@ function CanvasInner({ tabId, actions, rt, layoutEngine, onJumpToIde, onActivate
     return rt.doc.nodes.map((n) => {
       const flavor =
         n.extra.isComment ? 'comment'
-        : n.extra.isMarkdown ? 'markdown'
-        : 'code';
+          : n.extra.isMarkdown ? 'markdown'
+            : 'code';
       const cached = positions.get(n.id);
       const pos = cached ? { x: cached.x, y: cached.y } : { x: 0, y: 0 };
       const node: Node<GraffitiNodeData> = {
@@ -183,7 +247,7 @@ function CanvasInner({ tabId, actions, rt, layoutEngine, onJumpToIde, onActivate
           isSelected: rt.selectedNodeId === n.id,
           isLineNode: n.extra.line !== undefined && !n.extra.isMarkdown,
         },
-        draggable: true,
+        draggable: false,
         hidden: !cached,
       };
       if (cached) {
@@ -260,8 +324,7 @@ function CanvasInner({ tabId, actions, rt, layoutEngine, onJumpToIde, onActivate
 
   const onPaneClick = useCallback(() => {
     onActivate?.();
-    actions.select(null);
-  }, [actions, onActivate]);
+  }, [onActivate]);
 
   useLayoutEffect(() => {
     const getViewportElement = () =>
@@ -271,7 +334,7 @@ function CanvasInner({ tabId, actions, rt, layoutEngine, onJumpToIde, onActivate
       const f = flowRef.current;
       const prev = f.getViewport();
       if (rtRef.current.doc.nodes.length === 0) {
-        return () => {};
+        return () => { };
       }
       const pane = flowRootRef.current?.querySelector('.react-flow') as HTMLElement | null;
       const cw = Math.max(1, pane?.clientWidth ?? 800);
@@ -284,7 +347,7 @@ function CanvasInner({ tabId, actions, rt, layoutEngine, onJumpToIde, onActivate
         bounds.width <= 0 ||
         bounds.height <= 0
       ) {
-        return () => {};
+        return () => { };
       }
       // Align graph bbox to top-left (small pad) so html-to-image SVG/JPEG
       // content starts at the origin instead of centered with empty margins.
@@ -325,6 +388,7 @@ function CanvasInner({ tabId, actions, rt, layoutEngine, onJumpToIde, onActivate
       <ReactFlow
         nodes={nodes}
         edges={edges}
+        nodesDraggable={false}
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
         onNodeClick={onNodeClick}
@@ -339,61 +403,61 @@ function CanvasInner({ tabId, actions, rt, layoutEngine, onJumpToIde, onActivate
         minZoom={0.05}
         maxZoom={4}
       >
-      {/* Custom edge markers — referenced via url(#id) on the edge's
+        {/* Custom edge markers — referenced via url(#id) on the edge's
           markerEnd. React Flow injects its built-in markers for the
           ArrowClosed type; we add a "cross" (X) terminator. */}
-      <svg style={{ position: 'absolute', width: 0, height: 0 }}>
-        <defs>
-          <marker
-            id="graffiti-arrow-cross"
-            viewBox="0 0 10 10"
-            refX="5"
-            refY="5"
-            markerWidth="10"
-            markerHeight="10"
-            orient="auto-start-reverse"
-          >
-            <line
-              x1="1"
-              y1="1"
-              x2="9"
-              y2="9"
-              stroke="var(--color-edge)"
-              strokeWidth="1.5"
-            />
-            <line
-              x1="9"
-              y1="1"
-              x2="1"
-              y2="9"
-              stroke="var(--color-edge)"
-              strokeWidth="1.5"
-            />
-          </marker>
-        </defs>
-      </svg>
-      <Background gap={32} color={dark ? '#3d3d3d' : '#e5e5e5'} />
-      <Panel
-        position="bottom-left"
-        className="!m-0"
-        style={{
-          bottom: 'calc(15px + 78px + 8px)',
-          left: 15,
-          zIndex: 6,
-        }}
-      >
-        <PenColorSwatch tabId={tabId} />
-      </Panel>
-      <Controls showInteractive={false} />
-      <MiniMap
-        pannable
-        zoomable
-        nodeStrokeWidth={3}
-        maskColor={dark ? 'rgba(0,0,0,0.55)' : 'rgba(255,255,255,0.55)'}
-        nodeColor={dark ? '#444' : '#cfd8dc'}
-        nodeStrokeColor={dark ? '#888' : '#999'}
-        style={{ background: dark ? 'var(--color-bg-2)' : '#fafafa' }}
-      />
+        <svg style={{ position: 'absolute', width: 0, height: 0 }}>
+          <defs>
+            <marker
+              id="graffiti-arrow-cross"
+              viewBox="0 0 10 10"
+              refX="5"
+              refY="5"
+              markerWidth="10"
+              markerHeight="10"
+              orient="auto-start-reverse"
+            >
+              <line
+                x1="1"
+                y1="1"
+                x2="9"
+                y2="9"
+                stroke="var(--color-edge)"
+                strokeWidth="1.5"
+              />
+              <line
+                x1="9"
+                y1="1"
+                x2="1"
+                y2="9"
+                stroke="var(--color-edge)"
+                strokeWidth="1.5"
+              />
+            </marker>
+          </defs>
+        </svg>
+        <Background gap={32} color={dark ? '#3d3d3d' : '#e5e5e5'} />
+        <Panel
+          position="bottom-left"
+          className="!m-0"
+          style={{
+            bottom: 'calc(15px + 78px + 8px)',
+            left: 15,
+            zIndex: 6,
+          }}
+        >
+          <PenColorSwatch tabId={tabId} />
+        </Panel>
+        <Controls showInteractive={false} onFitView={smartFitView}></Controls>
+        <MiniMap
+          pannable
+          zoomable
+          nodeStrokeWidth={3}
+          maskColor={dark ? 'rgba(0,0,0,0.55)' : 'rgba(255,255,255,0.55)'}
+          nodeColor={dark ? '#444' : '#cfd8dc'}
+          nodeStrokeColor={dark ? '#888' : '#999'}
+          style={{ background: dark ? 'var(--color-bg-2)' : '#fafafa' }}
+        />
       </ReactFlow>
     </div>
   );

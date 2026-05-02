@@ -16,6 +16,11 @@ import {
   darkModeAtom,
 } from '@/state/settings';
 import { shareGraphDialogOpenAtom } from '@/state/shareGraphDialog';
+import {
+  nodeSearchPaletteOpenAtom,
+  nodeSearchScopeAtom,
+  tabJumpPaletteOpenAtom,
+} from '@/state/quickOpenPalettes';
 import { exportAllTabsToTar, exportTabToFile } from '@/persistence/importExport';
 import { db } from '@/persistence/db';
 import { toMermaid } from '@/graph/mermaidExport';
@@ -58,6 +63,25 @@ export async function runCopyCurrentTabMermaid(store: JotaiStore): Promise<void>
   }
 }
 
+export function openTabJumpPalette(store: JotaiStore): void {
+  store.set(nodeSearchPaletteOpenAtom, false);
+  store.set(tabJumpPaletteOpenAtom, true);
+}
+
+/** Mod+F — search only the graph in the focused pane (primary or side). */
+export function openNodeSearchInCurrentTab(store: JotaiStore): void {
+  store.set(tabJumpPaletteOpenAtom, false);
+  store.set(nodeSearchScopeAtom, 'currentTab');
+  store.set(nodeSearchPaletteOpenAtom, true);
+}
+
+/** Mod+Shift+F — search all workspace graphs; choosing a result opens that tab on primary and jumps. */
+export function openNodeSearchInAllTabs(store: JotaiStore): void {
+  store.set(tabJumpPaletteOpenAtom, false);
+  store.set(nodeSearchScopeAtom, 'allTabs');
+  store.set(nodeSearchPaletteOpenAtom, true);
+}
+
 export function buildCommands(store: JotaiStore, openHelp: () => void, openToken: () => void): Command[] {
   const toggle = <T>(atom: import('jotai').PrimitiveAtom<T>, mapper: (v: T) => T) => () => {
     store.set(atom, mapper as never);
@@ -91,6 +115,29 @@ export function buildCommands(store: JotaiStore, openHelp: () => void, openToken
       hotkey: 'Ctrl+Y / Ctrl+Shift+Z',
       section: 'Edit',
       run: runGraphRedo,
+    },
+    {
+      id: 'nav.tabs',
+      title: 'Go to tab…',
+      hotkey: 'Mod+P',
+      section: 'Navigate',
+      run: () => openTabJumpPalette(store),
+    },
+    {
+      id: 'nav.nodes.current',
+      title: 'Search nodes in focused graph',
+      hint: 'Active pane only',
+      hotkey: 'Mod+F',
+      section: 'Navigate',
+      run: () => openNodeSearchInCurrentTab(store),
+    },
+    {
+      id: 'nav.nodes.workspace',
+      title: 'Search nodes in all tabs',
+      hint: 'Opens result on primary',
+      hotkey: 'Mod+Shift+F',
+      section: 'Navigate',
+      run: () => openNodeSearchInAllTabs(store),
     },
     {
       id: 'export.tab',

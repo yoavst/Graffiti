@@ -34,7 +34,12 @@ import { dispatchInbound } from '@/network/protocol/dispatch';
 import { getStore } from '@/state/store';
 import { getCurrentTab, getTabFull } from '@/state/registry';
 import { addCommentAction, addTextNodeAction } from '@/commands/addNodeActions';
-import { runExportCurrentTabJson, runGraphRedo, runGraphUndo } from '@/commands/commands';
+import {
+  openNodeSearchInCurrentTab,
+  runExportCurrentTabJson,
+  runGraphRedo,
+  runGraphUndo,
+} from '@/commands/commands';
 import { importUserPickedFiles } from '@/persistence/tabImport';
 import { loadAll, tabsAtom, currentTabIdAtom } from '@/state/workspaces';
 import { dialogs } from '@/ui/dialogs/Dialogs';
@@ -179,8 +184,8 @@ export function Header({ onOpenToken, onOpenHelp }: { onOpenToken: () => void; o
             <RedoOutlinedIcon fontSize="small" />
           </IconButton>
         </Tooltip>
-        <Tooltip title="Search (coming soon)">
-          <IconButton size="small" onClick={() => { }}>
+        <Tooltip title="Search nodes in the focused graph (Ctrl+F)">
+          <IconButton size="small" onClick={() => openNodeSearchInCurrentTab(store)}>
             <SearchOutlinedIcon fontSize="small" />
           </IconButton>
         </Tooltip>

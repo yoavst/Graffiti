@@ -1,8 +1,14 @@
 import { useHotkeys as useHotkeysHook } from 'react-hotkeys-hook';
 import { useAtomValue, useSetAtom } from 'jotai';
-import { sidePaneTabIdAtom, currentTabIdAtom, tabsAtom } from '@/state/workspaces';
+import {
+  sidePaneTabIdAtom,
+  currentTabIdAtom,
+  tabsAtom,
+  activeTabIdAtom,
+  activePaneAtom,
+} from '@/state/workspaces';
 import { getCurrentTab } from '@/state/registry';
-import { tabRuntimeAtom, tabTickAtom } from '@/state/graph';
+import { requestFitViewForTab } from '@/flow/flowFitViewBridge';
 import { useStore } from 'jotai';
 import {
   inspectorVisibleAtom,
@@ -115,11 +121,9 @@ export function useHotkeys(_handlers: { onOpenToken: () => void; onOpenHelp: () 
     'home',
     (e) => {
       e.preventDefault();
-      const t = getCurrentTab();
-      if (!t) return;
-      // Bump the tick to force React Flow to refit if structure changed.
-      store.set(tabTickAtom(t.tabId), (n) => n + 1);
-      void tabRuntimeAtom; // keep import
+      const id = store.get(activeTabIdAtom);
+      if (!id) return;
+      requestFitViewForTab(id, store.get(activePaneAtom));
     },
     [store],
   );

@@ -33,12 +33,17 @@ export function HelpDialog({ onClose }: { onClose: () => void }) {
         </p>
         <ul className="mt-3 list-disc pl-5 text-sm">
           <li>Ctrl+Shift+P — Command palette</li>
-          <li>Ctrl+F / Ctrl+Shift+F — Search current / all tabs</li>
+          <li>Ctrl+P — Go to tab</li>
+          <li>Ctrl+F — Search nodes in the focused graph (primary or side) and jump</li>
+          <li>Ctrl+Shift+F — Search all tabs; picking a result opens that graph on primary and jumps</li>
           <li>Ctrl+Z / Ctrl+Y — Undo / Redo</li>
-          <li>Home / Ctrl+Home — Focus selected / Reset zoom</li>
+          <li>Esc — Clear node/edge selection (clicking the empty canvas only moves pane focus)</li>
+          <li>
+            Home / canvas fit-view — With a selected node, center and zoom to it; otherwise fit the
+            whole graph in the focused pane
+          </li>
           <li>Ctrl+Q / Ctrl+Shift+Q — Add comment / text node</li>
           <li>Ctrl+I / Ctrl+Alt+Shift+I — Swap arrow / focus target</li>
-          <li>Ctrl+E — Override label of selected node</li>
           <li>Ctrl+. — Toggle inspector panel</li>
           <li>Ctrl+\ — Open current tab in side pane</li>
         </ul>

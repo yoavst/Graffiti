@@ -26,6 +26,8 @@ import { DialogHost } from './ui/dialogs/Dialogs';
 import { useHotkeys } from './commands/hotkeys';
 import { setCurrentTab } from './state/registry';
 import { CommandPalette } from './ui/CommandPalette';
+import { NodeSearchPalette } from './ui/NodeSearchPalette';
+import { TabJumpPalette } from './ui/TabJumpPalette';
 import { readUrlState, writeUrlState } from './routing/url';
 import { importUserPickedFiles } from './persistence/tabImport';
 
@@ -179,6 +181,8 @@ function Inner() {
         onOpenHelp={() => setHelpOpen(true)}
         onOpenToken={() => setTokenOpen(true)}
       />
+      <TabJumpPalette />
+      <NodeSearchPalette />
       {tokenOpen && <TokenDialog onClose={() => setTokenOpen(false)} />}
       {helpOpen && <HelpDialog onClose={() => setHelpOpen(false)} />}
       <DialogHost />

@@ -52,7 +52,7 @@ export function CommandPalette({
               {list.map((c) => (
                 <Command.Item
                   key={c.id}
-                  value={c.title}
+                  value={[c.title, c.hint, c.hotkey].filter(Boolean).join(' ')}
                   onSelect={() => {
                     setOpen(false);
                     void c.run();

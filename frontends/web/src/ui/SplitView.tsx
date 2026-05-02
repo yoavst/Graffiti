@@ -42,7 +42,7 @@ export function SplitView() {
       >
         {hasSide && <PaneTitle tab={primaryTab} label="primary" />}
         <Suspense fallback={null}>
-          <TabHost tabId={primary} onActivate={() => setActivePane('primary')} />
+          <TabHost tabId={primary} pane="primary" onActivate={() => setActivePane('primary')} />
         </Suspense>
       </div>
       {hasSide && (
@@ -66,7 +66,7 @@ export function SplitView() {
             </button>
           </div>
           <Suspense fallback={null}>
-            <TabHost tabId={side!} onActivate={() => setActivePane('side')} />
+            <TabHost tabId={side!} pane="side" onActivate={() => setActivePane('side')} />
           </Suspense>
         </div>
       )}
