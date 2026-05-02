@@ -4,8 +4,13 @@ import { sidePaneTabIdAtom, currentTabIdAtom, tabsAtom } from '@/state/workspace
 import { getCurrentTab } from '@/state/registry';
 import { tabRuntimeAtom, tabTickAtom } from '@/state/graph';
 import { useStore } from 'jotai';
-import { inspectorVisibleAtom } from '@/state/settings';
+import {
+  inspectorVisibleAtom,
+  isExistingToNewAtom,
+  isNewWillBeSelectedAtom,
+} from '@/state/settings';
 import { addCommentAction, addTextNodeAction } from './addNodeActions';
+import { runGraphRedo, runGraphUndo } from './commands';
 
 export function useHotkeys(_handlers: { onOpenToken: () => void; onOpenHelp: () => void }) {
   const setSide = useSetAtom(sidePaneTabIdAtom);
@@ -19,8 +24,7 @@ export function useHotkeys(_handlers: { onOpenToken: () => void; onOpenHelp: () 
     'mod+z',
     (e) => {
       e.preventDefault();
-      const t = getCurrentTab();
-      t?.actions.undo();
+      runGraphUndo();
     },
     [],
   );
@@ -28,10 +32,25 @@ export function useHotkeys(_handlers: { onOpenToken: () => void; onOpenHelp: () 
     'mod+shift+z, mod+y',
     (e) => {
       e.preventDefault();
-      const t = getCurrentTab();
-      t?.actions.redo();
+      runGraphRedo();
     },
     [],
+  );
+  useHotkeysHook(
+    'mod+i',
+    (e) => {
+      e.preventDefault();
+      store.set(isExistingToNewAtom, (v) => !v);
+    },
+    [store],
+  );
+  useHotkeysHook(
+    'mod+alt+shift+i',
+    (e) => {
+      e.preventDefault();
+      store.set(isNewWillBeSelectedAtom, (v) => !v);
+    },
+    [store],
   );
   useHotkeysHook(
     'esc',

@@ -19,6 +19,7 @@ import { exportAllTabsToTar, exportTabToFile } from '@/persistence/importExport'
 import { db } from '@/persistence/db';
 import { toMermaid } from '@/graph/mermaidExport';
 import { addCommentAction, addTextNodeAction } from './addNodeActions';
+import { dialogs } from '@/ui/dialogs/Dialogs';
 
 export interface Command {
   id: string;
@@ -27,6 +28,33 @@ export interface Command {
   hotkey?: string;
   section?: string;
   run: () => void | Promise<void>;
+}
+
+export function runGraphUndo(): void {
+  getCurrentTab()?.actions.undo();
+}
+
+export function runGraphRedo(): void {
+  getCurrentTab()?.actions.redo();
+}
+
+export function runExportCurrentTabJson(store: JotaiStore): void {
+  const id = store.get(currentTabIdAtom);
+  if (id) void exportTabToFile(id);
+}
+
+export async function runCopyCurrentTabMermaid(store: JotaiStore): Promise<void> {
+  const id = store.get(currentTabIdAtom);
+  if (!id) return;
+  const g = await db.graphs.get(id);
+  if (!g) return;
+  const dark = store.get(darkModeAtom);
+  const s = toMermaid(g.doc, { gui: true, elkRenderer: true, darkMode: dark });
+  try {
+    await navigator.clipboard.writeText(s);
+  } catch {
+    await dialogs.alert('Could not copy to clipboard.', { title: 'Clipboard' });
+  }
 }
 
 export function buildCommands(store: JotaiStore, openHelp: () => void, openToken: () => void): Command[] {
@@ -54,24 +82,21 @@ export function buildCommands(store: JotaiStore, openHelp: () => void, openToken
       title: 'Undo',
       hotkey: 'Ctrl+Z',
       section: 'Edit',
-      run: () => getCurrentTab()?.actions.undo(),
+      run: runGraphUndo,
     },
     {
       id: 'redo',
       title: 'Redo',
       hotkey: 'Ctrl+Y / Ctrl+Shift+Z',
       section: 'Edit',
-      run: () => getCurrentTab()?.actions.redo(),
+      run: runGraphRedo,
     },
     {
       id: 'export.tab',
       title: 'Export current tab to JSON',
       hotkey: 'Ctrl+S',
       section: 'File',
-      run: () => {
-        const id = store.get(currentTabIdAtom);
-        if (id) void exportTabToFile(id);
-      },
+      run: () => runExportCurrentTabJson(store),
     },
     {
       id: 'export.all',
@@ -85,13 +110,7 @@ export function buildCommands(store: JotaiStore, openHelp: () => void, openToken
       title: 'Copy current tab as Mermaid',
       section: 'File',
       run: async () => {
-        const id = store.get(currentTabIdAtom);
-        if (!id) return;
-        const g = await db.graphs.get(id);
-        if (!g) return;
-        const dark = store.get(darkModeAtom);
-        const s = toMermaid(g.doc, { gui: true, elkRenderer: true, darkMode: dark });
-        await navigator.clipboard.writeText(s);
+        await runCopyCurrentTabMermaid(store);
       },
     },
     {

@@ -1,9 +1,7 @@
 import { useAtom, useAtomValue, useSetAtom, useStore } from 'jotai';
-import { useEffect } from 'react';
+import { useEffect, useRef, type ChangeEvent } from 'react';
 import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
-import Switch from '@mui/material/Switch';
-import FormControlLabel from '@mui/material/FormControlLabel';
 import TextField from '@mui/material/TextField';
 import NoteAddOutlinedIcon from '@mui/icons-material/NoteAddOutlined';
 import ChatBubbleOutlineOutlinedIcon from '@mui/icons-material/ChatBubbleOutlineOutlined';
@@ -11,6 +9,12 @@ import PowerSettingsNewIcon from '@mui/icons-material/PowerSettingsNew';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import KeyOutlinedIcon from '@mui/icons-material/KeyOutlined';
 import HelpIcon from '@mui/icons-material/Help';
+import UploadOutlinedIcon from '@mui/icons-material/UploadOutlined';
+import DownloadOutlinedIcon from '@mui/icons-material/DownloadOutlined';
+import ShareOutlinedIcon from '@mui/icons-material/ShareOutlined';
+import UndoOutlinedIcon from '@mui/icons-material/UndoOutlined';
+import RedoOutlinedIcon from '@mui/icons-material/RedoOutlined';
+import SearchOutlinedIcon from '@mui/icons-material/SearchOutlined';
 import {
   authTokenAtom,
   connectionStatusAtom,
@@ -29,6 +33,15 @@ import { dispatchInbound } from '@/network/protocol/dispatch';
 import { getStore } from '@/state/store';
 import { getCurrentTab, getTabFull } from '@/state/registry';
 import { addCommentAction, addTextNodeAction } from '@/commands/addNodeActions';
+import {
+  runCopyCurrentTabMermaid,
+  runExportCurrentTabJson,
+  runGraphRedo,
+  runGraphUndo,
+} from '@/commands/commands';
+import { importUserPickedFiles } from '@/persistence/tabImport';
+import { loadAll, tabsAtom, currentTabIdAtom } from '@/state/workspaces';
+import { dialogs } from '@/ui/dialogs/Dialogs';
 
 export function Header({ onOpenToken, onOpenHelp }: { onOpenToken: () => void; onOpenHelp: () => void }) {
   const [url, setUrl] = useAtom(connectionUrlAtom);
@@ -42,6 +55,9 @@ export function Header({ onOpenToken, onOpenHelp }: { onOpenToken: () => void; o
   const [newWillBeSelected, setNewWillBeSelected] = useAtom(isNewWillBeSelectedAtom);
   const [client, setClient] = useAtom(wsClientAtom);
   const store = useStore();
+  const setTabs = useSetAtom(tabsAtom);
+  const setCurrentTabId = useSetAtom(currentTabIdAtom);
+  const importInputRef = useRef<HTMLInputElement>(null);
 
   // Initial url
   useEffect(() => {
@@ -91,6 +107,23 @@ export function Header({ onOpenToken, onOpenHelp }: { onOpenToken: () => void; o
     setClient(null);
   }
 
+  async function onImportFilesChosen(e: ChangeEvent<HTMLInputElement>) {
+    const input = e.target;
+    const list = input.files;
+    input.value = '';
+    if (!list?.length) return;
+    const { firstTabId, targetMissing } = await importUserPickedFiles(Array.from(list));
+    if (targetMissing) {
+      await dialogs.alert('No tab group to import into. Open a workspace with at least one tab first.', {
+        title: 'Import',
+      });
+      return;
+    }
+    const all = await loadAll();
+    setTabs(all.tabs);
+    if (firstTabId) setCurrentTabId(firstTabId);
+  }
+
   const statusColor =
     status === 'connected' ? '#22c55e'
       : status === 'connecting' ? '#eab308'
@@ -99,44 +132,98 @@ export function Header({ onOpenToken, onOpenHelp }: { onOpenToken: () => void; o
 
   return (
     <header className="flex items-center gap-2 border-b border-(--color-border) bg-(--color-bg-2) px-3 py-2">
+      <input
+        ref={importInputRef}
+        type="file"
+        className="sr-only"
+        accept=".json,.tar,application/json,application/x-tar"
+        multiple
+        onChange={(e) => void onImportFilesChosen(e)}
+      />
       <img src="/icon.png" alt="Graffiti" className="h-7 w-7" />
       <h1 className="text-lg font-semibold mr-3">Graffiti</h1>
 
-      <Tooltip title="Add text node (Ctrl+Shift+Q)">
-        <IconButton size="small" onClick={() => void addTextNodeAction(store)}>
-          <NoteAddOutlinedIcon fontSize="small" />
-        </IconButton>
-      </Tooltip>
-      <Tooltip title="Add comment to selected node (Ctrl+Q)">
-        <IconButton size="small" onClick={() => void addCommentAction(store)}>
-          <ChatBubbleOutlineOutlinedIcon fontSize="small" />
-        </IconButton>
-      </Tooltip>
-
       <div className="flex-1" />
 
-      <FormControlLabel
-        control={
-          <Switch
-            size="small"
-            checked={existingToNew}
-            onChange={(e) => setExistingToNew(e.target.checked)}
-          />
-        }
-        label="existing→new"
-        slotProps={{ typography: { sx: { fontSize: '0.75rem' } } }}
-      />
-      <FormControlLabel
-        control={
-          <Switch
-            size="small"
-            checked={newWillBeSelected}
-            onChange={(e) => setNewWillBeSelected(e.target.checked)}
-          />
-        }
-        label="focus new"
-        slotProps={{ typography: { sx: { fontSize: '0.75rem' } } }}
-      />
+      <div className="flex shrink-0 items-center gap-1">
+        <Tooltip title="Import JSON or TAR…">
+          <IconButton size="small" onClick={() => importInputRef.current?.click()}>
+            <UploadOutlinedIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Export current tab to JSON (Ctrl+S)">
+          <IconButton size="small" onClick={() => runExportCurrentTabJson(store)}>
+            <DownloadOutlinedIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Copy diagram as Mermaid">
+          <IconButton size="small" onClick={() => void runCopyCurrentTabMermaid(store)}>
+            <ShareOutlinedIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Add text node (Ctrl+Shift+Q)">
+          <IconButton size="small" onClick={() => void addTextNodeAction(store)}>
+            <NoteAddOutlinedIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Add comment to selected node (Ctrl+Q)">
+          <IconButton size="small" onClick={() => void addCommentAction(store)}>
+            <ChatBubbleOutlineOutlinedIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Undo (Ctrl+Z)">
+          <IconButton size="small" onClick={() => runGraphUndo()}>
+            <UndoOutlinedIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Redo (Ctrl+Y / Ctrl+Shift+Z)">
+          <IconButton size="small" onClick={() => runGraphRedo()}>
+            <RedoOutlinedIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="Search (coming soon)">
+          <IconButton size="small" onClick={() => { }}>
+            <SearchOutlinedIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
+
+        <Tooltip
+          title="Arrow direction (Ctrl+I)\nFocus target (Ctrl+Alt+Shift+I)"
+          slotProps={{ tooltip: { sx: { whiteSpace: 'pre-line' } } }}
+        >
+          <button
+            type="button"
+            className="header-arrow-toggle focus-visible:outline focus-visible:outline-2 focus-visible:outline-(--color-accent) focus-visible:outline-offset-2"
+            aria-label="Edge direction and default selection after add from backend"
+            onClick={() => setExistingToNew(!existingToNew)}
+            onContextMenu={(e) => {
+              e.preventDefault();
+              setNewWillBeSelected(!newWillBeSelected);
+            }}
+          >
+            <span className="header-arrow-toggle__row">
+              <span
+                className={`header-arrow-toggle__text ${newWillBeSelected ? '' : 'header-arrow-toggle__text--bold'}`}
+                data-content="Existing"
+              >
+                Existing
+              </span>
+              <span className="header-arrow-toggle__track" aria-hidden>
+                <span className="header-arrow-toggle__line" />
+                <span
+                  className={`header-arrow-toggle__head ${existingToNew ? 'header-arrow-toggle__head--e2n' : ''}`}
+                />
+              </span>
+              <span
+                className={`header-arrow-toggle__text ${newWillBeSelected ? 'header-arrow-toggle__text--bold' : ''}`}
+                data-content="New"
+              >
+                New
+              </span>
+            </span>
+          </button>
+        </Tooltip>
+      </div>
 
       <TextField
         type="url"
@@ -153,11 +240,6 @@ export function Header({ onOpenToken, onOpenHelp }: { onOpenToken: () => void; o
           <IconButton
             size="small"
             onClick={disconnect}
-            sx={{
-              bgcolor: statusColor,
-              color: 'white',
-              '&:hover': { bgcolor: statusColor, opacity: 0.9 },
-            }}
           >
             <PowerSettingsNewIcon fontSize="small" />
           </IconButton>

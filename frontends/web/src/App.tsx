@@ -27,9 +27,7 @@ import { setCurrentTab } from './state/registry';
 import { CommandPalette } from './ui/CommandPalette';
 import { readUrlState, writeUrlState } from './routing/url';
 import { sidePaneTabIdAtom } from './state/workspaces';
-import { importFile } from './persistence/importExport';
-import { db } from './persistence/db';
-import { getCurrentTab as registryGetCurrentTab } from './state/registry';
+import { importUserPickedFiles } from './persistence/tabImport';
 import { loadAll as workspacesLoadAll } from './state/workspaces';
 import { useAtom } from 'jotai';
 
@@ -137,41 +135,10 @@ function Inner() {
       const files = e.dataTransfer ? Array.from(e.dataTransfer.files) : [];
       if (files.length === 0) return;
 
-      // Resolve the target group: use the current tab's group if available,
-      // otherwise fall back to the first group in the current workspace.
-      let targetGroupId: string | null = null;
-      const cur = registryGetCurrentTab();
-      if (cur) {
-        const tab = await db.tabs.get(cur.tabId);
-        if (tab) targetGroupId = tab.tabGroupId;
-      }
-      if (!targetGroupId) {
-        const tabIdFromAtom = getStore().get(currentTabIdAtom);
-        if (tabIdFromAtom) {
-          const tab = await db.tabs.get(tabIdFromAtom);
-          if (tab) targetGroupId = tab.tabGroupId;
-        }
-      }
-      if (!targetGroupId) {
-        const wid = getStore().get(currentWorkspaceIdAtom);
-        if (wid) {
-          const g = await db.tabGroups.where('workspaceId').equals(wid).first();
-          if (g) targetGroupId = g.id;
-        }
-      }
-      if (!targetGroupId) {
+      const { firstTabId: firstImportedTabId, targetMissing } = await importUserPickedFiles(files);
+      if (targetMissing) {
         console.warn('drop: no target tab group');
         return;
-      }
-
-      let firstImportedTabId: string | null = null;
-      for (const f of files) {
-        try {
-          const importedIds = await importFile(f, targetGroupId);
-          if (!firstImportedTabId && importedIds[0]) firstImportedTabId = importedIds[0];
-        } catch (err) {
-          console.error('import failed for', f.name, err);
-        }
       }
 
       const all = await workspacesLoadAll();

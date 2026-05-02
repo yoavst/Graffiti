@@ -98,3 +98,91 @@ button {
 :root.light .react-flow__minimap {
   background-color: #fafafa;
 }
+
+/* Header: Existing ↔ New — legacy-style line + arrowhead, foreground on transparent */
+.header-arrow-toggle {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  padding: 2px 6px;
+  margin: 0;
+  background: transparent;
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  user-select: none;
+  color: var(--color-fg);
+}
+.header-arrow-toggle:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+.header-arrow-toggle:active {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.header-arrow-toggle__row {
+  display: inline-flex;
+  align-items: center;
+}
+
+.header-arrow-toggle__text {
+  display: inline-block;
+  vertical-align: middle;
+  font-size: 12px;
+  line-height: 1.2;
+  color: var(--color-fg);
+  transition:
+    font-weight 0.2s ease,
+    font-size 0.2s ease;
+  font-weight: 400;
+}
+.header-arrow-toggle__text--bold {
+  font-size: 14px;
+  font-weight: 800;
+}
+.header-arrow-toggle__text::after {
+  display: block;
+  content: attr(data-content);
+  font-weight: 800;
+  font-size: 14px;
+  height: 0;
+  overflow: hidden;
+  visibility: hidden;
+}
+
+.header-arrow-toggle__track {
+  position: relative;
+  width: 44px;
+  height: 22px;
+  flex-shrink: 0;
+  margin: 0 2px;
+}
+
+.header-arrow-toggle__line {
+  width: 34px;
+  height: 2px;
+  position: absolute;
+  top: 50%;
+  left: 5px;
+  transform: translateY(-50%);
+  background: var(--color-fg);
+  border-radius: 1px;
+}
+
+.header-arrow-toggle__head {
+  padding: 3px;
+  border: solid var(--color-fg);
+  border-width: 0 2px 2px 0;
+  position: absolute;
+  top: 50%;
+  left: 5px;
+  transform: translateY(-50%) rotate(135deg);
+  transition:
+    left 0.25s ease,
+    transform 0.25s ease;
+  box-sizing: content-box;
+}
+.header-arrow-toggle__head--e2n {
+  left: calc(100% - 13px);
+  transform: translateY(-50%) rotate(-45deg);
+}
