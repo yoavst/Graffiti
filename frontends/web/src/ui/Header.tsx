@@ -70,10 +70,10 @@ export function Header({ onOpenToken, onOpenHelp }: { onOpenToken: () => void; o
     // store rather than React-captured locals so the latest values are used
     // even if the user flips a checkbox after connecting.
     let c: ReturnType<typeof connect> | null = null;
+    setLastUrl(u);
     c = connect(u, {
       onStatus: (s) => {
         setStatus(s);
-        if (s === 'connected') setLastUrl(u);
       },
       onMessage: (msg) => {
         const store = getStore();
@@ -233,30 +233,19 @@ export function Header({ onOpenToken, onOpenHelp }: { onOpenToken: () => void; o
         placeholder={defaultSocketUrl(isDomain)}
       />
 
-      {client ? (
-        <Tooltip title={`Disconnect (${status})`}>
-          <IconButton
-            size="small"
-            onClick={disconnect}
-          >
-            <PowerSettingsNewIcon fontSize="small" />
-          </IconButton>
-        </Tooltip>
-      ) : (
-        <Tooltip title={`Connect (${status})`}>
-          <IconButton
-            size="small"
-            onClick={doConnect}
-            sx={{
-              bgcolor: statusColor,
-              color: 'white',
-              '&:hover': { bgcolor: statusColor, opacity: 0.9 },
-            }}
-          >
-            <PlayArrowIcon fontSize="small" />
-          </IconButton>
-        </Tooltip>
-      )}
+
+      <Tooltip title={`${!client ? 'Disconnect' : 'Connect'} (${status})`}>
+        <IconButton
+          size="small"
+          onClick={client ? disconnect : doConnect}
+          sx={{
+            bgcolor: statusColor,
+            '&:hover': { bgcolor: statusColor, opacity: 0.9 },
+          }}
+        >
+          {client ? <PowerSettingsNewIcon fontSize="small" /> : <PlayArrowIcon fontSize="small" />}
+        </IconButton>
+      </Tooltip>
 
       <Tooltip title="Manage token (Ctrl+K)">
         <IconButton size="small" onClick={onOpenToken}>

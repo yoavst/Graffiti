@@ -14,10 +14,16 @@ export const isDomainModeAtom = atomWithStorage<boolean>(
   typeof location !== 'undefined' && location.hostname !== 'graffiti.quest',
 );
 
-export const isExistingToNewAtom = atomWithStorage<boolean>('isExistingToNew', true);
+export const isExistingToNewAtom = atomWithStorage<boolean>('isExistingToNew', true, undefined, {
+  getOnInit: true,
+});
 export const isNewWillBeSelectedAtom = atomWithStorage<boolean>(
   'isNewWillBeSelected',
   true,
+  undefined,
+  {
+    getOnInit: true,
+  },
 );
 
 export const sidebarVisibleAtom = atomWithStorage<boolean>('sidebarVisible', true);

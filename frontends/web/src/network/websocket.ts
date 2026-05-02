@@ -18,6 +18,10 @@ export interface WSClient {
 export function connect(url: string, events: WSEvents): WSClient {
   events.onStatus('connecting');
   const ws = new WebSocket(url);
+  // Browsers fire `error` then `close` for failed handshakes; only `close` should
+  // update status so we surface `error` instead of overwriting with `closed`.
+  let failed = false;
+  let suppressCloseStatus = false;
 
   ws.onopen = () => {
     events.onStatus('connected');
@@ -28,8 +32,16 @@ export function connect(url: string, events: WSEvents): WSClient {
     );
   };
 
-  ws.onclose = () => events.onStatus('closed');
-  ws.onerror = () => events.onStatus('error');
+  ws.onclose = () => {
+    if (suppressCloseStatus) {
+      suppressCloseStatus = false;
+      return;
+    }
+    events.onStatus(failed ? 'error' : 'closed');
+  };
+  ws.onerror = () => {
+    failed = true;
+  };
 
   ws.onmessage = (e) => {
     let parsed: unknown;
@@ -46,6 +58,7 @@ export function connect(url: string, events: WSEvents): WSClient {
       const token = events.onAuthRequired();
       if (token == null) {
         events.onStatus('auth_required');
+        suppressCloseStatus = true;
         ws.close();
       } else {
         ws.send(JSON.stringify({ type: 'auth_resp_v1', token }));
