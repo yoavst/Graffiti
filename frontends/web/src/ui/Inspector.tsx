@@ -509,12 +509,12 @@ function EdgeInspector({ tabId }: { tabId: string }) {
   }
 
   return (
-    <div className="flex flex-col gap-2">
-      <div className="text-xs opacity-60">id: {edge.id}</div>
-      <label className="text-xs">
+    <div className="flex flex-col gap-3">
+      <div className="text-sm opacity-60">id: {edge.id}</div>
+      <label className="text-sm opacity-70">
         Label
         <input
-          className="mt-1 w-full rounded border border-(--color-border) bg-(--color-bg-3) px-1 py-0.5 text-xs"
+          className="mt-1 w-full rounded border border-(--color-border) bg-(--color-bg-3) px-2 py-0.5 text-sm"
           value={edge.label ?? ''}
           onChange={(e) =>
             actions.apply({
@@ -527,7 +527,7 @@ function EdgeInspector({ tabId }: { tabId: string }) {
         />
       </label>
       <div>
-        <label className="text-xs opacity-60">Arrow</label>
+        <label className="text-sm opacity-70">Arrow</label>
         <Select
           fullWidth
           size="small"
@@ -540,7 +540,10 @@ function EdgeInspector({ tabId }: { tabId: string }) {
               newArrow: e.target.value as ArrowKind,
             })
           }
-          sx={{ mt: 0.5 }}
+          sx={{
+            mt: 0.5,
+            '& .MuiInputBase-root': { fontSize: '0.875rem' },
+          }}
         >
           <MenuItem value="normal">normal (--&gt;)</MenuItem>
           <MenuItem value="dotted">dotted (-.-&gt;)</MenuItem>
@@ -549,8 +552,8 @@ function EdgeInspector({ tabId }: { tabId: string }) {
         </Select>
       </div>
       <div>
-        <label className="text-xs opacity-60">Color</label>
-        <div className="mt-1 flex flex-wrap gap-1">
+        <label className="text-sm opacity-70">Color</label>
+        <div className="mt-1.5 flex flex-wrap gap-1.5">
           {EDGE_COLORS.map((c) => {
             const active = (edge.style?.color ?? undefined) === c.value;
             return (

@@ -1,5 +1,8 @@
 import { memo, useCallback, useRef } from 'react';
-import type { MouseEvent as ReactMouseEvent } from 'react';
+import type {
+  MouseEvent as ReactMouseEvent,
+  PointerEvent as ReactPointerEvent,
+} from 'react';
 import {
   BaseEdge,
   EdgeLabelRenderer,
@@ -55,12 +58,103 @@ function farNodeIdFromPathAndClick(
   return ratio <= 0.5 ? targetId : sourceId;
 }
 
+const EDGE_PAN_DRAG_THRESHOLD_PX = 3;
+
+/**
+ * React Flow puts `nopan` on every edge group, so the built-in pane drag never
+ * starts on strokes. Mirror pane panning by updating the viewport while dragging.
+ */
+function useEdgeStrokePan() {
+  const { getViewport, setViewport } = useReactFlow();
+  const panSession = useRef<{
+    pointerId: number;
+    startX: number;
+    startY: number;
+    base: { x: number; y: number; zoom: number };
+    dragging: boolean;
+  } | null>(null);
+  const suppressClickRef = useRef(false);
+
+  const onPointerDown = useCallback(
+    (e: ReactPointerEvent<SVGPathElement>) => {
+      if (e.button !== 0) return;
+      panSession.current = {
+        pointerId: e.pointerId,
+        startX: e.clientX,
+        startY: e.clientY,
+        base: getViewport(),
+        dragging: false,
+      };
+      try {
+        e.currentTarget.setPointerCapture(e.pointerId);
+      } catch {
+        /* ignore */
+      }
+    },
+    [getViewport],
+  );
+
+  const onPointerMove = useCallback(
+    (e: ReactPointerEvent<SVGPathElement>) => {
+      const s = panSession.current;
+      if (!s || e.pointerId !== s.pointerId) return;
+      const dx = e.clientX - s.startX;
+      const dy = e.clientY - s.startY;
+      if (!s.dragging) {
+        if (Math.hypot(dx, dy) < EDGE_PAN_DRAG_THRESHOLD_PX) return;
+        s.dragging = true;
+      }
+      suppressClickRef.current = true;
+      void setViewport({ x: s.base.x + dx, y: s.base.y + dy, zoom: s.base.zoom });
+    },
+    [setViewport],
+  );
+
+  const endPointer = useCallback((e: ReactPointerEvent<SVGPathElement>) => {
+    const s = panSession.current;
+    if (!s || e.pointerId !== s.pointerId) return;
+    try {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    } catch {
+      /* ignore */
+    }
+    if (!s.dragging) {
+      suppressClickRef.current = false;
+    }
+    panSession.current = null;
+  }, []);
+
+  const onLostPointerCapture = useCallback((e: ReactPointerEvent<SVGPathElement>) => {
+    if (panSession.current?.pointerId === e.pointerId) {
+      panSession.current = null;
+    }
+  }, []);
+
+  const onClickCapture = useCallback((e: ReactMouseEvent<SVGPathElement>) => {
+    if (suppressClickRef.current) {
+      suppressClickRef.current = false;
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  }, []);
+
+  return {
+    onPointerDown,
+    onPointerMove,
+    onPointerUp: endPointer,
+    onPointerCancel: endPointer,
+    onLostPointerCapture,
+    onClickCapture,
+  };
+}
+
 function LabeledEdgeImpl(props: EdgeProps) {
   const { sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition, markerEnd, data, source, target } =
     props;
   const d = (data ?? {}) as GraffitiEdgeData;
   const curvedDefault = useAtomValue(isCurvedEdgesAtom);
   const { screenToFlowPosition } = useReactFlow();
+  const edgeStrokePan = useEdgeStrokePan();
   const pathRef = useRef<SVGPathElement>(null);
 
   const pathArgs = { sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition };
@@ -110,6 +204,7 @@ function LabeledEdgeImpl(props: EdgeProps) {
         style={{ pointerEvents: 'stroke' }}
         onAuxClick={onMiddle}
         onMouseDown={stopMiddleScroll}
+        {...edgeStrokePan}
       />
       {d.label !== undefined && d.label !== '' && (
         <EdgeLabelRenderer>
@@ -124,7 +219,7 @@ function LabeledEdgeImpl(props: EdgeProps) {
               fontSize: 11,
               pointerEvents: 'all',
             }}
-            className="nodrag nopan"
+            className="nodrag"
             onAuxClick={onMiddle}
             onMouseDown={stopMiddleScroll}
           >
