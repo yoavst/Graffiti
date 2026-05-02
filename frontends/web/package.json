@@ -13,7 +13,10 @@
   },
   "dependencies": {
     "@dagrejs/dagre": "^1.1.4",
-    "@floating-ui/react": "^0.27.3",
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
+    "@mui/icons-material": "^9.0.0",
+    "@mui/material": "^9.0.0",
     "@xyflow/react": "^12.3.6",
     "cmdk": "^1.0.4",
     "comlink": "^4.4.2",

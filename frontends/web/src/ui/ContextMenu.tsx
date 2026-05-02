@@ -1,16 +1,7 @@
-// Right-click context menu, positioned at the cursor and dismissed via
-// @floating-ui/react's useDismiss (handles outside-press + escape correctly,
-// including not closing on the same event that opened the menu).
-
-import {
-  FloatingPortal,
-  flip,
-  shift,
-  useDismiss,
-  useFloating,
-  useInteractions,
-} from '@floating-ui/react';
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState, type ReactNode } from 'react';
+import Menu from '@mui/material/Menu';
+import MenuItem from '@mui/material/MenuItem';
+import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 
 export interface ContextMenuItem {
   label: string;
@@ -21,126 +12,102 @@ export interface ContextMenuItem {
   submenu?: ContextMenuItem[];
 }
 
-export interface ContextMenuState {
-  x: number;
-  y: number;
-  items: ContextMenuItem[];
-}
-
+// Wrapping component pattern from MUI's docs example. The <Menu> is a
+// React child of the wrapper div, so a contextmenu fired on the (portaled)
+// Modal backdrop bubbles back up through React's portal-aware event system
+// to handleContextMenu — that's how a second right-click while the menu is
+// open closes it instead of leaking through to the native browser menu.
 export function ContextMenu({
-  state,
-  onClose,
+  items,
+  children,
 }: {
-  state: ContextMenuState | null;
-  onClose: () => void;
+  items: ContextMenuItem[];
+  children: ReactNode;
 }) {
-  const open = state != null;
+  const [pos, setPos] = useState<{ x: number; y: number } | null>(null);
 
-  const { refs, floatingStyles, context, isPositioned } = useFloating({
-    open,
-    onOpenChange: (next) => {
-      if (!next) onClose();
-    },
-    placement: 'bottom-start',
-    middleware: [flip(), shift({ padding: 4 })],
-  });
+  function handleContextMenu(e: React.MouseEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    // Repeated contextmenu while open closes the menu rather than
+    // re-positioning it (matches MUI docs pattern).
+    setPos(pos === null ? { x: e.clientX, y: e.clientY } : null);
+  }
 
-  // Virtual reference at the cursor position.
-  useEffect(() => {
-    if (!state) return;
-    refs.setPositionReference({
-      getBoundingClientRect: () => ({
-        x: state.x,
-        y: state.y,
-        top: state.y,
-        left: state.x,
-        right: state.x,
-        bottom: state.y,
-        width: 0,
-        height: 0,
-      }),
-    });
-  }, [state, refs]);
-
-  const dismiss = useDismiss(context);
-  const { getFloatingProps } = useInteractions([dismiss]);
-
-  if (!open) return null;
+  const close = () => setPos(null);
 
   return (
-    <FloatingPortal>
-      <div
-        ref={refs.setFloating}
-        style={{ ...floatingStyles, visibility: isPositioned ? 'visible' : 'hidden' }}
-        {...getFloatingProps({
-          className:
-            'z-[60] min-w-48 rounded border border-(--color-border) bg-(--color-bg-2) py-1 text-sm shadow-xl',
-          onContextMenu: (e) => e.preventDefault(),
-        })}
+    <div onContextMenu={handleContextMenu} style={{ display: 'contents' }}>
+      {children}
+      <Menu
+        open={pos !== null}
+        onClose={close}
+        anchorReference="anchorPosition"
+        anchorPosition={pos !== null ? { top: pos.y, left: pos.x } : undefined}
+        slotProps={{ list: { dense: true } }}
       >
-        {state!.items.map((it, i) => (
-          <MenuItem key={i} item={it} onSelected={onClose} />
-        ))}
-      </div>
-    </FloatingPortal>
+        {pos !== null &&
+          items.map((it, i) => <Item key={i} item={it} onSelected={close} />)}
+      </Menu>
+    </div>
   );
 }
 
-function MenuItem({ item, onSelected }: { item: ContextMenuItem; onSelected: () => void }) {
-  const [open, setOpen] = useState(false);
-  const closeTimer = useRef<number | null>(null);
+function Item({ item, onSelected }: { item: ContextMenuItem; onSelected: () => void }) {
+  const anchorRef = useRef<HTMLLIElement | null>(null);
+  const [subOpen, setSubOpen] = useState(false);
 
-  function scheduleClose() {
-    if (closeTimer.current != null) window.clearTimeout(closeTimer.current);
-    closeTimer.current = window.setTimeout(() => setOpen(false), 120);
-  }
-  function cancelClose() {
-    if (closeTimer.current != null) {
-      window.clearTimeout(closeTimer.current);
-      closeTimer.current = null;
-    }
-  }
-
-  if (item.submenu) {
+  if (item.submenu && item.submenu.length > 0) {
+    const submenu = item.submenu;
     return (
-      <div
-        className="relative"
-        onMouseEnter={() => {
-          cancelClose();
-          setOpen(true);
-        }}
-        onMouseLeave={scheduleClose}
-      >
-        <div
-          className={`flex items-center justify-between cursor-default select-none px-3 py-1 hover:bg-(--color-bg-3) ${item.disabled ? 'opacity-40 pointer-events-none' : ''}`}
+      <>
+        <MenuItem
+          ref={anchorRef}
+          disabled={item.disabled}
+          onMouseEnter={() => setSubOpen(true)}
+          onMouseLeave={() => setSubOpen(false)}
+          sx={{ display: 'flex', justifyContent: 'space-between', gap: 1 }}
         >
           <span>{item.label}</span>
-          <span className="opacity-60 ml-2">▸</span>
-        </div>
-        {open && item.submenu.length > 0 && (
-          <div
-            className="absolute left-full top-0 -ml-px min-w-48 rounded border border-(--color-border) bg-(--color-bg-2) py-1 shadow-xl z-[61] max-h-[60vh] overflow-y-auto"
-            onMouseEnter={cancelClose}
-            onMouseLeave={scheduleClose}
-          >
-            {item.submenu.map((sub, i) => (
-              <MenuItem key={i} item={sub} onSelected={onSelected} />
-            ))}
-          </div>
-        )}
-      </div>
+          <ChevronRightIcon fontSize="small" sx={{ opacity: 0.6 }} />
+        </MenuItem>
+        <Menu
+          open={subOpen}
+          anchorEl={anchorRef.current}
+          onClose={() => setSubOpen(false)}
+          anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+          transformOrigin={{ vertical: 'top', horizontal: 'left' }}
+          disableAutoFocus
+          disableEnforceFocus
+          disableRestoreFocus
+          slotProps={{
+            list: {
+              dense: true,
+              onMouseEnter: () => setSubOpen(true),
+              onMouseLeave: () => setSubOpen(false),
+              sx: { pointerEvents: 'auto' },
+            },
+            root: { sx: { pointerEvents: 'none' } },
+          }}
+        >
+          {submenu.map((sub, i) => (
+            <Item key={i} item={sub} onSelected={onSelected} />
+          ))}
+        </Menu>
+      </>
     );
   }
+
   return (
-    <button
-      className={`block w-full text-left px-3 py-1 hover:bg-(--color-bg-3) ${item.destructive ? 'text-red-400' : ''} ${item.disabled ? 'opacity-40 pointer-events-none' : ''}`}
+    <MenuItem
+      disabled={item.disabled}
       onClick={() => {
-        if (item.disabled) return;
         item.onSelect();
         onSelected();
       }}
+      sx={item.destructive ? { color: 'error.main' } : undefined}
     >
       {item.label}
-    </button>
+    </MenuItem>
   );
 }

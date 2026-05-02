@@ -1,5 +1,6 @@
 import { useAtom, useAtomValue } from 'jotai';
 import { Suspense } from 'react';
+import CloseIcon from '@mui/icons-material/Close';
 import { GraphCanvas } from '@/flow/GraphCanvas';
 import { TabHost } from '@/ui/TabHost';
 import {
@@ -65,14 +66,14 @@ export function SplitView() {
           <div className="absolute right-2 top-2 z-20 flex items-center gap-1">
             <PenColorSwatch tabId={side!} />
             <button
-              className="rounded bg-(--color-bg-2) px-2 py-0.5 text-sm hover:bg-(--color-bg-3)"
+              className="flex items-center rounded bg-(--color-bg-2) px-2 py-0.5 hover:bg-(--color-bg-3)"
               onClick={() => {
                 setSide(null);
                 setActivePane('primary');
               }}
               title="Close side pane"
             >
-              ×
+              <CloseIcon fontSize="small" />
             </button>
           </div>
           <Suspense fallback={null}>

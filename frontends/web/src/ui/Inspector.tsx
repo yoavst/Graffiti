@@ -1,5 +1,8 @@
 import { useAtom, useAtomValue, useSetAtom } from 'jotai';
 import { useState } from 'react';
+import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
+import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import DeleteIcon from '@mui/icons-material/Delete';
 import { inspectorVisibleAtom } from '@/state/settings';
 import { activeTabAtom, loadAll, tabsAtom } from '@/state/workspaces';
 import { tabRuntimeAtom, tabTickAtom } from '@/state/graph';
@@ -21,11 +24,11 @@ export function Inspector() {
     return (
       <div className="flex w-9 flex-col items-center border-l border-(--color-border) bg-(--color-bg-2) p-1">
         <button
-          className="rounded px-1.5 py-0.5 text-base"
+          className="flex items-center rounded px-1.5 py-0.5"
           onClick={() => setVisible(true)}
           title="Show inspector"
         >
-          ◂
+          <ChevronLeftIcon fontSize="small" />
         </button>
       </div>
     );
@@ -45,9 +48,9 @@ export function Inspector() {
         <button
           onClick={() => setVisible(false)}
           title="Hide inspector"
-          className="rounded px-2 py-1 text-base hover:bg-(--color-bg-3)"
+          className="flex items-center rounded px-2 py-1 hover:bg-(--color-bg-3)"
         >
-          ▸
+          <ChevronRightIcon fontSize="small" />
         </button>
       </div>
       <div className="flex-1 overflow-auto p-3">
@@ -251,8 +254,12 @@ function PropertyRow({
           }
         }}
       />
-      <button onClick={onRemove} title="Remove" className="opacity-60 hover:opacity-100">
-        🗑
+      <button
+        onClick={onRemove}
+        title="Remove"
+        className="flex items-center opacity-60 hover:opacity-100"
+      >
+        <DeleteIcon fontSize="small" />
       </button>
     </div>
   );

@@ -1,6 +1,8 @@
 import { Provider, useAtomValue, useSetAtom } from 'jotai';
 import { useEffect, useState } from 'react';
+import { ThemeProvider } from '@mui/material/styles';
 import { getStore } from '@/state/store';
+import { theme } from '@/ui/theme';
 import {
   activeTabIdAtom,
   currentTabIdAtom,
@@ -219,8 +221,10 @@ function Inner() {
 
 export function App() {
   return (
-    <Provider store={getStore()}>
-      <Inner />
-    </Provider>
+    <ThemeProvider theme={theme}>
+      <Provider store={getStore()}>
+        <Inner />
+      </Provider>
+    </ThemeProvider>
   );
 }

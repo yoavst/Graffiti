@@ -3,7 +3,14 @@
 // component can pop a dialog without prop-drilling.
 
 import { atom, useAtom } from 'jotai';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import DialogContentText from '@mui/material/DialogContentText';
+import DialogActions from '@mui/material/DialogActions';
+import Button from '@mui/material/Button';
+import TextField from '@mui/material/TextField';
 
 type AlertSpec = {
   kind: 'alert';
@@ -124,13 +131,7 @@ function DialogShell({
   spec: DialogSpec;
   onClose: (result: unknown) => void;
 }) {
-  const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement | null>(null);
   const [value, setValue] = useState(spec.kind === 'prompt' ? (spec.initial ?? '') : '');
-
-  // Focus the input (prompt) or the primary button (alert/confirm) on mount.
-  useEffect(() => {
-    if (spec.kind === 'prompt') inputRef.current?.focus();
-  }, [spec.kind]);
 
   function cancel() {
     if (spec.kind === 'alert') onClose(undefined);
@@ -153,77 +154,71 @@ function DialogShell({
 
   const destructive = spec.kind === 'confirm' && !!spec.destructive;
 
+  // Rendering Paper as a <form> gives us free Enter-to-submit (browsers
+  // submit on Enter inside the form, including from a single-line TextField).
+  // Shift+Enter still inserts a newline in multiline mode, matching the old
+  // textarea behavior.
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50"
-      onClick={cancel}
-      onKeyDown={(e) => {
-        if (e.key === 'Escape') cancel();
+    <Dialog
+      open
+      onClose={cancel}
+      fullWidth
+      maxWidth="xs"
+      slotProps={{
+        paper: {
+          component: 'form',
+          onSubmit: (e: React.FormEvent) => {
+            e.preventDefault();
+            confirm();
+          },
+        },
       }}
     >
-      <div
-        className="w-[28rem] max-w-[90vw] rounded-lg border border-(--color-border) bg-(--color-bg-2) p-5 shadow-xl"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {spec.title && <h2 className="mb-2 text-base font-semibold">{spec.title}</h2>}
+      {spec.title && <DialogTitle>{spec.title}</DialogTitle>}
+      <DialogContent>
         {spec.kind === 'prompt' ? (
           <>
-            {spec.message && <p className="mb-2 text-sm opacity-80">{spec.message}</p>}
-            {spec.multiline ? (
-              <textarea
-                ref={inputRef as React.RefObject<HTMLTextAreaElement>}
-                className="w-full resize-y rounded border border-(--color-border) bg-(--color-bg-3) px-2 py-1.5 text-sm font-mono min-h-24"
-                value={value}
-                placeholder={spec.placeholder}
-                onChange={(e) => setValue(e.target.value)}
-                onKeyDown={(e) => {
-                  // Enter without modifier confirms; Shift+Enter inserts a newline.
-                  if (e.key === 'Enter' && !e.shiftKey && !e.ctrlKey && !e.metaKey) {
-                    e.preventDefault();
-                    confirm();
-                  }
-                  if (e.key === 'Escape') cancel();
-                }}
-              />
-            ) : (
-              <input
-                ref={inputRef as React.RefObject<HTMLInputElement>}
-                className="w-full rounded border border-(--color-border) bg-(--color-bg-3) px-2 py-1.5 text-sm"
-                value={value}
-                placeholder={spec.placeholder}
-                onChange={(e) => setValue(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') confirm();
-                  if (e.key === 'Escape') cancel();
-                }}
-              />
+            {spec.message && (
+              <DialogContentText sx={{ mb: 2 }}>{spec.message}</DialogContentText>
             )}
+            <TextField
+              autoFocus
+              fullWidth
+              size="small"
+              variant="outlined"
+              value={value}
+              placeholder={spec.placeholder}
+              onChange={(e) => setValue(e.target.value)}
+              multiline={spec.multiline}
+              minRows={spec.multiline ? 4 : undefined}
+              slotProps={
+                spec.multiline
+                  ? { input: { sx: { fontFamily: 'monospace', fontSize: '0.875rem' } } }
+                  : undefined
+              }
+            />
           </>
         ) : (
-          <p className="text-sm whitespace-pre-wrap opacity-90">{spec.message}</p>
+          <DialogContentText sx={{ whiteSpace: 'pre-wrap' }}>
+            {spec.message}
+          </DialogContentText>
         )}
-        <div className="mt-4 flex justify-end gap-2">
-          {spec.kind !== 'alert' && (
-            <button
-              className="rounded border border-(--color-border) px-3 py-1.5 text-sm hover:bg-(--color-bg-3)"
-              onClick={cancel}
-            >
-              Cancel
-            </button>
-          )}
-          <button
-            className={`rounded px-3 py-1.5 text-sm ${
-              destructive
-                ? 'bg-red-600 text-white hover:bg-red-700'
-                : 'bg-(--color-accent) text-black'
-            }`}
-            onClick={confirm}
-            autoFocus={spec.kind !== 'prompt'}
-          >
-            {confirmLabel}
-          </button>
-        </div>
-      </div>
-    </div>
+      </DialogContent>
+      <DialogActions>
+        {spec.kind !== 'alert' && (
+          <Button onClick={cancel} color="inherit">
+            Cancel
+          </Button>
+        )}
+        <Button
+          type="submit"
+          variant="contained"
+          color={destructive ? 'error' : 'primary'}
+          autoFocus={spec.kind !== 'prompt'}
+        >
+          {confirmLabel}
+        </Button>
+      </DialogActions>
+    </Dialog>
   );
 }

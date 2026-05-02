@@ -1,5 +1,11 @@
 import { useAtom, useAtomValue, useSetAtom } from 'jotai';
 import { useEffect, useMemo, useState } from 'react';
+import AddIcon from '@mui/icons-material/Add';
+import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
+import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/Delete';
 import {
   currentTabIdAtom,
   currentWorkspaceIdAtom,
@@ -12,7 +18,7 @@ import {
 import { db, pickColor, type TabRow, type TabGroupRow } from '@/persistence/db';
 import { newId } from '@/util/ids';
 import { sidebarVisibleAtom } from '@/state/settings';
-import { ContextMenu, type ContextMenuState } from '@/ui/ContextMenu';
+import { ContextMenu, type ContextMenuItem } from '@/ui/ContextMenu';
 import { dialogs } from '@/ui/dialogs/Dialogs';
 
 // Tab groups are no longer surfaced in the UI: every workspace is treated as
@@ -107,11 +113,11 @@ export function Sidebar() {
     return (
       <div className="flex w-9 flex-col items-center border-r border-(--color-border) bg-(--color-bg-2) p-1">
         <button
-          className="rounded px-1.5 py-0.5 text-base"
+          className="flex items-center rounded px-1.5 py-0.5"
           onClick={() => setVisible(true)}
           title="Show sidebar"
         >
-          ▸
+          <ChevronRightIcon fontSize="small" />
         </button>
       </div>
     );
@@ -179,18 +185,18 @@ export function Sidebar() {
         <span className="text-sm font-semibold uppercase text-(--color-fg-dim)">Workspaces</span>
         <div className="flex gap-1">
           <button
-            className="rounded px-2 py-1 text-base hover:bg-black/20"
+            className="flex items-center rounded px-2 py-1 hover:bg-black/20"
             onClick={addWorkspace}
             title="Add workspace"
           >
-            +
+            <AddIcon fontSize="small" />
           </button>
           <button
-            className="rounded px-2 py-1 text-base hover:bg-black/20"
+            className="flex items-center rounded px-2 py-1 hover:bg-black/20"
             onClick={() => setVisible(false)}
             title="Hide sidebar"
           >
-            ◂
+            <ChevronLeftIcon fontSize="small" />
           </button>
         </div>
       </div>
@@ -273,26 +279,16 @@ function WorkspaceItem({
   onSelectTab: (t: TabRow) => void;
   onChanged: () => void | Promise<void>;
 }) {
-  const [menu, setMenu] = useState<ContextMenuState | null>(null);
-
-  function openMenu(e: React.MouseEvent) {
-    e.preventDefault();
-    e.stopPropagation();
-    setMenu({
-      x: e.clientX,
-      y: e.clientY,
-      items: [
-        { label: 'Add tab', onSelect: onAddTab },
-        { label: 'Rename', onSelect: () => void rename() },
-        {
-          label: 'Delete',
-          destructive: true,
-          disabled: allWorkspaces.length <= 1,
-          onSelect: () => void remove(),
-        },
-      ],
-    });
-  }
+  const menuItems: ContextMenuItem[] = [
+    { label: 'Add tab', onSelect: onAddTab },
+    { label: 'Rename', onSelect: () => void rename() },
+    {
+      label: 'Delete',
+      destructive: true,
+      disabled: allWorkspaces.length <= 1,
+      onSelect: () => void remove(),
+    },
+  ];
 
   async function rename() {
     const name = (
@@ -332,71 +328,77 @@ function WorkspaceItem({
   }
 
   return (
-    <div className="border-b border-(--color-border)">
-      <div
-        className={`group flex items-center gap-1 px-2 py-1.5 ${isCurrent ? 'bg-(--color-accent)/12' : ''}`}
-        onContextMenu={openMenu}
-      >
-        <button
-          className="rounded px-1 py-0.5 text-sm opacity-60 hover:opacity-100"
-          onClick={onToggle}
-          title={isExpanded ? 'Collapse' : 'Expand'}
+    <ContextMenu items={menuItems}>
+      <div className="border-b border-(--color-border)">
+        <div
+          className={`group flex items-center gap-1 px-2 py-1.5 ${isCurrent ? 'bg-(--color-accent)/12' : ''}`}
         >
-          {isExpanded ? '▾' : '▸'}
-        </button>
-        <button
-          className="flex-1 truncate text-left text-sm font-medium"
-          onClick={onToggle}
-          title="Click to expand/collapse"
-        >
-          {workspace.name}
-        </button>
-        <span className="text-xs opacity-50">{tabCount}</span>
-        <div className="flex gap-0.5 opacity-0 group-hover:opacity-100">
           <button
-            className="rounded px-1.5 py-0.5 text-sm hover:bg-(--color-bg-2)"
-            onClick={onAddTab}
-            title="Add tab"
+            className="flex items-center rounded px-1 py-0.5 opacity-60 hover:opacity-100"
+            onClick={onToggle}
+            title={isExpanded ? 'Collapse' : 'Expand'}
           >
-            +
+            {isExpanded ? (
+              <ExpandMoreIcon fontSize="small" />
+            ) : (
+              <ChevronRightIcon fontSize="small" />
+            )}
           </button>
           <button
-            className="rounded px-1.5 py-0.5 text-sm hover:bg-(--color-bg-2)"
-            onClick={() => void rename()}
-            title="Rename workspace"
+            className="flex-1 truncate text-left"
+            onClick={onToggle}
+            title="Click to expand/collapse"
           >
-            ✎
+            <span className=" text-sm font-medium">{workspace.name}</span>
+            <span className="px-2 text-xs opacity-50">({tabCount})</span>
+
           </button>
-          <button
-            className="rounded px-1.5 py-0.5 text-sm hover:bg-(--color-bg-2)"
-            onClick={() => void remove()}
-            title="Delete workspace"
-          >
-            🗑
-          </button>
+
+          <div className="flex gap-0.5 opacity-0 group-hover:opacity-100">
+            <button
+              className="flex items-center rounded px-1.5 py-0.5 hover:bg-(--color-bg-2)"
+              onClick={onAddTab}
+              title="Add tab"
+            >
+              <AddIcon fontSize="small" />
+            </button>
+            <button
+              className="flex items-center rounded px-1.5 py-0.5 hover:bg-(--color-bg-2)"
+              onClick={() => void rename()}
+              title="Rename workspace"
+            >
+              <EditIcon fontSize="small" />
+            </button>
+            <button
+              className="flex items-center rounded px-1.5 py-0.5 hover:bg-(--color-bg-2)"
+              onClick={() => void remove()}
+              title="Delete workspace"
+            >
+              <DeleteIcon fontSize="small" />
+            </button>
+          </div>
         </div>
+        {isExpanded && (
+          <div className="pb-1 pl-4 pr-2">
+            {tabs.length === 0 && (
+              <div className="px-2 py-1 text-xs opacity-50">no tabs</div>
+            )}
+            {tabs.map((t) => (
+              <SidebarTab
+                key={t.id}
+                tab={t}
+                isCurrent={t.id === currentTabId}
+                isInSidePane={t.id === sidePaneTabId}
+                onSelect={() => onSelectTab(t)}
+                currentWorkspaceId={workspace.id}
+                allWorkspaces={allWorkspaces}
+                onChanged={onChanged}
+              />
+            ))}
+          </div>
+        )}
       </div>
-      {isExpanded && (
-        <div className="pb-1 pl-4 pr-2">
-          {tabs.length === 0 && (
-            <div className="px-2 py-1 text-xs opacity-50">no tabs</div>
-          )}
-          {tabs.map((t) => (
-            <SidebarTab
-              key={t.id}
-              tab={t}
-              isCurrent={t.id === currentTabId}
-              isInSidePane={t.id === sidePaneTabId}
-              onSelect={() => onSelectTab(t)}
-              currentWorkspaceId={workspace.id}
-              allWorkspaces={allWorkspaces}
-              onChanged={onChanged}
-            />
-          ))}
-        </div>
-      )}
-      <ContextMenu state={menu} onClose={() => setMenu(null)} />
-    </div>
+    </ContextMenu>
   );
 }
 
@@ -418,7 +420,6 @@ function SidebarTab({
   onChanged: () => void | Promise<void>;
 }) {
   const setSidePane = useSetAtom(sidePaneTabIdAtom);
-  const [menu, setMenu] = useState<ContextMenuState | null>(null);
 
   async function rename() {
     const name = (
@@ -469,32 +470,24 @@ function SidebarTab({
     await onChanged();
   }
 
-  function openMenu(e: React.MouseEvent) {
-    e.preventDefault();
-    e.stopPropagation();
-    const moveSubmenu = allWorkspaces
-      .filter((ws) => ws.id !== currentWorkspaceId)
-      .map((ws) => ({
-        label: ws.name,
-        onSelect: () => void moveToWorkspace(ws.id),
-      }));
-    setMenu({
-      x: e.clientX,
-      y: e.clientY,
-      items: [
-        { label: 'Rename', onSelect: () => void rename() },
-        {
-          label: isInSidePane ? 'Close side pane' : 'Open in side pane',
-          onSelect: () => setSidePane(isInSidePane ? null : tab.id),
-        },
-        ...(moveSubmenu.length > 0
-          ? [{ label: 'Move to workspace', onSelect: () => {}, submenu: moveSubmenu }]
-          : []),
-        { label: 'Linked projects', onSelect: () => void showLinkedProjects() },
-        { label: 'Remove', destructive: true, onSelect: () => void remove() },
-      ],
-    });
-  }
+  const moveSubmenu = allWorkspaces
+    .filter((ws) => ws.id !== currentWorkspaceId)
+    .map((ws) => ({
+      label: ws.name,
+      onSelect: () => void moveToWorkspace(ws.id),
+    }));
+  const menuItems: ContextMenuItem[] = [
+    { label: 'Rename', onSelect: () => void rename() },
+    {
+      label: isInSidePane ? 'Close side pane' : 'Open in side pane',
+      onSelect: () => setSidePane(isInSidePane ? null : tab.id),
+    },
+    ...(moveSubmenu.length > 0
+      ? [{ label: 'Move to workspace', onSelect: () => { }, submenu: moveSubmenu }]
+      : []),
+    { label: 'Linked projects', onSelect: () => void showLinkedProjects() },
+    { label: 'Remove', destructive: true, onSelect: () => void remove() },
+  ];
 
   // Encode pane membership in the tab background. Stronger tint for the
   // primary pane, lighter tint for the side pane, strongest when both.
@@ -516,16 +509,14 @@ function SidebarTab({
           : tab.name;
 
   return (
-    <>
+    <ContextMenu items={menuItems}>
       <button
         className={`group/tab flex w-full items-center gap-1.5 truncate rounded px-1.5 py-1 text-left text-sm ${paneTint}`}
         onClick={onSelect}
-        onContextMenu={openMenu}
         title={paneTitle}
       >
         <span className="flex-1 truncate">{tab.name}</span>
       </button>
-      <ContextMenu state={menu} onClose={() => setMenu(null)} />
-    </>
+    </ContextMenu>
   );
 }

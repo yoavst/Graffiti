@@ -1,5 +1,11 @@
 import { useAtom, useAtomValue, useSetAtom, useStore } from 'jotai';
 import { useEffect } from 'react';
+import NoteAddOutlinedIcon from '@mui/icons-material/NoteAddOutlined';
+import ChatBubbleOutlineOutlinedIcon from '@mui/icons-material/ChatBubbleOutlineOutlined';
+import PowerSettingsNewIcon from '@mui/icons-material/PowerSettingsNew';
+import PlayArrowIcon from '@mui/icons-material/PlayArrow';
+import KeyOutlinedIcon from '@mui/icons-material/KeyOutlined';
+import HelpIcon from '@mui/icons-material/Help';
 import {
   authTokenAtom,
   connectionStatusAtom,
@@ -82,9 +88,9 @@ export function Header({ onOpenToken, onOpenHelp }: { onOpenToken: () => void; o
 
   const statusColor =
     status === 'connected' ? 'bg-green-500'
-    : status === 'connecting' ? 'bg-yellow-500'
-    : status === 'error' ? 'bg-red-500'
-    : 'bg-gray-500';
+      : status === 'connecting' ? 'bg-yellow-500'
+        : status === 'error' ? 'bg-red-500'
+          : 'bg-gray-500';
 
   return (
     <header className="flex items-center gap-2 border-b border-(--color-border) bg-(--color-bg-2) px-3 py-2">
@@ -92,18 +98,18 @@ export function Header({ onOpenToken, onOpenHelp }: { onOpenToken: () => void; o
       <h1 className="text-lg font-semibold mr-3">Graffiti</h1>
 
       <button
-        className="rounded border border-(--color-border) px-2 py-1 text-xs"
+        className="flex items-center rounded border border-(--color-border) px-2 py-1 text-xs"
         onClick={() => void addTextNodeAction(store)}
         title="Add text node (Ctrl+Shift+Q)"
       >
-        📝
+        <NoteAddOutlinedIcon fontSize="small" />
       </button>
       <button
-        className="rounded border border-(--color-border) px-2 py-1 text-xs"
+        className="flex items-center rounded border border-(--color-border) px-2 py-1 text-xs"
         onClick={() => void addCommentAction(store)}
         title="Add comment to selected node (Ctrl+Q)"
       >
-        💬
+        <ChatBubbleOutlineOutlinedIcon fontSize="small" />
       </button>
 
       <div className="flex-1" />
@@ -135,35 +141,35 @@ export function Header({ onOpenToken, onOpenHelp }: { onOpenToken: () => void; o
 
       {client ? (
         <button
-          className={`rounded px-2 py-1 text-xs text-white ${statusColor}`}
+          className={`flex items-center rounded px-2 py-1 text-xs text-white ${statusColor}`}
           onClick={disconnect}
           title={`Disconnect (${status})`}
         >
-          ⏻
+          <PowerSettingsNewIcon fontSize="small" />
         </button>
       ) : (
         <button
-          className={`rounded px-2 py-1 text-xs text-white ${statusColor}`}
+          className={`flex items-center rounded px-2 py-1 text-xs text-white ${statusColor}`}
           onClick={doConnect}
           title={`Connect (${status})`}
         >
-          ▶
+          <PlayArrowIcon fontSize="small" />
         </button>
       )}
 
       <button
-        className="rounded border border-(--color-border) px-2 py-1 text-xs"
+        className="flex items-center rounded border border-(--color-border) px-2 py-1 text-xs"
         onClick={onOpenToken}
         title="Manage token (Ctrl+K)"
       >
-        🔑
+        <KeyOutlinedIcon fontSize="small" />
       </button>
       <button
-        className="rounded border border-(--color-border) px-2 py-1 text-xs"
+        className="flex items-center rounded border border-(--color-border) px-2 py-1 text-xs"
         onClick={onOpenHelp}
         title="Help (?)"
       >
-        ?
+        <HelpIcon fontSize="small" />
       </button>
     </header>
   );
