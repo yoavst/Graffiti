@@ -41,6 +41,7 @@ import {
   runGraphUndo,
 } from '@/commands/commands';
 import { importUserPickedFiles } from '@/persistence/tabImport';
+import { exportAllTabsToTar } from '@/persistence/importExport';
 import { loadAll, tabsAtom, currentTabIdAtom } from '@/state/workspaces';
 import { dialogs } from '@/ui/dialogs/Dialogs';
 import { ShareGraphDialog } from '@/ui/dialogs/ShareGraphDialog';
@@ -154,8 +155,18 @@ export function Header({ onOpenToken, onOpenHelp }: { onOpenToken: () => void; o
             <UploadOutlinedIcon fontSize="small" />
           </IconButton>
         </Tooltip>
-        <Tooltip title="Export current tab to JSON (Ctrl+S)">
-          <IconButton size="small" onClick={() => runExportCurrentTabJson(store)}>
+        <Tooltip
+          title={`Export current tab as JSON (click)\nExport all tabs as TAR (right-click or Ctrl+Alt+S)`}
+          slotProps={{ tooltip: { sx: { whiteSpace: 'pre-line' } } }}
+        >
+          <IconButton
+            size="small"
+            onClick={() => runExportCurrentTabJson(store)}
+            onContextMenu={(e) => {
+              e.preventDefault();
+              void exportAllTabsToTar();
+            }}
+          >
             <DownloadOutlinedIcon fontSize="small" />
           </IconButton>
         </Tooltip>

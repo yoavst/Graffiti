@@ -17,6 +17,7 @@ import {
 } from '@/state/settings';
 import { addCommentAction, addTextNodeAction } from './addNodeActions';
 import { runGraphRedo, runGraphUndo } from './commands';
+import { exportAllTabsToTar } from '@/persistence/importExport';
 
 export function useHotkeys(_handlers: { onOpenToken: () => void; onOpenHelp: () => void }) {
   const setSide = useSetAtom(sidePaneTabIdAtom);
@@ -116,6 +117,14 @@ export function useHotkeys(_handlers: { onOpenToken: () => void; onOpenHelp: () 
       void addTextNodeAction(store);
     },
     [store],
+  );
+  useHotkeysHook(
+    'mod+alt+s',
+    (e) => {
+      e.preventDefault();
+      void exportAllTabsToTar();
+    },
+    [],
   );
   useHotkeysHook(
     'home',

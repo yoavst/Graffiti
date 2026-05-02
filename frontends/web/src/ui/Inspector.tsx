@@ -1,5 +1,5 @@
 import { useAtom, useAtomValue, useSetAtom } from 'jotai';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Button from '@mui/material/Button';
 import Select from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
@@ -41,13 +41,19 @@ export function Inspector() {
     rt.selectedNodeId != null ? rt.doc.nodes.find((n) => n.id === rt.selectedNodeId) : null;
   const selectedEdge =
     rt.selectedEdgeId != null ? rt.doc.edges.find((e) => e.id === rt.selectedEdgeId) : null;
+  const hasSelection = !!(selectedNode ?? selectedEdge);
+  const [sheet, setSheet] = useState<'selection' | 'notes'>('selection');
+  useEffect(() => {
+    if (hasSelection) setSheet('selection');
+  }, [hasSelection, selectedNode?.id, selectedEdge?.id]);
+
+  const headerLabel =
+    !hasSelection || sheet === 'notes' ? 'Tab notes' : selectedNode ? 'Node' : 'Edge';
 
   return (
     <aside className="flex w-72 flex-col border-l border-(--color-border) bg-(--color-bg-2) text-base">
       <div className="flex items-center justify-between border-b border-(--color-border) px-3 py-2">
-        <span className="text-sm font-semibold uppercase text-(--color-fg-dim)">
-          {selectedNode ? 'Node' : selectedEdge ? 'Edge' : 'Tab notes'}
-        </span>
+        <span className="text-sm font-semibold uppercase text-(--color-fg-dim)">{headerLabel}</span>
         <button
           onClick={() => setVisible(false)}
           title="Hide inspector"
@@ -56,16 +62,34 @@ export function Inspector() {
           <ChevronRightIcon fontSize="small" />
         </button>
       </div>
+      {hasSelection ? (
+        <div className="flex gap-2 border-b border-(--color-border) px-3 py-1.5 text-xs">
+          <button
+            type="button"
+            className={`rounded px-2 py-0.5 ${sheet === 'selection' ? 'bg-(--color-bg-3) font-medium' : 'opacity-70 hover:bg-(--color-bg-3)/60'}`}
+            onClick={() => setSheet('selection')}
+          >
+            Selection
+          </button>
+          <button
+            type="button"
+            className={`rounded px-2 py-0.5 ${sheet === 'notes' ? 'bg-(--color-bg-3) font-medium' : 'opacity-70 hover:bg-(--color-bg-3)/60'}`}
+            onClick={() => setSheet('notes')}
+          >
+            Tab notes
+          </button>
+        </div>
+      ) : null}
       <div className="flex-1 min-h-0 overflow-auto p-3">
-        {selectedNode ? (
+        {!hasSelection || sheet === 'notes' ? (
+          <NotesEditor key={tab.id} tabId={tab.id} initial={tab.notes ?? ''} />
+        ) : selectedNode ? (
           <NodeInspector key={`${tab.id}-${selectedNode.id}`} tabId={tab.id} />
         ) : selectedEdge ? (
           <EdgeInspector key={`${tab.id}-${selectedEdge.id}`} tabId={tab.id} />
-        ) : (
-          <NotesEditor key={tab.id} tabId={tab.id} initial={tab.notes ?? ''} />
-        )}
+        ) : null}
       </div>
-      {(selectedNode?.extra.address && ws) || selectedEdge ? (
+      {sheet === 'selection' && ((selectedNode?.extra.address && ws) || selectedEdge) ? (
         <div className="border-t border-(--color-border) p-3">
           {selectedNode?.extra.address && ws && (
             <Button
@@ -425,11 +449,24 @@ function EdgeInspector({ tabId }: { tabId: string }) {
 
 function NotesEditor({ tabId, initial }: { tabId: string; initial: string }) {
   const [v, setV] = useState(initial);
+  const vRef = useRef(v);
+  vRef.current = v;
   const setTabs = useSetAtom(tabsAtom);
+
+  useEffect(() => {
+    const id = tabId;
+    return () => {
+      const notes = vRef.current;
+      void (async () => {
+        await db.tabs.update(id, { notes });
+        const all = await loadAll();
+        setTabs(all.tabs);
+      })();
+    };
+  }, [tabId, setTabs]);
+
   async function save() {
     await db.tabs.update(tabId, { notes: v });
-    // Refresh the tabs atom so the 📝 indicator (and anything else watching
-    // the tab row) updates immediately.
     const all = await loadAll();
     setTabs(all.tabs);
   }
