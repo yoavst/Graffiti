@@ -1,5 +1,10 @@
 import { useAtom, useAtomValue, useSetAtom, useStore } from 'jotai';
 import { useEffect } from 'react';
+import IconButton from '@mui/material/IconButton';
+import Tooltip from '@mui/material/Tooltip';
+import Switch from '@mui/material/Switch';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import TextField from '@mui/material/TextField';
 import NoteAddOutlinedIcon from '@mui/icons-material/NoteAddOutlined';
 import ChatBubbleOutlineOutlinedIcon from '@mui/icons-material/ChatBubbleOutlineOutlined';
 import PowerSettingsNewIcon from '@mui/icons-material/PowerSettingsNew';
@@ -87,90 +92,102 @@ export function Header({ onOpenToken, onOpenHelp }: { onOpenToken: () => void; o
   }
 
   const statusColor =
-    status === 'connected' ? 'bg-green-500'
-      : status === 'connecting' ? 'bg-yellow-500'
-        : status === 'error' ? 'bg-red-500'
-          : 'bg-gray-500';
+    status === 'connected' ? '#22c55e'
+      : status === 'connecting' ? '#eab308'
+        : status === 'error' ? '#ef4444'
+          : '#6b7280';
 
   return (
     <header className="flex items-center gap-2 border-b border-(--color-border) bg-(--color-bg-2) px-3 py-2">
       <img src="/icon.png" alt="Graffiti" className="h-7 w-7" />
       <h1 className="text-lg font-semibold mr-3">Graffiti</h1>
 
-      <button
-        className="flex items-center rounded border border-(--color-border) px-2 py-1 text-xs"
-        onClick={() => void addTextNodeAction(store)}
-        title="Add text node (Ctrl+Shift+Q)"
-      >
-        <NoteAddOutlinedIcon fontSize="small" />
-      </button>
-      <button
-        className="flex items-center rounded border border-(--color-border) px-2 py-1 text-xs"
-        onClick={() => void addCommentAction(store)}
-        title="Add comment to selected node (Ctrl+Q)"
-      >
-        <ChatBubbleOutlineOutlinedIcon fontSize="small" />
-      </button>
+      <Tooltip title="Add text node (Ctrl+Shift+Q)">
+        <IconButton size="small" onClick={() => void addTextNodeAction(store)}>
+          <NoteAddOutlinedIcon fontSize="small" />
+        </IconButton>
+      </Tooltip>
+      <Tooltip title="Add comment to selected node (Ctrl+Q)">
+        <IconButton size="small" onClick={() => void addCommentAction(store)}>
+          <ChatBubbleOutlineOutlinedIcon fontSize="small" />
+        </IconButton>
+      </Tooltip>
 
       <div className="flex-1" />
 
-      <label className="flex items-center gap-2 text-xs">
-        <input
-          type="checkbox"
-          checked={existingToNew}
-          onChange={(e) => setExistingToNew(e.target.checked)}
-        />
-        <span>existing→new</span>
-      </label>
-      <label className="flex items-center gap-2 text-xs">
-        <input
-          type="checkbox"
-          checked={newWillBeSelected}
-          onChange={(e) => setNewWillBeSelected(e.target.checked)}
-        />
-        <span>focus new</span>
-      </label>
+      <FormControlLabel
+        control={
+          <Switch
+            size="small"
+            checked={existingToNew}
+            onChange={(e) => setExistingToNew(e.target.checked)}
+          />
+        }
+        label="existing→new"
+        slotProps={{ typography: { sx: { fontSize: '0.75rem' } } }}
+      />
+      <FormControlLabel
+        control={
+          <Switch
+            size="small"
+            checked={newWillBeSelected}
+            onChange={(e) => setNewWillBeSelected(e.target.checked)}
+          />
+        }
+        label="focus new"
+        slotProps={{ typography: { sx: { fontSize: '0.75rem' } } }}
+      />
 
-      <input
+      <TextField
         type="url"
-        className="rounded border border-(--color-border) bg-(--color-bg-3) px-2 py-1 text-xs w-64"
+        size="small"
+        variant="outlined"
+        sx={{ width: '16rem' }}
         value={url}
         onChange={(e) => setUrl(e.target.value)}
         placeholder={defaultSocketUrl(isDomain)}
       />
 
       {client ? (
-        <button
-          className={`flex items-center rounded px-2 py-1 text-xs text-white ${statusColor}`}
-          onClick={disconnect}
-          title={`Disconnect (${status})`}
-        >
-          <PowerSettingsNewIcon fontSize="small" />
-        </button>
+        <Tooltip title={`Disconnect (${status})`}>
+          <IconButton
+            size="small"
+            onClick={disconnect}
+            sx={{
+              bgcolor: statusColor,
+              color: 'white',
+              '&:hover': { bgcolor: statusColor, opacity: 0.9 },
+            }}
+          >
+            <PowerSettingsNewIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
       ) : (
-        <button
-          className={`flex items-center rounded px-2 py-1 text-xs text-white ${statusColor}`}
-          onClick={doConnect}
-          title={`Connect (${status})`}
-        >
-          <PlayArrowIcon fontSize="small" />
-        </button>
+        <Tooltip title={`Connect (${status})`}>
+          <IconButton
+            size="small"
+            onClick={doConnect}
+            sx={{
+              bgcolor: statusColor,
+              color: 'white',
+              '&:hover': { bgcolor: statusColor, opacity: 0.9 },
+            }}
+          >
+            <PlayArrowIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
       )}
 
-      <button
-        className="flex items-center rounded border border-(--color-border) px-2 py-1 text-xs"
-        onClick={onOpenToken}
-        title="Manage token (Ctrl+K)"
-      >
-        <KeyOutlinedIcon fontSize="small" />
-      </button>
-      <button
-        className="flex items-center rounded border border-(--color-border) px-2 py-1 text-xs"
-        onClick={onOpenHelp}
-        title="Help (?)"
-      >
-        <HelpIcon fontSize="small" />
-      </button>
+      <Tooltip title="Manage token (Ctrl+K)">
+        <IconButton size="small" onClick={onOpenToken}>
+          <KeyOutlinedIcon fontSize="small" />
+        </IconButton>
+      </Tooltip>
+      <Tooltip title="Help (?)">
+        <IconButton size="small" onClick={onOpenHelp}>
+          <HelpIcon fontSize="small" />
+        </IconButton>
+      </Tooltip>
     </header>
   );
 }

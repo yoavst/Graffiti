@@ -9,8 +9,10 @@ Browser app at graffiti.quest. Renders the call graph and talks to the IDE backe
 - **Jotai** for state. A single shared store from [src/state/store.ts](src/state/store.ts) so non-React code (the WS dispatcher, command palette) can read/write atoms.
 - **React Flow** ([@xyflow/react](https://reactflow.dev)) for the canvas
 - **Dexie** (IndexedDB) for persistence
-- **Tailwind CSS 4** via PostCSS
+- **Tailwind CSS 4** via PostCSS — owns layout (flex, spacing, sizing) and the design-token color palette in [src/styles.css](src/styles.css)
+- **MUI v9** (`@mui/material`, `@mui/icons-material`, `@emotion/react`/`styled`) for UI primitives — buttons, dialogs, menus, text fields, tooltips, icons. Theme bridge in [src/ui/theme.ts](src/ui/theme.ts) maps MUI's palette to the literal hex values from [src/styles.css](src/styles.css). `<ThemeProvider>` wraps the app in [src/App.tsx](src/App.tsx); **no `<CssBaseline />`** — Tailwind preflight stays in charge of resets. Dark-only (light mode is intentionally unsupported, see [state/settings.ts](src/state/settings.ts)).
 - **Zod** for validating inbound WS messages
+- **cmdk** for the command palette ([src/ui/CommandPalette.tsx](src/ui/CommandPalette.tsx)) — kept over MUI `Autocomplete` because it has grouped sections + fuzzy match out of the box
 - **Vitest** + jsdom for tests
 - ELK and Dagre for layout
 
@@ -42,7 +44,7 @@ Browser app at graffiti.quest. Renders the call graph and talks to the IDE backe
   - [protocol/legacy.ts](src/network/protocol/legacy.ts) — `addData` / `addDataBulk` / `updateNodes` translated into reducer ops.
   - [protocol/mcp.ts](src/network/protocol/mcp.ts), [protocol/types.ts](src/network/protocol/types.ts), [protocol/selection.ts](src/network/protocol/selection.ts).
 - [src/persistence/](src/persistence/) — [Dexie schema](src/persistence/db.ts) (`workspaces`/`tabGroups`/`tabs`/`graphs`/`settings`), [legacy localStorage migration](src/persistence/migrations.ts), [import/export](src/persistence/importExport.ts), [tar packing](src/persistence/tar.ts).
-- [src/ui/](src/ui/) — [Header](src/ui/Header.tsx), [Sidebar](src/ui/sidebar/Sidebar.tsx), [SplitView](src/ui/SplitView.tsx), [Inspector](src/ui/Inspector.tsx), [TabHost](src/ui/TabHost.tsx), [CommandPalette](src/ui/CommandPalette.tsx) (cmdk), [ContextMenu](src/ui/ContextMenu.tsx), [PenColorSwatch](src/ui/PenColorSwatch.tsx), [dialogs/](src/ui/dialogs/).
+- [src/ui/](src/ui/) — [Header](src/ui/Header.tsx), [Sidebar](src/ui/sidebar/Sidebar.tsx), [SplitView](src/ui/SplitView.tsx), [Inspector](src/ui/Inspector.tsx), [TabHost](src/ui/TabHost.tsx), [CommandPalette](src/ui/CommandPalette.tsx) (cmdk), [ContextMenu](src/ui/ContextMenu.tsx), [PenColorSwatch](src/ui/PenColorSwatch.tsx), [theme.ts](src/ui/theme.ts) (MUI theme bridge), [dialogs/](src/ui/dialogs/).
 - [src/commands/](src/commands/) — command registry + react-hotkeys-hook bindings.
 - [src/routing/url.ts](src/routing/url.ts) — workspace/tab/pane2 ↔ URL.
 - [src/util/](src/util/) — `ids.ts`, `escape.ts`.
@@ -67,6 +69,15 @@ When adding fields, prefer extending `extra` on nodes (`NodeExtra` is open-ended
 - **Active vs. current tab:** `currentTabIdAtom` is the primary pane; `activeTabIdAtom` resolves to whichever pane the user last clicked. WS dispatch / hotkeys / inspector should target `activeTabIdAtom`.
 - **Persistence debounce** is 250ms; call `actions.flush()` if you need a synchronous write (e.g. before export).
 - **StrictMode safety:** `ensureDefaultWorkspace` memoizes its promise to defeat double-invoke in dev. Follow the same pattern for any other "create on first boot" effects.
+
+## UI conventions
+
+- **Tailwind owns layout, MUI owns primitives.** Use Tailwind utilities (flex, gap, sizing, spacing) for the structural shell; reach for MUI for `Button`, `IconButton`, `TextField`, `Select`, `Tooltip`, `Dialog`, `Menu`, `Popover`. Don't replace Tailwind layout with `Box sx={...}` — that's double-styling for no payoff.
+- **Don't add `<CssBaseline />`.** Tailwind 4's preflight is the one source of reset rules; MUI's would fight it.
+- **Theme tokens.** Add new design tokens as `--color-*` CSS variables in [src/styles.css](src/styles.css), then mirror the hex into [src/ui/theme.ts](src/ui/theme.ts) so MUI components pick them up. Hex values are duplicated (not `var(--color-*)`) because MUI's palette manipulation (alpha/lighten/darken) needs concrete colors at theme-init time.
+- **Icons:** import per-icon paths (`import KeyOutlined from '@mui/icons-material/KeyOutlined'`). The barrel import (`import { KeyOutlined } from '@mui/icons-material'`) kills tree-shaking and adds ~1 MB. The codebase favors filled variants over outlined.
+- **Context menus:** use [src/ui/ContextMenu.tsx](src/ui/ContextMenu.tsx) — `<ContextMenu items={items}>{trigger}</ContextMenu>`. The wrapper uses `display: contents` and the MUI `<Menu>` is rendered inside, so a contextmenu on the (portaled) backdrop bubbles back via React's portal-aware events to close the menu instead of leaking through to the native browser menu. Repeated right-clicks on the backdrop close the open menu rather than re-positioning (matches the [MUI docs example](https://mui.com/material-ui/react-menu/#context-menu)).
+- **Imperative dialogs:** use `dialogs.alert/confirm/prompt` from [src/ui/dialogs/Dialogs.tsx](src/ui/dialogs/Dialogs.tsx). They render a MUI `Dialog` whose `Paper` is a `<form>` so Enter submits and Shift+Enter inserts a newline in multiline mode.
 
 ## Coding notes
 

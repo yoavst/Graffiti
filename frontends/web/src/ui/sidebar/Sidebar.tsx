@@ -1,5 +1,6 @@
 import { useAtom, useAtomValue, useSetAtom } from 'jotai';
 import { useEffect, useMemo, useState } from 'react';
+import TextField from '@mui/material/TextField';
 import AddIcon from '@mui/icons-material/Add';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
@@ -201,8 +202,10 @@ export function Sidebar() {
         </div>
       </div>
       <div className="border-b border-(--color-border) px-2 py-2">
-        <input
-          className="w-full rounded border border-(--color-border) bg-(--color-bg-3) px-2 py-1.5 text-sm"
+        <TextField
+          fullWidth
+          size="small"
+          variant="outlined"
           placeholder="search tabs"
           value={search}
           onChange={(e) => setSearch(e.target.value)}

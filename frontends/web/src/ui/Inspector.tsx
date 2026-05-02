@@ -1,5 +1,8 @@
 import { useAtom, useAtomValue, useSetAtom } from 'jotai';
 import { useState } from 'react';
+import Button from '@mui/material/Button';
+import Select from '@mui/material/Select';
+import MenuItem from '@mui/material/MenuItem';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -53,7 +56,7 @@ export function Inspector() {
           <ChevronRightIcon fontSize="small" />
         </button>
       </div>
-      <div className="flex-1 overflow-auto p-3">
+      <div className="flex-1 min-h-0 overflow-auto p-3">
         {selectedNode ? (
           <NodeInspector key={`${tab.id}-${selectedNode.id}`} tabId={tab.id} />
         ) : selectedEdge ? (
@@ -62,17 +65,37 @@ export function Inspector() {
           <NotesEditor key={tab.id} tabId={tab.id} initial={tab.notes ?? ''} />
         )}
       </div>
-      {selectedNode && selectedNode.extra.address && ws && (
-        <button
-          className="m-3 rounded bg-(--color-accent) px-3 py-1.5 text-sm font-medium text-black hover:opacity-90"
-          onClick={() => {
-            const payload = jumpToPayload(selectedNode);
-            if (payload) ws.send(payload);
-          }}
-        >
-          Jump to IDE
-        </button>
-      )}
+      {(selectedNode?.extra.address && ws) || selectedEdge ? (
+        <div className="border-t border-(--color-border) p-3">
+          {selectedNode?.extra.address && ws && (
+            <Button
+              fullWidth
+              variant="outlined"
+              color="primary"
+              onClick={() => {
+                const payload = jumpToPayload(selectedNode);
+                if (payload) ws.send(payload);
+              }}
+            >
+              Jump to IDE
+            </Button>
+          )}
+          {selectedEdge && (
+            <Button
+              fullWidth
+              variant="outlined"
+              color="error"
+              startIcon={<DeleteIcon />}
+              onClick={() => {
+                const tabFull = getTabFull(tab.id);
+                if (tabFull) tabFull.actions.apply({ type: 'removeEdge', data: selectedEdge });
+              }}
+            >
+              Remove edge
+            </Button>
+          )}
+        </div>
+      ) : null}
     </aside>
   );
 }
@@ -107,7 +130,11 @@ function NodeInspector({ tabId }: { tabId: string }) {
         <label className="text-sm opacity-70">Theme</label>
         <div className="mt-1.5 flex flex-wrap gap-1.5">
           <button
-            className="h-7 w-7 rounded-full border border-(--color-border) text-xs"
+            className={`h-7 w-7 rounded-full text-xs ${
+              node.theme === undefined
+                ? 'ring-2 ring-(--color-accent)'
+                : 'border border-(--color-border)'
+            }`}
             onClick={() =>
               actions.apply({
                 type: 'setNodeTheme',
@@ -122,7 +149,11 @@ function NodeInspector({ tabId }: { tabId: string }) {
           {THEMES.map((th, i) => (
             <button
               key={i}
-              className="h-7 w-7 rounded-full border border-(--color-border)"
+              className={`h-7 w-7 rounded-full ${
+                node.theme === i
+                  ? 'ring-2 ring-(--color-accent)'
+                  : 'border border-(--color-border)'
+              }`}
               style={{ background: th.bg }}
               onClick={() =>
                 actions.apply({
@@ -345,8 +376,9 @@ function EdgeInspector({ tabId }: { tabId: string }) {
       </label>
       <div>
         <label className="text-xs opacity-60">Arrow</label>
-        <select
-          className="mt-1 w-full rounded border border-(--color-border) bg-(--color-bg-3) px-1 py-0.5 text-xs"
+        <Select
+          fullWidth
+          size="small"
           value={edge.arrow ?? 'normal'}
           onChange={(e) =>
             actions.apply({
@@ -356,12 +388,13 @@ function EdgeInspector({ tabId }: { tabId: string }) {
               newArrow: e.target.value as ArrowKind,
             })
           }
+          sx={{ mt: 0.5 }}
         >
-          <option value="normal">normal (--&gt;)</option>
-          <option value="dotted">dotted (-.-&gt;)</option>
-          <option value="cross">cross (--x)</option>
-          <option value="none">none (---)</option>
-        </select>
+          <MenuItem value="normal">normal (--&gt;)</MenuItem>
+          <MenuItem value="dotted">dotted (-.-&gt;)</MenuItem>
+          <MenuItem value="cross">cross (--x)</MenuItem>
+          <MenuItem value="none">none (---)</MenuItem>
+        </Select>
       </div>
       <div>
         <label className="text-xs opacity-60">Color</label>
@@ -383,12 +416,6 @@ function EdgeInspector({ tabId }: { tabId: string }) {
           })}
         </div>
       </div>
-      <button
-        className="mt-2 rounded border border-red-700/40 bg-red-700/20 px-2 py-1 text-xs text-red-300 hover:bg-red-700/30"
-        onClick={() => actions.apply({ type: 'removeEdge', data: edge })}
-      >
-        Remove edge
-      </button>
     </div>
   );
 }
