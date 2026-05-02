@@ -1,8 +1,16 @@
-// A simple right-click context menu. Renders into a portal so it can
-// escape parent overflow:hidden boxes (like the tab bar).
+// Right-click context menu, positioned at the cursor and dismissed via
+// @floating-ui/react's useDismiss (handles outside-press + escape correctly,
+// including not closing on the same event that opened the menu).
 
-import { createPortal } from 'react-dom';
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import {
+  FloatingPortal,
+  flip,
+  shift,
+  useDismiss,
+  useFloating,
+  useInteractions,
+} from '@floating-ui/react';
+import { useEffect, useRef, useState } from 'react';
 
 export interface ContextMenuItem {
   label: string;
@@ -26,67 +34,55 @@ export function ContextMenu({
   state: ContextMenuState | null;
   onClose: () => void;
 }) {
-  const ref = useRef<HTMLDivElement>(null);
-  // Computed final position. Initially the requested coords; corrected after
-  // we measure the rendered menu so it never leaks past the viewport edges.
-  const [pos, setPos] = useState<{ x: number; y: number } | null>(null);
+  const open = state != null;
 
+  const { refs, floatingStyles, context, isPositioned } = useFloating({
+    open,
+    onOpenChange: (next) => {
+      if (!next) onClose();
+    },
+    placement: 'bottom-start',
+    middleware: [flip(), shift({ padding: 4 })],
+  });
+
+  // Virtual reference at the cursor position.
   useEffect(() => {
     if (!state) return;
-    function onDoc(e: MouseEvent) {
-      if (!ref.current?.contains(e.target as Node)) onClose();
-    }
-    function onKey(e: KeyboardEvent) {
-      if (e.key === 'Escape') onClose();
-    }
-    document.addEventListener('mousedown', onDoc);
-    document.addEventListener('keydown', onKey);
-    return () => {
-      document.removeEventListener('mousedown', onDoc);
-      document.removeEventListener('keydown', onKey);
-    };
-  }, [state, onClose]);
+    refs.setPositionReference({
+      getBoundingClientRect: () => ({
+        x: state.x,
+        y: state.y,
+        top: state.y,
+        left: state.x,
+        right: state.x,
+        bottom: state.y,
+        width: 0,
+        height: 0,
+      }),
+    });
+  }, [state, refs]);
 
-  // Reset position when state changes so the next opening starts hidden.
-  useEffect(() => {
-    setPos(null);
-  }, [state]);
+  const dismiss = useDismiss(context);
+  const { getFloatingProps } = useInteractions([dismiss]);
 
-  // Measure the menu after first paint and clamp into the viewport. We hide
-  // until measured so the corrected position is what the user actually sees.
-  useLayoutEffect(() => {
-    if (!state || !ref.current) return;
-    const rect = ref.current.getBoundingClientRect();
-    const margin = 4;
-    let x = state.x;
-    let y = state.y;
-    if (x + rect.width > window.innerWidth - margin) {
-      x = Math.max(margin, window.innerWidth - rect.width - margin);
-    }
-    if (y + rect.height > window.innerHeight - margin) {
-      y = Math.max(margin, window.innerHeight - rect.height - margin);
-    }
-    setPos({ x, y });
-  }, [state]);
+  if (!open) return null;
 
-  if (!state) return null;
-
-  return createPortal(
-    <div
-      ref={ref}
-      className="fixed z-[60] min-w-48 rounded border border-(--color-border) bg-(--color-bg-2) py-1 text-sm shadow-xl"
-      style={{
-        left: pos?.x ?? state.x,
-        top: pos?.y ?? state.y,
-        visibility: pos ? 'visible' : 'hidden',
-      }}
-      onContextMenu={(e) => e.preventDefault()}
-    >
-      {state.items.map((it, i) => (
-        <MenuItem key={i} item={it} onSelected={onClose} />
-      ))}
-    </div>,
-    document.body,
+  return (
+    <FloatingPortal>
+      <div
+        ref={refs.setFloating}
+        style={{ ...floatingStyles, visibility: isPositioned ? 'visible' : 'hidden' }}
+        {...getFloatingProps({
+          className:
+            'z-[60] min-w-48 rounded border border-(--color-border) bg-(--color-bg-2) py-1 text-sm shadow-xl',
+          onContextMenu: (e) => e.preventDefault(),
+        })}
+      >
+        {state!.items.map((it, i) => (
+          <MenuItem key={i} item={it} onSelected={onClose} />
+        ))}
+      </div>
+    </FloatingPortal>
   );
 }
 

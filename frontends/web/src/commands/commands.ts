@@ -18,6 +18,7 @@ import {
 import { exportAllTabsToTar, exportTabToFile } from '@/persistence/importExport';
 import { db } from '@/persistence/db';
 import { toMermaid } from '@/graph/mermaidExport';
+import { addCommentAction, addTextNodeAction } from './addNodeActions';
 
 export interface Command {
   id: string;
@@ -34,6 +35,20 @@ export function buildCommands(store: JotaiStore, openHelp: () => void, openToken
   };
 
   return [
+    {
+      id: 'graph.addTextNode',
+      title: 'Add text node',
+      hotkey: 'Ctrl+Shift+Q',
+      section: 'Edit',
+      run: () => addTextNodeAction(store),
+    },
+    {
+      id: 'graph.addComment',
+      title: 'Add comment to selected node',
+      hotkey: 'Ctrl+Q',
+      section: 'Edit',
+      run: () => addCommentAction(store),
+    },
     {
       id: 'undo',
       title: 'Undo',

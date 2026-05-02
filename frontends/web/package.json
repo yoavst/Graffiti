@@ -21,14 +21,14 @@
     "elkjs": "^0.9.3",
     "html-to-image": "^1.11.13",
     "jotai": "^2.10.4",
-    "mermaid": "^11.4.1",
+    "jotai-family": "^1.0.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-hotkeys-hook": "^4.6.1",
     "react-markdown": "^9.0.3",
     "rehype-raw": "^7.0.0",
     "remark-gfm": "^4.0.0",
-    "uuid": "^11.0.3",
+    "uuid": "^14.0.0",
     "zod": "^3.24.1"
   },
   "devDependencies": {

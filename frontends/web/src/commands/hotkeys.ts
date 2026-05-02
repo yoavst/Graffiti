@@ -5,6 +5,7 @@ import { getCurrentTab } from '@/state/registry';
 import { tabRuntimeAtom, tabTickAtom } from '@/state/graph';
 import { useStore } from 'jotai';
 import { inspectorVisibleAtom } from '@/state/settings';
+import { addCommentAction, addTextNodeAction } from './addNodeActions';
 
 export function useHotkeys(_handlers: { onOpenToken: () => void; onOpenHelp: () => void }) {
   const setSide = useSetAtom(sidePaneTabIdAtom);
@@ -74,6 +75,22 @@ export function useHotkeys(_handlers: { onOpenToken: () => void; onOpenHelp: () 
       if (currentTabId) setSide(currentTabId);
     },
     [currentTabId, setSide],
+  );
+  useHotkeysHook(
+    'mod+q',
+    (e) => {
+      e.preventDefault();
+      void addCommentAction(store);
+    },
+    [store],
+  );
+  useHotkeysHook(
+    'mod+shift+q',
+    (e) => {
+      e.preventDefault();
+      void addTextNodeAction(store);
+    },
+    [store],
   );
   useHotkeysHook(
     'home',

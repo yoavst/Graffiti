@@ -2,7 +2,7 @@
 // Persistence to Dexie is debounced and runs on idle.
 
 import { atom } from 'jotai';
-import { atomFamily } from 'jotai/utils';
+import { atomFamily } from 'jotai-family';
 import { db } from '@/persistence/db';
 import {
   applyAndRecord,

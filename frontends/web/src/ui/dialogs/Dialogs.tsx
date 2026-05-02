@@ -28,6 +28,7 @@ type PromptSpec = {
   initial?: string;
   placeholder?: string;
   confirmLabel?: string;
+  multiline?: boolean;
   resolve: (value: string | null) => void;
 };
 
@@ -73,7 +74,13 @@ export const dialogs = {
   },
   prompt(
     message: string,
-    opts?: { title?: string; initial?: string; placeholder?: string; confirmLabel?: string },
+    opts?: {
+      title?: string;
+      initial?: string;
+      placeholder?: string;
+      confirmLabel?: string;
+      multiline?: boolean;
+    },
   ): Promise<string | null> {
     return open<string | null>((resolve) => ({
       kind: 'prompt',
@@ -82,6 +89,7 @@ export const dialogs = {
       initial: opts?.initial,
       placeholder: opts?.placeholder,
       confirmLabel: opts?.confirmLabel,
+      multiline: opts?.multiline,
       resolve,
     }));
   },
@@ -116,7 +124,7 @@ function DialogShell({
   spec: DialogSpec;
   onClose: (result: unknown) => void;
 }) {
-  const inputRef = useRef<HTMLInputElement | null>(null);
+  const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement | null>(null);
   const [value, setValue] = useState(spec.kind === 'prompt' ? (spec.initial ?? '') : '');
 
   // Focus the input (prompt) or the primary button (alert/confirm) on mount.
@@ -161,17 +169,35 @@ function DialogShell({
         {spec.kind === 'prompt' ? (
           <>
             {spec.message && <p className="mb-2 text-sm opacity-80">{spec.message}</p>}
-            <input
-              ref={inputRef}
-              className="w-full rounded border border-(--color-border) bg-(--color-bg-3) px-2 py-1.5 text-sm"
-              value={value}
-              placeholder={spec.placeholder}
-              onChange={(e) => setValue(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') confirm();
-                if (e.key === 'Escape') cancel();
-              }}
-            />
+            {spec.multiline ? (
+              <textarea
+                ref={inputRef as React.RefObject<HTMLTextAreaElement>}
+                className="w-full resize-y rounded border border-(--color-border) bg-(--color-bg-3) px-2 py-1.5 text-sm font-mono min-h-24"
+                value={value}
+                placeholder={spec.placeholder}
+                onChange={(e) => setValue(e.target.value)}
+                onKeyDown={(e) => {
+                  // Enter without modifier confirms; Shift+Enter inserts a newline.
+                  if (e.key === 'Enter' && !e.shiftKey && !e.ctrlKey && !e.metaKey) {
+                    e.preventDefault();
+                    confirm();
+                  }
+                  if (e.key === 'Escape') cancel();
+                }}
+              />
+            ) : (
+              <input
+                ref={inputRef as React.RefObject<HTMLInputElement>}
+                className="w-full rounded border border-(--color-border) bg-(--color-bg-3) px-2 py-1.5 text-sm"
+                value={value}
+                placeholder={spec.placeholder}
+                onChange={(e) => setValue(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') confirm();
+                  if (e.key === 'Escape') cancel();
+                }}
+              />
+            )}
           </>
         ) : (
           <p className="text-sm whitespace-pre-wrap opacity-90">{spec.message}</p>

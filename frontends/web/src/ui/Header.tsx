@@ -1,4 +1,4 @@
-import { useAtom, useAtomValue, useSetAtom } from 'jotai';
+import { useAtom, useAtomValue, useSetAtom, useStore } from 'jotai';
 import { useEffect } from 'react';
 import {
   authTokenAtom,
@@ -17,6 +17,7 @@ import { wsClientAtom } from '@/state/wsClient';
 import { dispatchInbound } from '@/network/protocol/dispatch';
 import { getStore } from '@/state/store';
 import { getCurrentTab, getTabFull } from '@/state/registry';
+import { addCommentAction, addTextNodeAction } from '@/commands/addNodeActions';
 
 export function Header({ onOpenToken, onOpenHelp }: { onOpenToken: () => void; onOpenHelp: () => void }) {
   const [url, setUrl] = useAtom(connectionUrlAtom);
@@ -29,6 +30,7 @@ export function Header({ onOpenToken, onOpenHelp }: { onOpenToken: () => void; o
   const [existingToNew, setExistingToNew] = useAtom(isExistingToNewAtom);
   const [newWillBeSelected, setNewWillBeSelected] = useAtom(isNewWillBeSelectedAtom);
   const [client, setClient] = useAtom(wsClientAtom);
+  const store = useStore();
 
   // Initial url
   useEffect(() => {
@@ -88,6 +90,21 @@ export function Header({ onOpenToken, onOpenHelp }: { onOpenToken: () => void; o
     <header className="flex items-center gap-2 border-b border-(--color-border) bg-(--color-bg-2) px-3 py-2">
       <img src="/icon.png" alt="Graffiti" className="h-7 w-7" />
       <h1 className="text-lg font-semibold mr-3">Graffiti</h1>
+
+      <button
+        className="rounded border border-(--color-border) px-2 py-1 text-xs"
+        onClick={() => void addTextNodeAction(store)}
+        title="Add text node (Ctrl+Shift+Q)"
+      >
+        📝
+      </button>
+      <button
+        className="rounded border border-(--color-border) px-2 py-1 text-xs"
+        onClick={() => void addCommentAction(store)}
+        title="Add comment to selected node (Ctrl+Q)"
+      >
+        💬
+      </button>
 
       <div className="flex-1" />
 

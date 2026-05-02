@@ -273,6 +273,27 @@ function WorkspaceItem({
   onSelectTab: (t: TabRow) => void;
   onChanged: () => void | Promise<void>;
 }) {
+  const [menu, setMenu] = useState<ContextMenuState | null>(null);
+
+  function openMenu(e: React.MouseEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    setMenu({
+      x: e.clientX,
+      y: e.clientY,
+      items: [
+        { label: 'Add tab', onSelect: onAddTab },
+        { label: 'Rename', onSelect: () => void rename() },
+        {
+          label: 'Delete',
+          destructive: true,
+          disabled: allWorkspaces.length <= 1,
+          onSelect: () => void remove(),
+        },
+      ],
+    });
+  }
+
   async function rename() {
     const name = (
       await dialogs.prompt('Rename workspace', {
@@ -314,6 +335,7 @@ function WorkspaceItem({
     <div className="border-b border-(--color-border)">
       <div
         className={`group flex items-center gap-1 px-2 py-1.5 ${isCurrent ? 'bg-(--color-accent)/12' : ''}`}
+        onContextMenu={openMenu}
       >
         <button
           className="rounded px-1 py-0.5 text-sm opacity-60 hover:opacity-100"
@@ -325,8 +347,7 @@ function WorkspaceItem({
         <button
           className="flex-1 truncate text-left text-sm font-medium"
           onClick={onToggle}
-          onDoubleClick={() => void rename()}
-          title="Click to expand/collapse, double-click to rename"
+          title="Click to expand/collapse"
         >
           {workspace.name}
         </button>
@@ -367,12 +388,14 @@ function WorkspaceItem({
               isCurrent={t.id === currentTabId}
               isInSidePane={t.id === sidePaneTabId}
               onSelect={() => onSelectTab(t)}
+              currentWorkspaceId={workspace.id}
               allWorkspaces={allWorkspaces}
               onChanged={onChanged}
             />
           ))}
         </div>
       )}
+      <ContextMenu state={menu} onClose={() => setMenu(null)} />
     </div>
   );
 }
@@ -382,6 +405,7 @@ function SidebarTab({
   isCurrent,
   isInSidePane,
   onSelect,
+  currentWorkspaceId,
   allWorkspaces,
   onChanged,
 }: {
@@ -389,6 +413,7 @@ function SidebarTab({
   isCurrent: boolean;
   isInSidePane: boolean;
   onSelect: () => void;
+  currentWorkspaceId: string;
   allWorkspaces: import('@/persistence/db').WorkspaceRow[];
   onChanged: () => void | Promise<void>;
 }) {
@@ -444,14 +469,11 @@ function SidebarTab({
     await onChanged();
   }
 
-  async function openMenu(e: React.MouseEvent) {
+  function openMenu(e: React.MouseEvent) {
     e.preventDefault();
     e.stopPropagation();
-    // Build the "Move to" submenu with one entry per other workspace.
-    const currentGroup = await db.tabGroups.get(tab.tabGroupId);
-    const currentWsId = currentGroup?.workspaceId;
     const moveSubmenu = allWorkspaces
-      .filter((ws) => ws.id !== currentWsId)
+      .filter((ws) => ws.id !== currentWorkspaceId)
       .map((ws) => ({
         label: ws.name,
         onSelect: () => void moveToWorkspace(ws.id),
@@ -466,7 +488,7 @@ function SidebarTab({
           onSelect: () => setSidePane(isInSidePane ? null : tab.id),
         },
         ...(moveSubmenu.length > 0
-          ? [{ label: 'Move to workspace', onSelect: () => { }, submenu: moveSubmenu }]
+          ? [{ label: 'Move to workspace', onSelect: () => {}, submenu: moveSubmenu }]
           : []),
         { label: 'Linked projects', onSelect: () => void showLinkedProjects() },
         { label: 'Remove', destructive: true, onSelect: () => void remove() },
@@ -498,8 +520,7 @@ function SidebarTab({
       <button
         className={`group/tab flex w-full items-center gap-1.5 truncate rounded px-1.5 py-1 text-left text-sm ${paneTint}`}
         onClick={onSelect}
-        onDoubleClick={() => void rename()}
-        onContextMenu={(e) => void openMenu(e)}
+        onContextMenu={openMenu}
         title={paneTitle}
       >
         <span className="flex-1 truncate">{tab.name}</span>
