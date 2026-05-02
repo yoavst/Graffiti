@@ -30,16 +30,26 @@ export interface LayoutResult {
   height: number;
 }
 
-// Measure text accurately so ELK doesn't pack nodes on top of each other.
-// We use canvas.measureText with the same font stack as our node CSS.
-const FONT = '500 14px ui-sans-serif, system-ui, -apple-system, sans-serif';
-const NODE_MAX_WIDTH = 520;
-const NODE_MIN_WIDTH = 100;
-// 12px (px-3) + 12px (px-3) + 2px + 2px (border-2) on each axis.
-const NODE_PADDING_X = 28;
-const NODE_PADDING_Y = 20;
-// text-sm line-height = 1.25rem = 20px.
-const LINE_HEIGHT = 20;
+// Canvas metrics mirror CodeNode / MarkdownNode / CommentNode (Tailwind
+// text-sm / text-xs, padding, border) so ELK/Dagre sizes match what React
+// renders — otherwise edges miss handles and nodes look over-wide when text
+// wraps inside maxWidth.
+
+const FONT_CODE = '500 14px ui-sans-serif, system-ui, -apple-system, sans-serif';
+const FONT_MARKDOWN = '400 14px ui-sans-serif, system-ui, -apple-system, sans-serif';
+const FONT_COMMENT = 'italic 12px ui-sans-serif, system-ui, -apple-system, sans-serif';
+
+const OUTER_MAX_CODE = 520;
+const OUTER_MAX_COMMENT = 320;
+const OUTER_MIN = 100;
+
+// px-3 (12+12) + border 2+2 on each horizontal side.
+const PAD_X = 28;
+// py-2 (8+8) + border 2+2 on each vertical side.
+const PAD_Y = 20;
+
+const LINE_CODE = 20;
+const LINE_COMMENT = 17;
 
 let _ctx: CanvasRenderingContext2D | null = null;
 function getCtx(): CanvasRenderingContext2D | null {
@@ -47,37 +57,108 @@ function getCtx(): CanvasRenderingContext2D | null {
   if (_ctx) return _ctx;
   const canvas = document.createElement('canvas');
   _ctx = canvas.getContext('2d');
-  if (_ctx) _ctx.font = FONT;
   return _ctx;
 }
 
-function measureNode(label: string): { width: number; height: number } {
+function makeMeasure(font: string): (s: string) => number {
   const ctx = getCtx();
-  const lines = label.split('\n');
-  let maxLine = 0;
-  if (ctx) {
-    for (const line of lines) {
-      const w = ctx.measureText(line).width;
-      if (w > maxLine) maxLine = w;
+  return (s: string) => {
+    if (!ctx) return s.length * 7;
+    ctx.font = font;
+    return ctx.measureText(s).width;
+  };
+}
+
+function wrapParagraph(paragraph: string, maxContentW: number, measure: (s: string) => number): string[] {
+  if (maxContentW < 4) return [''];
+  const words = paragraph.split(/\s+/).filter((w) => w.length > 0);
+  if (words.length === 0) return [''];
+  const lines: string[] = [];
+  let current = '';
+  for (const word of words) {
+    const trial = current ? `${current} ${word}` : word;
+    if (measure(trial) <= maxContentW) {
+      current = trial;
+      continue;
     }
-  } else {
-    maxLine = label.length * 8;
+    if (current) {
+      lines.push(current);
+      current = '';
+    }
+    if (measure(word) <= maxContentW) {
+      current = word;
+      continue;
+    }
+    let piece = '';
+    for (const ch of word) {
+      const grow = piece + ch;
+      if (measure(grow) <= maxContentW) {
+        piece = grow;
+      } else {
+        if (piece) lines.push(piece);
+        piece = ch;
+      }
+    }
+    current = piece;
   }
-  const widthRaw = Math.ceil(maxLine) + NODE_PADDING_X;
-  const width = Math.max(NODE_MIN_WIDTH, Math.min(NODE_MAX_WIDTH, widthRaw));
-  // If clamped, the text wraps across multiple visual lines.
-  const visualLines =
-    widthRaw > NODE_MAX_WIDTH
-      ? Math.ceil(widthRaw / (NODE_MAX_WIDTH - NODE_PADDING_X))
-      : lines.length;
-  const height = NODE_PADDING_Y + visualLines * LINE_HEIGHT;
+  if (current) lines.push(current);
+  return lines;
+}
+
+/** Split on explicit newlines, wrap each block to max content width (exported for tests). */
+export function wrapLabelLines(label: string, maxContentW: number, measure: (s: string) => number): string[] {
+  const blocks = label.split('\n');
+  const out: string[] = [];
+  for (const block of blocks) {
+    if (block === '') out.push('');
+    else out.push(...wrapParagraph(block, maxContentW, measure));
+  }
+  return out.length > 0 ? out : [''];
+}
+
+function measureWrappedNode(
+  label: string,
+  opts: { font: string; outerMax: number; lineHeight: number },
+): { width: number; height: number } {
+  const measure = makeMeasure(opts.font);
+  const maxContent = opts.outerMax - PAD_X;
+  const lines = wrapLabelLines(label, maxContent, measure);
+  let maxLine = 0;
+  for (const ln of lines) {
+    maxLine = Math.max(maxLine, measure(ln));
+  }
+  const widthRaw = Math.ceil(maxLine) + PAD_X;
+  const width = Math.max(OUTER_MIN, Math.min(opts.outerMax, widthRaw));
+  const height = PAD_Y + lines.length * opts.lineHeight;
   return { width, height };
+}
+
+function measureForGraphNode(n: GNode): { width: number; height: number } {
+  const text = n.overrideLabel ?? n.label ?? '';
+  if (n.extra.isComment) {
+    return measureWrappedNode(text, {
+      font: FONT_COMMENT,
+      outerMax: OUTER_MAX_COMMENT,
+      lineHeight: LINE_COMMENT,
+    });
+  }
+  if (n.extra.isMarkdown) {
+    return measureWrappedNode(text, {
+      font: FONT_MARKDOWN,
+      outerMax: OUTER_MAX_CODE,
+      lineHeight: LINE_CODE,
+    });
+  }
+  return measureWrappedNode(text, {
+    font: FONT_CODE,
+    outerMax: OUTER_MAX_CODE,
+    lineHeight: LINE_CODE,
+  });
 }
 
 export function nodesToInput(nodes: GNode[]): LayoutInputNode[] {
   return nodes.map((n) => {
-    const label = n.overrideLabel ?? n.label ?? '';
-    const { width, height } = measureNode(label);
+    const { width, height } = measureForGraphNode(n);
     return {
       id: n.id,
       width,

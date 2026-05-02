@@ -1,5 +1,6 @@
 import { memo } from 'react';
 import { Handle, Position, type NodeProps } from '@xyflow/react';
+import { HANDLE } from '@/flow/nodeHandles';
 import { getNodeTheme, type GNode } from '@/graph/model';
 
 export interface GraffitiNodeData extends Record<string, unknown> {
@@ -26,9 +27,15 @@ function CodeNodeImpl({ data }: NodeProps) {
         wordBreak: 'break-word',
       }}
     >
-      <Handle type="target" position={Position.Top} />
+      <Handle type="target" position={Position.Top} id={HANDLE.tgtT} />
+      <Handle type="target" position={Position.Right} id={HANDLE.tgtR} />
+      <Handle type="target" position={Position.Bottom} id={HANDLE.tgtB} />
+      <Handle type="target" position={Position.Left} id={HANDLE.tgtL} />
       {label}
-      <Handle type="source" position={Position.Bottom} />
+      <Handle type="source" position={Position.Top} id={HANDLE.srcT} />
+      <Handle type="source" position={Position.Right} id={HANDLE.srcR} />
+      <Handle type="source" position={Position.Bottom} id={HANDLE.srcB} />
+      <Handle type="source" position={Position.Left} id={HANDLE.srcL} />
     </div>
   );
 }

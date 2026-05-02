@@ -48,7 +48,7 @@ export function CommandPalette({
         <Command.List className="mt-2 max-h-96 overflow-auto">
           <Command.Empty className="px-2 py-4 text-sm opacity-60">No matches.</Command.Empty>
           {[...groups.entries()].map(([section, list]) => (
-            <Command.Group key={section} heading={section} className="text-xs uppercase opacity-60 px-2 mt-2">
+            <Command.Group key={section} heading={section} className="text-xs opacity-60 px-2 mt-2">
               {list.map((c) => (
                 <Command.Item
                   key={c.id}

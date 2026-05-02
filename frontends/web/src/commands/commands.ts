@@ -15,6 +15,7 @@ import {
   sidebarVisibleAtom,
   darkModeAtom,
 } from '@/state/settings';
+import { shareGraphDialogOpenAtom } from '@/state/shareGraphDialog';
 import { exportAllTabsToTar, exportTabToFile } from '@/persistence/importExport';
 import { db } from '@/persistence/db';
 import { toMermaid } from '@/graph/mermaidExport';
@@ -111,6 +112,14 @@ export function buildCommands(store: JotaiStore, openHelp: () => void, openToken
       section: 'File',
       run: async () => {
         await runCopyCurrentTabMermaid(store);
+      },
+    },
+    {
+      id: 'export.share',
+      title: 'Share graph…',
+      section: 'File',
+      run: () => {
+        store.set(shareGraphDialogOpenAtom, true);
       },
     },
     {

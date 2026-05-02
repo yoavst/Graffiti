@@ -15,9 +15,15 @@ export const tabsAtom = atom<TabRow[]>([]);
 export const currentWorkspaceIdAtom = atomWithStorage<string | null>(
   'currentWorkspaceId',
   null,
+  undefined,
+  { getOnInit: true },
 );
-export const currentTabIdAtom = atomWithStorage<string | null>('currentTabId', null);
-export const sidePaneTabIdAtom = atomWithStorage<string | null>('sidePaneTabId', null);
+export const currentTabIdAtom = atomWithStorage<string | null>('currentTabId', null, undefined, {
+  getOnInit: true,
+});
+export const sidePaneTabIdAtom = atomWithStorage<string | null>('sidePaneTabId', null, undefined, {
+  getOnInit: true,
+});
 
 // Which split pane is "active" — used by the inspector and global commands so
 // they target the pane the user last interacted with rather than always the

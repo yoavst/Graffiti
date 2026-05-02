@@ -1,0 +1,151 @@
+import { useAtom, useStore } from 'jotai';
+import { Fragment, useCallback, useEffect, useState } from 'react';
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import DialogActions from '@mui/material/DialogActions';
+import TextField from '@mui/material/TextField';
+import Button from '@mui/material/Button';
+import Snackbar from '@mui/material/Snackbar';
+import { activeTabIdAtom } from '@/state/workspaces';
+import { shareGraphDialogOpenAtom } from '@/state/shareGraphDialog';
+import { getFlowExportBridge } from '@/flow/flowExportBridge';
+import {
+  captureViewportToJpegBlob,
+  captureViewportToSvgFile,
+  downloadJpeg,
+  safeExportBasename,
+} from '@/flow/exportFlowCapture';
+import { db } from '@/persistence/db';
+import { toMermaid } from '@/graph/mermaidExport';
+import { darkModeAtom } from '@/state/settings';
+import { dialogs } from '@/ui/dialogs/Dialogs';
+
+const defaultDpi = 600;
+
+export function ShareGraphDialog() {
+  const [open, setOpen] = useAtom(shareGraphDialogOpenAtom);
+  const store = useStore();
+  const [dpiStr, setDpiStr] = useState(String(defaultDpi));
+  const [busy, setBusy] = useState(false);
+  const [clipboardToast, setClipboardToast] = useState(false);
+
+  useEffect(() => {
+    if (open) setClipboardToast(false);
+  }, [open]);
+
+  const dpi = (() => {
+    const n = Number.parseInt(dpiStr, 10);
+    if (!Number.isFinite(n) || n < 72 || n > 2400) return defaultDpi;
+    return n;
+  })();
+
+  const close = useCallback(() => {
+    setOpen(false);
+  }, [setOpen]);
+
+  const runRasterOrSvg = useCallback(
+    async (kind: 'jpeg' | 'svg') => {
+      const tabId = store.get(activeTabIdAtom);
+      if (!tabId) {
+        await dialogs.alert('No active tab to export.', { title: 'Share graph' });
+        return;
+      }
+      const bridge = getFlowExportBridge(tabId);
+      if (!bridge) {
+        await dialogs.alert('Could not find the graph canvas for this tab.', { title: 'Share graph' });
+        return;
+      }
+      setBusy(true);
+      let restore: () => void = () => { };
+      try {
+        restore = await bridge.prepareFullGraphSnapshot();
+        const el = bridge.getViewportElement();
+        if (!el) throw new Error('Viewport not ready');
+        const tab = await db.tabs.get(tabId);
+        const base = safeExportBasename(tab?.name);
+        if (kind === 'jpeg') {
+          const blob = await captureViewportToJpegBlob(el, dpi);
+          downloadJpeg(`${base}.jpg`, blob);
+        } else {
+          await captureViewportToSvgFile(el, dpi, `${base}.svg`);
+        }
+      } catch (e) {
+        console.error(e);
+        await dialogs.alert(
+          e instanceof Error ? e.message : 'Export failed. Try again after the layout finishes.',
+          { title: 'Share graph' },
+        );
+      } finally {
+        restore();
+        setBusy(false);
+        close();
+      }
+    },
+    [dpi, store],
+  );
+
+  const runMermaid = useCallback(async () => {
+    const tabId = store.get(activeTabIdAtom);
+    if (!tabId) {
+      await dialogs.alert('No active tab to export.', { title: 'Share graph' });
+      return;
+    }
+    const [g, tab] = await Promise.all([db.graphs.get(tabId), db.tabs.get(tabId)]);
+    if (!g) {
+      await dialogs.alert('No graph data for this tab.', { title: 'Share graph' });
+      return;
+    }
+    const dark = store.get(darkModeAtom);
+    const text = toMermaid(g.doc, {
+      gui: true,
+      elkRenderer: tab?.layout === 'elk',
+      darkMode: dark,
+    });
+    if (!text.trim()) {
+      await dialogs.alert('This graph has no nodes to export.', { title: 'Share graph' });
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(text);
+      setClipboardToast(true);
+    } catch {
+      await dialogs.alert('Could not copy to clipboard.', { title: 'Share graph' });
+    }
+    close();
+  }, [store, setOpen]);
+
+  return (
+    <Fragment>
+      <Dialog open={open} onClose={close} fullWidth maxWidth="xs">
+        <DialogTitle sx={{ textAlign: 'center', fontWeight: 700 }}>Share graph</DialogTitle>
+        <DialogContent>
+          <TextField
+            label="dpi"
+            type="number"
+            fullWidth
+            size="small"
+            margin="dense"
+            value={dpiStr}
+            disabled={busy}
+            onChange={(e) => setDpiStr(e.target.value)}
+            slotProps={{ htmlInput: { min: 72, max: 2400, step: 1 } }}
+            helperText="Used for JPEG and SVG raster resolution (72–2400)."
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => void runRasterOrSvg('jpeg')}>JPEG</Button>
+          <Button onClick={() => void runRasterOrSvg('svg')}>SVG</Button>
+          <Button onClick={() => void runMermaid()}>Mermaid</Button>
+        </DialogActions>
+      </Dialog>
+      <Snackbar
+        open={clipboardToast}
+        onClose={() => setClipboardToast(false)}
+        autoHideDuration={2000}
+        message="Copied to clipboard"
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      />
+    </Fragment>
+  );
+}

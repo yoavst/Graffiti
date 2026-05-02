@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import {
   Background,
   Controls,
@@ -23,6 +23,8 @@ import { tabTickAtom, type TabActions, type TabRuntime } from '@/state/graph';
 import { layout, structuralHash } from '@/graph/layout';
 import { nodesToInput } from '@/graph/layout/types';
 import { darkModeAtom, isCurvedEdgesAtom } from '@/state/settings';
+import { registerFlowExportBridge } from '@/flow/flowExportBridge';
+import { HANDLE, handlesForEdgeToComment } from '@/flow/nodeHandles';
 
 const nodeTypes = {
   code: CodeNode,
@@ -68,6 +70,9 @@ function CanvasInner({ tabId, actions, rt, layoutEngine, onJumpToIde, onActivate
   const flow = useReactFlow();
   const flowRef = useRef(flow);
   flowRef.current = flow;
+  const rtRef = useRef(rt);
+  rtRef.current = rt;
+  const flowRootRef = useRef<HTMLDivElement>(null);
   const lastHashRef = useRef<string>(layoutCache.get(tabId)?.hash ?? '');
   // Layout positions live in a state variable so a fresh layout triggers a
   // re-render of the controlled `nodes` prop. Initialize from the cache so
@@ -195,7 +200,9 @@ function CanvasInner({ tabId, actions, rt, layoutEngine, onJumpToIde, onActivate
 
   const edges: Edge<GraffitiEdgeData>[] = useMemo(() => {
     return rt.doc.edges.map((e) => {
-      const arrow = e.arrow ?? 'normal';
+      const targetNode = rt.doc.nodes.find((n) => n.id === e.to);
+      const targetIsComment = targetNode?.extra.isComment === true;
+      const arrow = e.arrow ?? (targetIsComment ? 'none' : 'normal');
       // Marker URLs reference the SVG <defs> we render below the canvas.
       const markerEnd =
         arrow === 'cross'
@@ -203,11 +210,15 @@ function CanvasInner({ tabId, actions, rt, layoutEngine, onJumpToIde, onActivate
           : arrow === 'none'
             ? undefined
             : { type: MarkerType.ArrowClosed, color: e.style?.color ?? 'var(--color-edge)' };
+      const side =
+        targetIsComment ? handlesForEdgeToComment(e.from, e.to, positions) : undefined;
       return {
         id: String(e.id),
         source: String(e.from),
         target: String(e.to),
         type: 'labeled',
+        sourceHandle: side?.sourceHandle ?? HANDLE.srcB,
+        targetHandle: side?.targetHandle ?? HANDLE.tgtT,
         markerEnd,
         data: {
           arrow,
@@ -218,7 +229,7 @@ function CanvasInner({ tabId, actions, rt, layoutEngine, onJumpToIde, onActivate
       };
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [rt.doc.edges, rt.selectedEdgeId, tick]);
+  }, [rt.doc.edges, rt.doc.nodes, rt.selectedEdgeId, tick, positions]);
 
   const onNodeClick: NodeMouseHandler = useCallback(
     (_e, n) => {
@@ -250,6 +261,53 @@ function CanvasInner({ tabId, actions, rt, layoutEngine, onJumpToIde, onActivate
     actions.select(null);
   }, [actions, onActivate]);
 
+  useLayoutEffect(() => {
+    const getViewportElement = () =>
+      (flowRootRef.current?.querySelector('.react-flow__viewport') as HTMLElement | null) ?? null;
+
+    const prepareFullGraphSnapshot = async () => {
+      const f = flowRef.current;
+      const prev = f.getViewport();
+      if (rtRef.current.doc.nodes.length === 0) {
+        return () => {};
+      }
+      const pane = flowRootRef.current?.querySelector('.react-flow') as HTMLElement | null;
+      const cw = Math.max(1, pane?.clientWidth ?? 800);
+      const ch = Math.max(1, pane?.clientHeight ?? 600);
+      const nodes = f.getNodes();
+      const bounds = f.getNodesBounds(nodes);
+      if (
+        !Number.isFinite(bounds.width) ||
+        !Number.isFinite(bounds.height) ||
+        bounds.width <= 0 ||
+        bounds.height <= 0
+      ) {
+        return () => {};
+      }
+      // Align graph bbox to top-left (small pad) so html-to-image SVG/JPEG
+      // content starts at the origin instead of centered with empty margins.
+      // Screen = flow * zoom + viewport.{x,y} (@xyflow/system rendererPointToPoint).
+      const pad = 12;
+      const zoom = Math.max(0.05, Math.min(4, Math.min((cw - 2 * pad) / bounds.width, (ch - 2 * pad) / bounds.height)));
+      f.setViewport({
+        x: pad - bounds.x * zoom,
+        y: pad - bounds.y * zoom,
+        zoom,
+      });
+      await new Promise<void>((resolve) => {
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => resolve());
+        });
+      });
+      return () => {
+        f.setViewport(prev);
+      };
+    };
+
+    registerFlowExportBridge(tabId, { getViewportElement, prepareFullGraphSnapshot });
+    return () => registerFlowExportBridge(tabId, null);
+  }, [tabId]);
+
   const onMoveEnd = useCallback(
     (e: unknown, viewport: Viewport) => {
       // If the move was triggered by user interaction (mouse/touch), remember
@@ -261,23 +319,24 @@ function CanvasInner({ tabId, actions, rt, layoutEngine, onJumpToIde, onActivate
   );
 
   return (
-    <ReactFlow
-      nodes={nodes}
-      edges={edges}
-      nodeTypes={nodeTypes}
-      edgeTypes={edgeTypes}
-      onNodeClick={onNodeClick}
-      onNodeContextMenu={onNodeContextMenu}
-      onEdgeClick={onEdgeClick}
-      onPaneClick={onPaneClick}
-      onMoveEnd={onMoveEnd}
-      onlyRenderVisibleElements
-      proOptions={{ hideAttribution: true }}
-      defaultViewport={startViewportRef.current ?? { x: 0, y: 0, zoom: 1 }}
-      fitView={!startViewportRef.current}
-      minZoom={0.05}
-      maxZoom={4}
-    >
+    <div ref={flowRootRef} className="absolute inset-0">
+      <ReactFlow
+        nodes={nodes}
+        edges={edges}
+        nodeTypes={nodeTypes}
+        edgeTypes={edgeTypes}
+        onNodeClick={onNodeClick}
+        onNodeContextMenu={onNodeContextMenu}
+        onEdgeClick={onEdgeClick}
+        onPaneClick={onPaneClick}
+        onMoveEnd={onMoveEnd}
+        onlyRenderVisibleElements
+        proOptions={{ hideAttribution: true }}
+        defaultViewport={startViewportRef.current ?? { x: 0, y: 0, zoom: 1 }}
+        fitView={!startViewportRef.current}
+        minZoom={0.05}
+        maxZoom={4}
+      >
       {/* Custom edge markers — referenced via url(#id) on the edge's
           markerEnd. React Flow injects its built-in markers for the
           ArrowClosed type; we add a "cross" (X) terminator. */}
@@ -322,7 +381,8 @@ function CanvasInner({ tabId, actions, rt, layoutEngine, onJumpToIde, onActivate
         nodeStrokeColor={dark ? '#888' : '#999'}
         style={{ background: dark ? 'var(--color-bg-2)' : '#fafafa' }}
       />
-    </ReactFlow>
+      </ReactFlow>
+    </div>
   );
 }
 

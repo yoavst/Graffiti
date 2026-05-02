@@ -1,4 +1,5 @@
 import { useAtom, useAtomValue, useSetAtom, useStore } from 'jotai';
+import { shareGraphDialogOpenAtom } from '@/state/shareGraphDialog';
 import { useEffect, useRef, type ChangeEvent } from 'react';
 import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
@@ -33,15 +34,11 @@ import { dispatchInbound } from '@/network/protocol/dispatch';
 import { getStore } from '@/state/store';
 import { getCurrentTab, getTabFull } from '@/state/registry';
 import { addCommentAction, addTextNodeAction } from '@/commands/addNodeActions';
-import {
-  runCopyCurrentTabMermaid,
-  runExportCurrentTabJson,
-  runGraphRedo,
-  runGraphUndo,
-} from '@/commands/commands';
+import { runExportCurrentTabJson, runGraphRedo, runGraphUndo } from '@/commands/commands';
 import { importUserPickedFiles } from '@/persistence/tabImport';
 import { loadAll, tabsAtom, currentTabIdAtom } from '@/state/workspaces';
 import { dialogs } from '@/ui/dialogs/Dialogs';
+import { ShareGraphDialog } from '@/ui/dialogs/ShareGraphDialog';
 
 export function Header({ onOpenToken, onOpenHelp }: { onOpenToken: () => void; onOpenHelp: () => void }) {
   const [url, setUrl] = useAtom(connectionUrlAtom);
@@ -57,6 +54,7 @@ export function Header({ onOpenToken, onOpenHelp }: { onOpenToken: () => void; o
   const store = useStore();
   const setTabs = useSetAtom(tabsAtom);
   const setCurrentTabId = useSetAtom(currentTabIdAtom);
+  const setShareGraphOpen = useSetAtom(shareGraphDialogOpenAtom);
   const importInputRef = useRef<HTMLInputElement>(null);
 
   // Initial url
@@ -156,8 +154,8 @@ export function Header({ onOpenToken, onOpenHelp }: { onOpenToken: () => void; o
             <DownloadOutlinedIcon fontSize="small" />
           </IconButton>
         </Tooltip>
-        <Tooltip title="Copy diagram as Mermaid">
-          <IconButton size="small" onClick={() => void runCopyCurrentTabMermaid(store)}>
+        <Tooltip title="Share graph (JPEG, SVG, Mermaid)…">
+          <IconButton size="small" onClick={() => setShareGraphOpen(true)}>
             <ShareOutlinedIcon fontSize="small" />
           </IconButton>
         </Tooltip>
@@ -188,7 +186,7 @@ export function Header({ onOpenToken, onOpenHelp }: { onOpenToken: () => void; o
         </Tooltip>
 
         <Tooltip
-          title="Arrow direction (Ctrl+I)\nFocus target (Ctrl+Alt+Shift+I)"
+          title={`Arrow direction (Ctrl+I)\nFocus target (Ctrl+Alt+Shift+I)`}
           slotProps={{ tooltip: { sx: { whiteSpace: 'pre-line' } } }}
         >
           <button
@@ -270,6 +268,8 @@ export function Header({ onOpenToken, onOpenHelp }: { onOpenToken: () => void; o
           <HelpIcon fontSize="small" />
         </IconButton>
       </Tooltip>
+
+      <ShareGraphDialog />
     </header>
   );
 }

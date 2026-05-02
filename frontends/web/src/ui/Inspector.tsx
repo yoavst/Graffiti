@@ -343,6 +343,9 @@ function EdgeInspector({ tabId }: { tabId: string }) {
   const edge = rt.doc.edges.find((e) => e.id === rt.selectedEdgeId);
   if (!edge) return null;
   const actions = t.actions;
+  const targetNode = rt.doc.nodes.find((n) => n.id === edge.to);
+  const targetIsComment = targetNode?.extra.isComment === true;
+  const arrowValue = edge.arrow ?? (targetIsComment ? 'none' : 'normal');
 
   function setColor(color: string | undefined) {
     if (!edge) return;
@@ -379,7 +382,7 @@ function EdgeInspector({ tabId }: { tabId: string }) {
         <Select
           fullWidth
           size="small"
-          value={edge.arrow ?? 'normal'}
+          value={arrowValue}
           onChange={(e) =>
             actions.apply({
               type: 'setEdgeArrow',

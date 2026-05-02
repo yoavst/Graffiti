@@ -1,4 +1,4 @@
-import { Provider, useAtomValue, useSetAtom } from 'jotai';
+import { Provider, useAtomValue, useSetAtom, useAtom } from 'jotai';
 import { useEffect, useState } from 'react';
 import { ThemeProvider } from '@mui/material/styles';
 import { getStore } from '@/state/store';
@@ -10,6 +10,7 @@ import {
   ensureDefaultWorkspace,
   loadAll,
   pruneEmptyWorkspaces,
+  sidePaneTabIdAtom,
   tabGroupsAtom,
   tabsAtom,
   workspacesAtom,
@@ -26,10 +27,7 @@ import { useHotkeys } from './commands/hotkeys';
 import { setCurrentTab } from './state/registry';
 import { CommandPalette } from './ui/CommandPalette';
 import { readUrlState, writeUrlState } from './routing/url';
-import { sidePaneTabIdAtom } from './state/workspaces';
 import { importUserPickedFiles } from './persistence/tabImport';
-import { loadAll as workspacesLoadAll } from './state/workspaces';
-import { useAtom } from 'jotai';
 
 function Inner() {
   const setWorkspaces = useSetAtom(workspacesAtom);
@@ -53,11 +51,26 @@ function Inner() {
         setWorkspaces(workspaces);
         setGroups(groups);
         setTabs(tabs);
-        if (!currentWsId || !workspaces.find((w) => w.id === currentWsId)) {
+
+        const store = getStore();
+        const persistedWs = store.get(currentWorkspaceIdAtom);
+        const persistedTab = store.get(currentTabIdAtom);
+        if (!persistedWs || !workspaces.find((w) => w.id === persistedWs)) {
           setCurrentWsId(ensured.workspaceId);
         }
-        if (!currentTabId || !tabs.find((t) => t.id === currentTabId)) {
+        if (!persistedTab || !tabs.find((t) => t.id === persistedTab)) {
           setCurrentTabId(ensured.tabId);
+        }
+
+        const url = readUrlState();
+        if (url.workspace && workspaces.some((w) => w.id === url.workspace)) {
+          setCurrentWsId(url.workspace);
+        }
+        if (url.tab && tabs.some((t) => t.id === url.tab)) {
+          setCurrentTabId(url.tab);
+        }
+        if (url.pane2 && tabs.some((t) => t.id === url.pane2)) {
+          store.set(sidePaneTabIdAtom, url.pane2);
         }
       } finally {
         setBootDone(true);
@@ -74,15 +87,7 @@ function Inner() {
   }, [activeTabId]);
 
   // URL state — read on boot, write on changes
-  const [sidePane, setSidePane] = useAtom(sidePaneTabIdAtom);
-  useEffect(() => {
-    if (!bootDone) return;
-    const url = readUrlState();
-    if (url.workspace) setCurrentWsId(url.workspace);
-    if (url.tab) setCurrentTabId(url.tab);
-    if (url.pane2) setSidePane(url.pane2);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bootDone]);
+  const sidePane = useAtomValue(sidePaneTabIdAtom);
   useEffect(() => {
     if (!bootDone) return;
     writeUrlState({
@@ -141,7 +146,7 @@ function Inner() {
         return;
       }
 
-      const all = await workspacesLoadAll();
+      const all = await loadAll();
       setTabs(all.tabs);
       if (firstImportedTabId) setCurrentTabId(firstImportedTabId);
     }

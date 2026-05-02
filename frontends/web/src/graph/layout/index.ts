@@ -16,9 +16,13 @@ export async function layout(
   return layoutWithElk(nodesToInput(nodes), edgesToInput(edges), options);
 }
 
-/** Build a structural hash so we can skip layout when only label/theme changed. */
+/** Hash graph identity + measured node boxes so label edits relayout with new sizes. */
 export function structuralHash(nodes: GNode[], edges: GEdge[]): string {
-  const ns = nodes.map((n) => n.id).sort((a, b) => a - b).join(',');
+  const inputs = nodesToInput(nodes);
+  const ns = [...inputs]
+    .sort((a, b) => a.id - b.id)
+    .map((i) => `${i.id}:${i.width}x${i.height}`)
+    .join(';');
   const es = edges.map((e) => `${e.from}-${e.to}-${e.id}`).sort().join(';');
   return `n:${ns}|e:${es}`;
 }
