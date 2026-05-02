@@ -41,7 +41,6 @@ const FONT_COMMENT = 'italic 12px ui-sans-serif, system-ui, -apple-system, sans-
 
 const OUTER_MAX_CODE = 520;
 const OUTER_MAX_COMMENT = 320;
-const OUTER_MIN = 100;
 
 // px-3 (12+12) + border 2+2 on each horizontal side.
 const PAD_X = 28;
@@ -128,7 +127,7 @@ function measureWrappedNode(
     maxLine = Math.max(maxLine, measure(ln));
   }
   const widthRaw = Math.ceil(maxLine) + PAD_X;
-  const width = Math.max(OUTER_MIN, Math.min(opts.outerMax, widthRaw));
+  const width = Math.min(opts.outerMax, Math.max(widthRaw, PAD_X));
   const height = PAD_Y + lines.length * opts.lineHeight;
   return { width, height };
 }
