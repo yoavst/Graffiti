@@ -11,14 +11,16 @@ function MarkdownNodeImpl({ data }: NodeProps) {
   const node = d.graffiti;
   const theme = getNodeTheme(node);
   const label = node.overrideLabel ?? node.label;
+  const borderColor = d.isSelected ? '#fff' : d.isFarHighlighted ? '#dc2626' : theme.stroke ?? 'rgba(0,0,0,0.45)';
+  const borderWidth = d.isSelected ? 4 : d.isFarHighlighted ? 3 : 2;
   return (
     <div
       className="rounded-lg border-2 px-3 py-2 text-sm shadow-sm"
       style={{
         background: theme.bg,
         color: theme.fg,
-        borderColor: d.isSelected ? '#fff' : theme.stroke ?? 'rgba(0,0,0,0.45)',
-        borderWidth: d.isSelected ? 4 : 2,
+        borderColor,
+        borderWidth,
         maxWidth: 520,
       }}
     >

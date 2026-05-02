@@ -1,4 +1,12 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type MouseEvent as ReactMouseEvent,
+} from 'react';
 import {
   Background,
   Controls,
@@ -164,6 +172,10 @@ function CanvasInner({ tabId, pane, actions, rt, layoutEngine, onJumpToIde, onAc
   // with no options so the framing matches that button exactly.
   const initialized = useNodesInitialized();
 
+  // Numeric `padding` uses React Flow's relative formula for every branch so
+  // search/jump (`forceNodeId`) matches Home / Controls single-node fit.
+  const singleNodeFitPadding = 1;
+
   /** Toolbar fit / Home: full graph or `fitView` on the selected node. With `forceNodeId`, skip `getNode` (it can lag `actions.select` in the same tick). */
   const smartFitView = useCallback((forceNodeId?: number) => {
     const f = flowRef.current;
@@ -173,8 +185,8 @@ function CanvasInner({ tabId, pane, actions, rt, layoutEngine, onJumpToIde, onAc
       if (forceNodeId != null) {
         void f.fitView({
           nodes: [{ id: String(sel) }],
-          padding: 0.12,
-          duration: 200,
+          padding: singleNodeFitPadding,
+          duration: 400,
         });
         return;
       }
@@ -182,8 +194,8 @@ function CanvasInner({ tabId, pane, actions, rt, layoutEngine, onJumpToIde, onAc
       if (rfNode && !rfNode.hidden) {
         void f.fitView({
           nodes: [{ id: String(sel) }],
-          padding: 0.12,
-          duration: 200,
+          padding: singleNodeFitPadding,
+          duration: 400,
         });
         return;
       }
@@ -245,6 +257,7 @@ function CanvasInner({ tabId, pane, actions, rt, layoutEngine, onJumpToIde, onAc
         data: {
           graffiti: n,
           isSelected: rt.selectedNodeId === n.id,
+          isFarHighlighted: rt.farHighlightNodeId === n.id,
           isLineNode: n.extra.line !== undefined && !n.extra.isMarkdown,
         },
         draggable: false,
@@ -262,7 +275,25 @@ function CanvasInner({ tabId, pane, actions, rt, layoutEngine, onJumpToIde, onAc
       return node;
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [rt.doc.nodes, rt.selectedNodeId, positions, tick]);
+  }, [rt.doc.nodes, rt.selectedNodeId, rt.farHighlightNodeId, positions, tick]);
+
+  const onEdgeMiddleClick = useCallback(
+    (e: ReactMouseEvent, farNodeId: number) => {
+      onActivate?.();
+      if (e.ctrlKey) {
+        actions.select(farNodeId);
+        requestAnimationFrame(() => {
+          void smartFitView(farNodeId);
+        });
+        return;
+      }
+      actions.setFarHighlight(farNodeId);
+      requestAnimationFrame(() => {
+        void smartFitView(farNodeId);
+      });
+    },
+    [actions, onActivate, smartFitView],
+  );
 
   const edges: Edge<GraffitiEdgeData>[] = useMemo(() => {
     return rt.doc.edges.map((e) => {
@@ -270,9 +301,10 @@ function CanvasInner({ tabId, pane, actions, rt, layoutEngine, onJumpToIde, onAc
       const targetIsComment = targetNode?.extra.isComment === true;
       const arrow = e.arrow ?? (targetIsComment ? 'none' : 'normal');
       // Marker URLs reference the SVG <defs> we render below the canvas.
+      // String markers must be bare ids — EdgeWrapper wraps as url(`#${id}`).
       const markerEnd =
         arrow === 'cross'
-          ? 'url(#graffiti-arrow-cross)'
+          ? 'graffiti-arrow-cross'
           : arrow === 'none'
             ? undefined
             : { type: MarkerType.ArrowClosed, color: e.style?.color ?? 'var(--color-edge)' };
@@ -291,18 +323,26 @@ function CanvasInner({ tabId, pane, actions, rt, layoutEngine, onJumpToIde, onAc
           label: e.label,
           style: e.style,
           isSelected: rt.selectedEdgeId === e.id,
+          onEdgeMiddleClick,
         },
       };
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [rt.doc.edges, rt.doc.nodes, rt.selectedEdgeId, tick, positions]);
+  }, [rt.doc.edges, rt.doc.nodes, rt.selectedEdgeId, tick, positions, onEdgeMiddleClick]);
 
   const onNodeClick: NodeMouseHandler = useCallback(
-    (_e, n) => {
+    (e, n) => {
       onActivate?.();
-      actions.select(parseInt(n.id, 10));
+      const id = parseInt(n.id, 10);
+      if ((e.ctrlKey || e.metaKey) && onJumpToIde) {
+        e.preventDefault();
+        onJumpToIde(id);
+        actions.select(id);
+        return;
+      }
+      actions.select(id);
     },
-    [actions, onActivate],
+    [actions, onActivate, onJumpToIde],
   );
 
   const onNodeContextMenu: NodeMouseHandler = useCallback(
@@ -403,35 +443,35 @@ function CanvasInner({ tabId, pane, actions, rt, layoutEngine, onJumpToIde, onAc
         minZoom={0.05}
         maxZoom={4}
       >
-        {/* Custom edge markers — referenced via url(#id) on the edge's
-          markerEnd. React Flow injects its built-in markers for the
-          ArrowClosed type; we add a "cross" (X) terminator. */}
         <svg style={{ position: 'absolute', width: 0, height: 0 }}>
           <defs>
             <marker
               id="graffiti-arrow-cross"
-              viewBox="0 0 10 10"
-              refX="5"
-              refY="5"
-              markerWidth="10"
-              markerHeight="10"
+              viewBox="-0.75 -0.75 13.5 13.5"
+              refX="11"
+              refY="6"
+              markerWidth="12"
+              markerHeight="12"
+              markerUnits="userSpaceOnUse"
               orient="auto-start-reverse"
             >
               <line
-                x1="1"
-                y1="1"
-                x2="9"
-                y2="9"
-                stroke="var(--color-edge)"
-                strokeWidth="1.5"
+                x1="2"
+                y1="2"
+                x2="10"
+                y2="10"
+                stroke="#c0c0c0"
+                strokeWidth="2"
+                strokeLinecap="round"
               />
               <line
-                x1="9"
-                y1="1"
-                x2="1"
-                y2="9"
-                stroke="var(--color-edge)"
-                strokeWidth="1.5"
+                x1="10"
+                y1="2"
+                x2="2"
+                y2="10"
+                stroke="#c0c0c0"
+                strokeWidth="2"
+                strokeLinecap="round"
               />
             </marker>
           </defs>

@@ -11,13 +11,17 @@ function CommentNodeImpl({ data }: NodeProps) {
   const node = d.graffiti;
   const theme = getNodeTheme(node);
   const label = node.overrideLabel ?? node.label;
+  const border =
+    d.isSelected ? '2px solid #fff'
+      : d.isFarHighlighted ? '3px solid #dc2626'
+        : `2px dashed ${theme.stroke ?? '#858585'}`;
   return (
     <div
       className="px-3 py-2 text-xs italic shadow-sm"
       style={{
         background: theme.bg,
         color: theme.fg,
-        border: `2px ${d.isSelected ? 'solid #fff' : `dashed ${theme.stroke ?? '#858585'}`}`,
+        border,
         borderRadius: 12,
         maxWidth: 320,
       }}

@@ -23,6 +23,8 @@ export interface TabRuntime {
   loaded: boolean;
   selectedNodeId: number | null;
   selectedEdgeId: number | null;
+  /** Endpoint opposite the middle-click point on an edge (see LabeledEdge). */
+  farHighlightNodeId: number | null;
 }
 
 function emptyRuntime(): TabRuntime {
@@ -32,6 +34,7 @@ function emptyRuntime(): TabRuntime {
     loaded: false,
     selectedNodeId: null,
     selectedEdgeId: null,
+    farHighlightNodeId: null,
   };
 }
 
@@ -49,6 +52,7 @@ export interface TabActions {
   redo: () => void;
   select: (nodeId: number | null) => void;
   selectEdge: (edgeId: number | null) => void;
+  setFarHighlight: (nodeId: number | null) => void;
   hydrate: () => Promise<void>;
   flush: () => void;
 }
@@ -109,12 +113,19 @@ export function makeTabActions(
       const rt = getRuntime();
       rt.selectedNodeId = nodeId;
       rt.selectedEdgeId = null;
+      rt.farHighlightNodeId = null;
       bumpTick();
     },
     selectEdge(edgeId) {
       const rt = getRuntime();
       rt.selectedEdgeId = edgeId;
       rt.selectedNodeId = null;
+      rt.farHighlightNodeId = null;
+      bumpTick();
+    },
+    setFarHighlight(nodeId) {
+      const rt = getRuntime();
+      rt.farHighlightNodeId = nodeId;
       bumpTick();
     },
     async hydrate() {
