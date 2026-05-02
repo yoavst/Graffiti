@@ -51,6 +51,17 @@ export interface NodeExtra {
   [key: string]: unknown;
 }
 
+/** First-class `extra` keys hidden from the inspector's generic property list. */
+export const NODE_EXTRA_INSPECTOR_HIDDEN_KEYS: ReadonlySet<string> = new Set([
+  'label',
+  'isMarkdown',
+  'isComment',
+  'isUnclickable',
+  'hover',
+  'hoverCT',
+  'detail',
+]);
+
 export interface EdgeStyle {
   dashed?: boolean;
   color?: string;
@@ -62,7 +73,7 @@ export interface GNode {
   id: number;
   label: string;
   overrideLabel?: string;
-  theme?: number; // index into THEMES (or undefined for auto)
+  theme?: number; // index into THEMES; omission means defaults in getNodeTheme (code → 0)
   extra: NodeExtra;
 }
 
@@ -78,8 +89,11 @@ export interface GEdge {
 export interface GraphConfig {
   elkRenderer?: boolean;
   notes?: string;
-  pendingNodeTheme?: number | 'auto';
+  /** Default palette index for new nodes (0 = first / green). */
+  pendingNodeTheme?: number;
   viewport?: { x: number; y: number; zoom: number };
+  /** Per-graph legend copy keyed by `EDGE_COLORS` id (`green`, `blue`, …). */
+  colorLegend?: Partial<Record<(typeof EDGE_COLORS)[number]['id'], string>>;
 }
 
 export interface GraphDoc {
@@ -100,6 +114,15 @@ export const THEMES: Array<{ bg: string; fg: string }> = [
   { bg: '#9500ae', fg: 'white' },
   { bg: '#2c387e', fg: 'white' },
 ];
+
+/** Pen color / tab default for new nodes — always a palette index (0 = first / green). */
+export function normalizePendingNodeTheme(v: unknown): number {
+  if (typeof v === 'number' && Number.isFinite(v)) {
+    const i = Math.trunc(v);
+    if (i >= 0 && i < THEMES.length) return i;
+  }
+  return 0;
+}
 
 export const MARKDOWN_THEME = { bg: 'white', fg: 'black', stroke: '#e5e5e5' };
 export const COMMENT_THEME = { bg: '#bfbfbf', fg: 'black', stroke: '#858585' };
@@ -125,4 +148,30 @@ export function getNodeTheme(node: GNode): { bg: string; fg: string; stroke?: st
 
 export function visibleLabel(node: GNode): string {
   return node.overrideLabel ?? node.label;
+}
+
+function normHex(s: string): string {
+  return s.trim().toLowerCase();
+}
+
+/** Which `EDGE_COLORS` entries appear on at least one node or edge in `doc`. */
+export function usedPaletteColorIds(doc: GraphDoc): Set<(typeof EDGE_COLORS)[number]['id']> {
+  const used = new Set<(typeof EDGE_COLORS)[number]['id']>();
+  const hexToId = new Map<string, (typeof EDGE_COLORS)[number]['id']>();
+  for (const c of EDGE_COLORS) {
+    if (c.value) hexToId.set(normHex(c.value), c.id);
+  }
+  for (const e of doc.edges) {
+    const col = e.style?.color;
+    if (col === undefined || col === '') used.add('auto');
+    else {
+      const id = hexToId.get(normHex(col));
+      if (id) used.add(id);
+    }
+  }
+  for (const n of doc.nodes) {
+    const id = hexToId.get(normHex(getNodeTheme(n).bg));
+    if (id) used.add(id);
+  }
+  return used;
 }

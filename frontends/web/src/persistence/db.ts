@@ -26,7 +26,7 @@ export interface TabRow {
   name: string;
   layout: 'elk' | 'dagre';
   notes?: string;
-  pendingNodeTheme?: number | 'auto';
+  pendingNodeTheme?: number;
   orderIndex: number;
   updatedAt: number;
 }

@@ -87,6 +87,12 @@ function MountedTab({
     return () => unregisterTab(tabId);
   }, [tabId, rt, actions]);
 
+  useEffect(() => {
+    return () => {
+      if (store.get(tabRuntimeAtom(tabId)).loaded) actions.flush();
+    };
+  }, [actions, tabId, store]);
+
   const ws = useAtomValue(wsClientAtom);
 
   if (!hydrated) {

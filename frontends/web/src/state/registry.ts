@@ -4,19 +4,30 @@
 
 import type { TabActions, TabRuntime } from './graph';
 
-const runtimes = new Map<string, { rt: TabRuntime; actions: TabActions }>();
+const runtimes = new Map<string, { rt: TabRuntime; actions: TabActions; refcount: number }>();
 let currentTabId: string | null = null;
 
 export function registerTab(tabId: string, rt: TabRuntime, actions: TabActions) {
-  runtimes.set(tabId, { rt, actions });
+  const cur = runtimes.get(tabId);
+  if (cur) {
+    cur.refcount += 1;
+    cur.rt = rt;
+    cur.actions = actions;
+  } else {
+    runtimes.set(tabId, { rt, actions, refcount: 1 });
+  }
 }
 
 export function unregisterTab(tabId: string) {
-  runtimes.delete(tabId);
+  const cur = runtimes.get(tabId);
+  if (!cur) return;
+  cur.refcount -= 1;
+  if (cur.refcount <= 0) runtimes.delete(tabId);
 }
 
 export function getTab(tabId: string) {
-  return runtimes.get(tabId) ?? null;
+  const e = runtimes.get(tabId);
+  return e ? { rt: e.rt, actions: e.actions } : null;
 }
 
 export function setCurrentTab(tabId: string | null) {
@@ -31,5 +42,5 @@ export function getCurrentTab() {
 
 export function getTabFull(tabId: string) {
   const e = runtimes.get(tabId);
-  return e ? { tabId, ...e } : null;
+  return e ? { tabId, rt: e.rt, actions: e.actions } : null;
 }

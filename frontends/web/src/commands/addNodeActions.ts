@@ -3,6 +3,7 @@
 // scripts/main.js — both reuse the same addNodeAndEdge pipeline as inbound
 // websocket messages so undo, dedupe, and pen-color all behave identically.
 
+import { normalizePendingNodeTheme } from '@/graph/model';
 import { handleAddData } from '@/network/protocol/legacy';
 import { tabsAtom } from '@/state/workspaces';
 import { isExistingToNewAtom, isNewWillBeSelectedAtom } from '@/state/settings';
@@ -26,9 +27,9 @@ export async function addTextNodeAction(store: JotaiStore): Promise<void> {
   });
   if (value == null || value === '') return;
 
-  const pendingNodeTheme = store
-    .get(tabsAtom)
-    .find((t) => t.id === target.tabId)?.pendingNodeTheme;
+  const pendingNodeTheme = normalizePendingNodeTheme(
+    store.get(tabsAtom).find((t) => t.id === target.tabId)?.pendingNodeTheme as unknown,
+  );
 
   handleAddData(
     {
@@ -66,9 +67,9 @@ export async function addCommentAction(store: JotaiStore): Promise<void> {
   });
   if (value == null || value === '') return;
 
-  const pendingNodeTheme = store
-    .get(tabsAtom)
-    .find((t) => t.id === target.tabId)?.pendingNodeTheme;
+  const pendingNodeTheme = normalizePendingNodeTheme(
+    store.get(tabsAtom).find((t) => t.id === target.tabId)?.pendingNodeTheme as unknown,
+  );
 
   // Comments always hang off the selected node (selected → new), regardless
   // of the global existing→new toggle. Match the legacy event_addComment.

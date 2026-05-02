@@ -1,16 +1,25 @@
-import { useAtom, useAtomValue, useSetAtom } from 'jotai';
-import { useEffect, useRef, useState } from 'react';
+import { useAtom, useAtomValue, useSetAtom, useStore } from 'jotai';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import Button from '@mui/material/Button';
 import Select from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
+import TextField from '@mui/material/TextField';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { inspectorVisibleAtom } from '@/state/settings';
 import { activeTabAtom, loadAll, tabsAtom } from '@/state/workspaces';
-import { tabRuntimeAtom, tabTickAtom } from '@/state/graph';
+import { makeTabActions, tabRuntimeAtom, tabTickAtom } from '@/state/graph';
 import { db } from '@/persistence/db';
-import { EDGE_COLORS, THEMES, type ArrowKind } from '@/graph/model';
+import {
+  EDGE_COLORS,
+  NODE_EXTRA_INSPECTOR_HIDDEN_KEYS,
+  THEMES,
+  usedPaletteColorIds,
+  type ArrowKind,
+  type GNode,
+  type GraphConfig,
+} from '@/graph/model';
 import { getTabFull } from '@/state/registry';
 import { wsClientAtom } from '@/state/wsClient';
 import { jumpToPayload } from '@/network/protocol/legacy';
@@ -51,8 +60,8 @@ export function Inspector() {
     !hasSelection || sheet === 'notes' ? 'Tab notes' : selectedNode ? 'Node' : 'Edge';
 
   return (
-    <aside className="flex w-72 flex-col border-l border-(--color-border) bg-(--color-bg-2) text-base">
-      <div className="flex items-center justify-between border-b border-(--color-border) px-3 py-2">
+    <aside className="flex h-full min-h-0 w-72 flex-col border-l border-(--color-border) bg-(--color-bg-2) text-base">
+      <div className="flex shrink-0 items-center justify-between border-b border-(--color-border) px-3 py-2">
         <span className="text-sm font-semibold uppercase text-(--color-fg-dim)">{headerLabel}</span>
         <button
           onClick={() => setVisible(false)}
@@ -63,7 +72,7 @@ export function Inspector() {
         </button>
       </div>
       {hasSelection ? (
-        <div className="flex gap-2 border-b border-(--color-border) px-3 py-1.5 text-xs">
+        <div className="flex shrink-0 gap-2 border-b border-(--color-border) px-3 py-1.5 text-xs">
           <button
             type="button"
             className={`rounded px-2 py-0.5 ${sheet === 'selection' ? 'bg-(--color-bg-3) font-medium' : 'opacity-70 hover:bg-(--color-bg-3)/60'}`}
@@ -80,48 +89,178 @@ export function Inspector() {
           </button>
         </div>
       ) : null}
-      <div className="flex-1 min-h-0 overflow-auto p-3">
-        {!hasSelection || sheet === 'notes' ? (
-          <NotesEditor key={tab.id} tabId={tab.id} initial={tab.notes ?? ''} />
-        ) : selectedNode ? (
-          <NodeInspector key={`${tab.id}-${selectedNode.id}`} tabId={tab.id} />
-        ) : selectedEdge ? (
-          <EdgeInspector key={`${tab.id}-${selectedEdge.id}`} tabId={tab.id} />
-        ) : null}
-      </div>
-      {sheet === 'selection' && ((selectedNode?.extra.address && ws) || selectedEdge) ? (
-        <div className="border-t border-(--color-border) p-3">
-          {selectedNode?.extra.address && ws && (
-            <Button
-              fullWidth
-              variant="outlined"
-              color="primary"
-              onClick={() => {
-                const payload = jumpToPayload(selectedNode);
-                if (payload) ws.send(payload);
-              }}
-            >
-              Jump to IDE
-            </Button>
-          )}
-          {selectedEdge && (
-            <Button
-              fullWidth
-              variant="outlined"
-              color="error"
-              startIcon={<DeleteIcon />}
-              onClick={() => {
-                const tabFull = getTabFull(tab.id);
-                if (tabFull) tabFull.actions.apply({ type: 'removeEdge', data: selectedEdge });
-              }}
-            >
-              Remove edge
-            </Button>
-          )}
+      <div className="flex min-h-0 flex-1 flex-col">
+        <div className="flex min-h-0 flex-1 flex-col border-b border-(--color-border)">
+          <div className="min-h-0 flex-1 overflow-auto p-3">
+            {!hasSelection || sheet === 'notes' ? (
+              <NotesEditor key={tab.id} tabId={tab.id} initial={tab.notes ?? ''} />
+            ) : selectedNode ? (
+              <NodeInspector key={`${tab.id}-${selectedNode.id}`} tabId={tab.id} />
+            ) : selectedEdge ? (
+              <EdgeInspector key={`${tab.id}-${selectedEdge.id}`} tabId={tab.id} />
+            ) : null}
+          </div>
+          {sheet === 'selection' && ((selectedNode?.extra.address && ws) || selectedEdge) ? (
+            <div className="shrink-0 border-t border-(--color-border) p-3">
+              {selectedNode?.extra.address && ws && (
+                <Button
+                  fullWidth
+                  variant="outlined"
+                  color="primary"
+                  onClick={() => {
+                    const payload = jumpToPayload(selectedNode);
+                    if (payload) ws.send(payload);
+                  }}
+                >
+                  Jump to IDE
+                </Button>
+              )}
+              {selectedEdge && (
+                <Button
+                  fullWidth
+                  variant="outlined"
+                  color="error"
+                  startIcon={<DeleteIcon />}
+                  onClick={() => {
+                    const tabFull = getTabFull(tab.id);
+                    if (tabFull) tabFull.actions.apply({ type: 'removeEdge', data: selectedEdge });
+                  }}
+                >
+                  Remove edge
+                </Button>
+              )}
+            </div>
+          ) : null}
         </div>
-      ) : null}
+        <div className="flex min-h-0 flex-1 flex-col">
+          <div className="shrink-0 border-b border-(--color-border) px-3 py-1.5 text-xs font-semibold uppercase text-(--color-fg-dim)">
+            Color legend
+          </div>
+          <div className="min-h-0 flex-1 overflow-auto p-2">
+            <ColorLegendPanel tabId={tab.id} />
+          </div>
+        </div>
+      </div>
     </aside>
   );
+}
+
+function ColorLegendPanel({ tabId }: { tabId: string }) {
+  const store = useStore();
+  const rt = useAtomValue(tabRuntimeAtom(tabId));
+  const tick = useAtomValue(tabTickAtom(tabId));
+  void tick;
+  const used = usedPaletteColorIds(rt.doc);
+
+  const actions = useMemo(
+    () =>
+      makeTabActions(
+        tabId,
+        () => store.get(tabRuntimeAtom(tabId)),
+        () => store.set(tabTickAtom(tabId), (n) => n + 1),
+      ),
+    [tabId, store],
+  );
+
+  function commitLegendText(colorId: (typeof EDGE_COLORS)[number]['id'], text: string) {
+    const doc = store.get(tabRuntimeAtom(tabId)).doc;
+    const oldConfig = doc.config;
+    const merged: GraphConfig = { ...(oldConfig ?? {}) };
+    const nextLegend = { ...(merged.colorLegend ?? {}) };
+    if (text.trim() === '') delete nextLegend[colorId];
+    else nextLegend[colorId] = text;
+    if (Object.keys(nextLegend).length === 0) delete merged.colorLegend;
+    else merged.colorLegend = nextLegend;
+    const newConfig = Object.keys(merged).length > 0 ? merged : undefined;
+    actions.apply({ type: 'setConfig', oldConfig, newConfig });
+  }
+
+  return (
+    <div className="flex flex-col gap-2">
+      {EDGE_COLORS.filter((c) => c.id !== 'auto').map((c) => {
+        const isUsed = used.has(c.id);
+        const desc = rt.doc.config?.colorLegend?.[c.id] ?? '';
+        return (
+          <div key={c.id} className="flex items-center gap-2">
+            <div
+              className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-(--color-border) text-[10px]`}
+              style={{ background: c.value }}
+              title={c.label}
+            />
+            <LegendDescriptionField
+              key={`${tabId}::${c.id}`}
+              colorId={c.id}
+              committed={desc}
+              placeholder={c.label}
+              onCommit={(text) => commitLegendText(c.id, text)}
+            />
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function LegendDescriptionField({
+  colorId,
+  committed,
+  placeholder,
+  onCommit,
+}: {
+  colorId: string;
+  committed: string;
+  placeholder: string;
+  onCommit: (text: string) => void;
+}) {
+  const [local, setLocal] = useState(committed);
+  const localRef = useRef(local);
+  const committedRef = useRef(committed);
+  const onCommitRef = useRef(onCommit);
+  localRef.current = local;
+  committedRef.current = committed;
+  onCommitRef.current = onCommit;
+
+  function flushIfDirty() {
+    const l = localRef.current;
+    const c = committedRef.current;
+    if (l === c) return;
+    onCommitRef.current(l);
+    committedRef.current = l;
+  }
+
+  useEffect(() => {
+    setLocal(committed);
+  }, [committed, colorId]);
+
+  useLayoutEffect(() => {
+    return () => flushIfDirty();
+  }, [colorId]);
+
+  return (
+    <TextField
+      size="small"
+      fullWidth
+      placeholder={placeholder}
+      value={local}
+      onChange={(e) => setLocal(e.target.value)}
+      onBlur={() => flushIfDirty()}
+      variant="outlined"
+      sx={{
+        '& .MuiInputBase-root': { fontSize: '0.75rem' },
+      }}
+    />
+  );
+}
+
+function nodeThemeSwatchActive(node: GNode, i: number): boolean {
+  if (node.extra.isMarkdown && !node.extra.isComment) {
+    return node.theme === i;
+  }
+  if (node.extra.isComment) {
+    if (node.theme === undefined || node.theme === 4) return false;
+    return node.theme === i;
+  }
+  return (node.theme ?? 0) === i;
 }
 
 function NodeInspector({ tabId }: { tabId: string }) {
@@ -153,31 +292,13 @@ function NodeInspector({ tabId }: { tabId: string }) {
       <div>
         <label className="text-sm opacity-70">Theme</label>
         <div className="mt-1.5 flex flex-wrap gap-1.5">
-          <button
-            className={`h-7 w-7 rounded-full text-xs ${
-              node.theme === undefined
-                ? 'ring-2 ring-(--color-accent)'
-                : 'border border-(--color-border)'
-            }`}
-            onClick={() =>
-              actions.apply({
-                type: 'setNodeTheme',
-                id: node.id,
-                oldTheme: node.theme,
-                newTheme: undefined,
-              })
-            }
-          >
-            A
-          </button>
           {THEMES.map((th, i) => (
             <button
               key={i}
-              className={`h-7 w-7 rounded-full ${
-                node.theme === i
+              className={`h-7 w-7 rounded-full ${nodeThemeSwatchActive(node, i)
                   ? 'ring-2 ring-(--color-accent)'
                   : 'border border-(--color-border)'
-              }`}
+                }`}
               style={{ background: th.bg }}
               onClick={() =>
                 actions.apply({
@@ -258,9 +379,7 @@ function NodeInspector({ tabId }: { tabId: string }) {
       <div className="border-t border-(--color-border) pt-2">
         <div className="text-sm opacity-70 mb-1.5">Properties</div>
         {Object.entries(node.extra)
-          // `label` has its own editor above; editing it here would be
-          // overwritten by computedProperties recompute. Hide it.
-          .filter(([k]) => k !== 'label')
+          .filter(([k]) => !NODE_EXTRA_INSPECTOR_HIDDEN_KEYS.has(k))
           .map(([k, v]) => (
             <PropertyRow
               // Include node id so a different selection forces a fresh row
@@ -273,7 +392,13 @@ function NodeInspector({ tabId }: { tabId: string }) {
               onRemove={() => removeKey(k)}
             />
           ))}
-        <NewPropertyRow key={`new::${node.id}`} onAdd={(k, v) => setKey(k, v)} />
+        <NewPropertyRow
+          key={`new::${node.id}`}
+          onAdd={(k, v) => {
+            if (NODE_EXTRA_INSPECTOR_HIDDEN_KEYS.has(k)) return;
+            setKey(k, v);
+          }}
+        />
       </div>
     </div>
   );

@@ -8,6 +8,7 @@ import {
   type GEdge,
   type GNode,
   type NodeExtra,
+  normalizePendingNodeTheme,
 } from '@/graph/model';
 import {
   type Op,
@@ -27,20 +28,20 @@ interface AddCtx {
   isExistingToNew: boolean;
   /** True = the newly-added node becomes selected after the call. */
   isNewWillBeSelected: boolean;
-  /** Default theme to apply to newly-created nodes (the "pen color"). */
-  pendingNodeTheme?: number | 'auto';
+  /** Default palette index for newly-created nodes (the pen color). */
+  pendingNodeTheme?: number;
 }
 
 function nodeFromIncoming(
   idCounter: number,
   incoming: IncomingNode,
-  pendingTheme?: number | 'auto',
+  pendingTheme?: number,
 ): GNode {
   const extra: NodeExtra = { ...incoming } as NodeExtra;
   applyComputedProperties(extra);
   const label = (extra as { label?: string }).label ?? incoming.label ?? '(unnamed)';
   const node: GNode = { id: idCounter, label, extra };
-  if (typeof pendingTheme === 'number') node.theme = pendingTheme;
+  node.theme = normalizePendingNodeTheme(pendingTheme);
   return node;
 }
 

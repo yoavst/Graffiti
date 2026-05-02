@@ -5,7 +5,7 @@
 
 import { db } from './db';
 import { newId } from '@/util/ids';
-import type { GraphDoc } from '@/graph/model';
+import { normalizePendingNodeTheme, type GraphDoc } from '@/graph/model';
 import type { TabRow } from './db';
 import { isTarBuffer, packTar, unpackTar } from './tar';
 
@@ -15,7 +15,10 @@ export function encodeTabJson(name: string, doc: GraphDoc, tab: TabRow): string 
   const config = {
     elkRenderer: tab.layout === 'elk',
     notes: tab.notes,
-    pendingNodeTheme: tab.pendingNodeTheme,
+    pendingNodeTheme: normalizePendingNodeTheme(tab.pendingNodeTheme as unknown),
+    ...(doc.config?.colorLegend && Object.keys(doc.config.colorLegend).length > 0
+      ? { colorLegend: doc.config.colorLegend }
+      : {}),
   };
   return JSON.stringify([doc.idCounter, doc.nodes, doc.edges, config], null, 4);
   void name;
@@ -119,7 +122,7 @@ async function persistImportedTab(
     name,
     layout: doc.config?.elkRenderer === false ? 'dagre' : 'elk',
     notes: doc.config?.notes,
-    pendingNodeTheme: doc.config?.pendingNodeTheme,
+    pendingNodeTheme: normalizePendingNodeTheme(doc.config?.pendingNodeTheme as unknown),
     orderIndex: existing.length,
     updatedAt: Date.now(),
   });

@@ -6,7 +6,9 @@ import {
   tabsAtom,
   activeTabIdAtom,
   activePaneAtom,
+  loadAll,
 } from '@/state/workspaces';
+import { db } from '@/persistence/db';
 import { getCurrentTab } from '@/state/registry';
 import { requestFitViewForTab } from '@/flow/flowFitViewBridge';
 import { useStore } from 'jotai';
@@ -18,6 +20,16 @@ import {
 import { addCommentAction, addTextNodeAction } from './addNodeActions';
 import { runGraphRedo, runGraphUndo } from './commands';
 import { exportAllTabsToTar } from '@/persistence/importExport';
+import { THEMES } from '@/graph/model';
+
+/** 1–9 = first–ninth palette entry (node theme indices 0–8). */
+function themeIndexFromDigitKey(key: string): number | null {
+  if (key >= '1' && key <= '9') {
+    const i = key.charCodeAt(0) - 49;
+    return i < THEMES.length ? i : null;
+  }
+  return null;
+}
 
 export function useHotkeys(_handlers: { onOpenToken: () => void; onOpenHelp: () => void }) {
   const setSide = useSetAtom(sidePaneTabIdAtom);
@@ -133,6 +145,36 @@ export function useHotkeys(_handlers: { onOpenToken: () => void; onOpenHelp: () 
       const id = store.get(activeTabIdAtom);
       if (!id) return;
       requestFitViewForTab(id, store.get(activePaneAtom));
+    },
+    [store],
+  );
+  useHotkeysHook(
+    '1,2,3,4,5,6,7,8,9',
+    (e) => {
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+      const idx = themeIndexFromDigitKey(e.key);
+      if (idx === null) return;
+      const t = getCurrentTab();
+      if (!t) return;
+      const sel = t.rt.selectedNodeId;
+      if (sel != null) {
+        const node = t.rt.doc.nodes.find((n) => n.id === sel);
+        if (!node) return;
+        e.preventDefault();
+        t.actions.apply({
+          type: 'setNodeTheme',
+          id: node.id,
+          oldTheme: node.theme,
+          newTheme: idx,
+        });
+        return;
+      }
+      e.preventDefault();
+      void (async () => {
+        await db.tabs.update(t.tabId, { pendingNodeTheme: idx });
+        const all = await loadAll();
+        store.set(tabsAtom, all.tabs);
+      })();
     },
     [store],
   );

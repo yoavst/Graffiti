@@ -3,7 +3,7 @@
 // are LEFT IN PLACE — we just stop reading them after the first run.
 
 import { db, pickColor, type TabRow } from './db';
-import type { GraphDoc } from '@/graph/model';
+import { normalizePendingNodeTheme, type GraphDoc } from '@/graph/model';
 import { newId } from '@/util/ids';
 
 const MIGRATION_FLAG = 'graffiti.migratedToDexie';
@@ -66,7 +66,7 @@ export async function migrateLegacyIfNeeded(): Promise<MigrationResult> {
     name: p.name,
     layout: p.doc.config?.elkRenderer === false ? 'dagre' : 'elk',
     notes: p.doc.config?.notes,
-    pendingNodeTheme: p.doc.config?.pendingNodeTheme,
+    pendingNodeTheme: normalizePendingNodeTheme(p.doc.config?.pendingNodeTheme as unknown),
     orderIndex: i,
     updatedAt: now,
   }));

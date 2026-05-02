@@ -1,5 +1,6 @@
 import { atom } from 'jotai';
 import { db, type WorkspaceRow, type TabGroupRow, type TabRow, pickColor } from '@/persistence/db';
+import { normalizePendingNodeTheme } from '@/graph/model';
 import { newId } from '@/util/ids';
 import { atomWithStorage } from 'jotai/utils';
 
@@ -87,11 +88,20 @@ export async function loadAll(): Promise<{
   groups: TabGroupRow[];
   tabs: TabRow[];
 }> {
-  const [workspaces, groups, tabs] = await Promise.all([
+  const [workspaces, groups, tabsRaw] = await Promise.all([
     db.workspaces.orderBy('orderIndex').toArray(),
     db.tabGroups.orderBy('orderIndex').toArray(),
     db.tabs.orderBy('orderIndex').toArray(),
   ]);
+  const fixWrites: Promise<unknown>[] = [];
+  const tabs = tabsRaw.map((t) => {
+    const n = normalizePendingNodeTheme(t.pendingNodeTheme as unknown);
+    if (t.pendingNodeTheme !== n) {
+      fixWrites.push(db.tabs.update(t.id, { pendingNodeTheme: n }));
+    }
+    return { ...t, pendingNodeTheme: n };
+  });
+  if (fixWrites.length > 0) await Promise.all(fixWrites);
   return { workspaces, groups, tabs };
 }
 
