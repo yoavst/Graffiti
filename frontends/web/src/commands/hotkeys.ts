@@ -21,6 +21,7 @@ import { addCommentAction, addTextNodeAction } from './addNodeActions';
 import { runGraphRedo, runGraphUndo } from './commands';
 import { exportAllTabsToTar } from '@/persistence/importExport';
 import { THEMES } from '@/graph/model';
+import { appOverlayAtom } from '@/state/appOverlay';
 
 /** 1–9 = first–ninth palette entry (node theme indices 0–8). */
 function themeIndexFromDigitKey(key: string): number | null {
@@ -31,7 +32,7 @@ function themeIndexFromDigitKey(key: string): number | null {
   return null;
 }
 
-export function useHotkeys(_handlers: { onOpenToken: () => void; onOpenHelp: () => void }) {
+export function useHotkeys() {
   const setSide = useSetAtom(sidePaneTabIdAtom);
   const currentTabId = useAtomValue(currentTabIdAtom);
   const setInspector = useSetAtom(inspectorVisibleAtom);
@@ -74,11 +75,33 @@ export function useHotkeys(_handlers: { onOpenToken: () => void; onOpenHelp: () 
   useHotkeysHook(
     'esc',
     (e) => {
+      const o = store.get(appOverlayAtom);
+      if (o !== 'none') {
+        e.preventDefault();
+        store.set(appOverlayAtom, 'none');
+        return;
+      }
       e.preventDefault();
       const t = getCurrentTab();
       t?.actions.select(null);
     },
-    [],
+    [store],
+  );
+  useHotkeysHook(
+    'shift+/',
+    (e) => {
+      e.preventDefault();
+      store.set(appOverlayAtom, 'help');
+    },
+    [store],
+  );
+  useHotkeysHook(
+    'mod+k',
+    (e) => {
+      e.preventDefault();
+      store.set(appOverlayAtom, 'token');
+    },
+    [store],
   );
   useHotkeysHook(
     'delete',

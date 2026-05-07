@@ -1,4 +1,4 @@
-import { useAtom, useStore } from 'jotai';
+import { useAtomValue, useSetAtom, useStore } from 'jotai';
 import { Fragment, useCallback, useEffect, useRef, useState } from 'react';
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
@@ -8,7 +8,7 @@ import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
 import Snackbar from '@mui/material/Snackbar';
 import { activeTabIdAtom } from '@/state/workspaces';
-import { shareGraphDialogOpenAtom } from '@/state/shareGraphDialog';
+import { appOverlayAtom } from '@/state/appOverlay';
 import { getFlowExportBridge } from '@/flow/flowExportBridge';
 import {
   captureViewportToJpegBlob,
@@ -18,14 +18,15 @@ import {
 } from '@/flow/exportFlowCapture';
 import { db } from '@/persistence/db';
 import { toMermaid } from '@/graph/mermaidExport';
-import { darkModeAtom } from '@/state/settings';
 import { dialogs } from '@/ui/dialogs/Dialogs';
 import { isModEnter } from '@/util/keyboard';
 
 const defaultDpi = 600;
 
 export function ShareGraphDialog() {
-  const [open, setOpen] = useAtom(shareGraphDialogOpenAtom);
+  const overlay = useAtomValue(appOverlayAtom);
+  const setOverlay = useSetAtom(appOverlayAtom);
+  const open = overlay === 'shareGraph';
   const store = useStore();
   const [dpiStr, setDpiStr] = useState(String(defaultDpi));
   const [busy, setBusy] = useState(false);
@@ -43,8 +44,8 @@ export function ShareGraphDialog() {
   })();
 
   const close = useCallback(() => {
-    setOpen(false);
-  }, [setOpen]);
+    setOverlay('none');
+  }, [setOverlay]);
 
   const runRasterOrSvg = useCallback(
     async (kind: 'jpeg' | 'svg') => {
@@ -84,7 +85,7 @@ export function ShareGraphDialog() {
         close();
       }
     },
-    [dpi, store],
+    [dpi, store, close],
   );
 
   const runMermaid = useCallback(async () => {
@@ -98,11 +99,10 @@ export function ShareGraphDialog() {
       await dialogs.alert('No graph data for this tab.', { title: 'Share graph' });
       return;
     }
-    const dark = store.get(darkModeAtom);
     const text = toMermaid(g.doc, {
       gui: true,
       elkRenderer: tab?.layout === 'elk',
-      darkMode: dark,
+      darkMode: true,
     });
     if (!text.trim()) {
       await dialogs.alert('This graph has no nodes to export.', { title: 'Share graph' });
@@ -115,7 +115,7 @@ export function ShareGraphDialog() {
       await dialogs.alert('Could not copy to clipboard.', { title: 'Share graph' });
     }
     close();
-  }, [store, setOpen]);
+  }, [store, close]);
 
   return (
     <Fragment>

@@ -1,4 +1,5 @@
 import { Provider, useAtomValue, useSetAtom, useAtom } from 'jotai';
+import { appOverlayAtom } from '@/state/appOverlay';
 import { useEffect, useState } from 'react';
 import { ThemeProvider } from '@mui/material/styles';
 import { getStore } from '@/state/store';
@@ -38,9 +39,8 @@ function Inner() {
   const [currentWsId, setCurrentWsId] = useAtom(currentWorkspaceIdAtom);
   const [currentTabId, setCurrentTabId] = useAtom(currentTabIdAtom);
   const [bootDone, setBootDone] = useState(false);
-
-  const [tokenOpen, setTokenOpen] = useState(false);
-  const [helpOpen, setHelpOpen] = useState(false);
+  const overlay = useAtomValue(appOverlayAtom);
+  const setOverlay = useSetAtom(appOverlayAtom);
 
   // Boot: migrate legacy data, ensure a default workspace exists, load atoms.
   useEffect(() => {
@@ -99,7 +99,7 @@ function Inner() {
     });
   }, [bootDone, currentWsId, currentTabId, sidePane]);
 
-  useHotkeys({ onOpenToken: () => setTokenOpen(true), onOpenHelp: () => setHelpOpen(true) });
+  useHotkeys();
 
   // Drag-and-drop import.
   //
@@ -171,20 +171,17 @@ function Inner() {
 
   return (
     <div className="flex h-full flex-col">
-      <Header onOpenToken={() => setTokenOpen(true)} onOpenHelp={() => setHelpOpen(true)} />
+      <Header />
       <div className="flex flex-1 min-h-0">
         <Sidebar />
         <SplitView />
         <Inspector />
       </div>
-      <CommandPalette
-        onOpenHelp={() => setHelpOpen(true)}
-        onOpenToken={() => setTokenOpen(true)}
-      />
+      <CommandPalette />
       <TabJumpPalette />
       <NodeSearchPalette />
-      {tokenOpen && <TokenDialog onClose={() => setTokenOpen(false)} />}
-      {helpOpen && <HelpDialog onClose={() => setHelpOpen(false)} />}
+      {overlay === 'token' && <TokenDialog onClose={() => setOverlay('none')} />}
+      {overlay === 'help' && <HelpDialog onClose={() => setOverlay('none')} />}
       <DialogHost />
       {dragHover && (
         <div className="pointer-events-none fixed inset-0 z-40 flex items-center justify-center bg-(--color-accent)/20 text-2xl font-semibold text-(--color-accent) ring-4 ring-(--color-accent) ring-inset">

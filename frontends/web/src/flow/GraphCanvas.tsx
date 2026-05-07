@@ -31,7 +31,7 @@ import { LabeledEdge, type GraffitiEdgeData } from './edges/LabeledEdge';
 import { tabTickAtom, type TabActions, type TabRuntime } from '@/state/graph';
 import { layout, structuralHash } from '@/graph/layout';
 import { nodesToInput } from '@/graph/layout/types';
-import { darkModeAtom, isCurvedEdgesAtom } from '@/state/settings';
+import { isCurvedEdgesAtom } from '@/state/settings';
 import { registerFlowExportBridge } from '@/flow/flowExportBridge';
 import {
   pendingNodeFocusAtom,
@@ -85,7 +85,6 @@ function CanvasInner({ tabId, pane, actions, rt, layoutEngine, onJumpToIde, onAc
   const globalPendingFocus = useAtomValue(pendingNodeFocusAtom);
   const setPendingNodeFocus = useSetAtom(pendingNodeFocusAtom);
   const curved = useAtomValue(isCurvedEdgesAtom);
-  const dark = useAtomValue(darkModeAtom);
   const flow = useReactFlow();
   const flowRef = useRef(flow);
   flowRef.current = flow;
@@ -476,7 +475,7 @@ function CanvasInner({ tabId, pane, actions, rt, layoutEngine, onJumpToIde, onAc
             </marker>
           </defs>
         </svg>
-        <Background gap={32} color={dark ? '#3d3d3d' : '#e5e5e5'} />
+        <Background gap={32} color="#3d3d3d" />
         <Panel
           position="bottom-left"
           className="!m-0"
@@ -493,10 +492,10 @@ function CanvasInner({ tabId, pane, actions, rt, layoutEngine, onJumpToIde, onAc
           pannable
           zoomable
           nodeStrokeWidth={3}
-          maskColor={dark ? 'rgba(0,0,0,0.55)' : 'rgba(255,255,255,0.55)'}
-          nodeColor={dark ? '#444' : '#cfd8dc'}
-          nodeStrokeColor={dark ? '#888' : '#999'}
-          style={{ background: dark ? 'var(--color-bg-2)' : '#fafafa' }}
+          maskColor="rgba(0,0,0,0.55)"
+          nodeColor="#444"
+          nodeStrokeColor="#888"
+          style={{ background: 'var(--color-bg-2)' }}
         />
       </ReactFlow>
     </div>

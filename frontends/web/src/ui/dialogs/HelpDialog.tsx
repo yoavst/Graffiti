@@ -37,7 +37,10 @@ export function HelpDialog({ onClose }: { onClose: () => void }) {
           <li>Ctrl+F — Search nodes in the focused graph (primary or side) and jump</li>
           <li>Ctrl+Shift+F — Search all tabs; picking a result opens that graph on primary and jumps</li>
           <li>Ctrl+Z / Ctrl+Y — Undo / Redo</li>
-          <li>Esc — Clear node/edge selection (clicking the empty canvas only moves pane focus)</li>
+          <li>
+            Esc — Close an open palette or dialog; otherwise clear node/edge selection (clicking the
+            empty canvas only moves pane focus)
+          </li>
           <li>
             Home / canvas fit-view — With a selected node, center and zoom to it; otherwise fit the
             whole graph in the focused pane

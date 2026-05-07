@@ -1,9 +1,9 @@
 import { Command } from 'cmdk';
 import { useMemo } from 'react';
-import { useAtom, useAtomValue, useSetAtom, useStore } from 'jotai';
+import { useAtomValue, useSetAtom, useStore } from 'jotai';
 import { useHotkeys } from 'react-hotkeys-hook';
 import { orderedWorkspaceTabs } from '@/navigation/collectNavItems';
-import { nodeSearchPaletteOpenAtom, tabJumpPaletteOpenAtom } from '@/state/quickOpenPalettes';
+import { appOverlayAtom } from '@/state/appOverlay';
 import {
   activePaneAtom,
   currentTabIdAtom,
@@ -13,36 +13,40 @@ import {
 } from '@/state/workspaces';
 
 export function TabJumpPalette() {
-  const [open, setOpen] = useAtom(tabJumpPaletteOpenAtom);
+  const overlay = useAtomValue(appOverlayAtom);
+  const setOverlay = useSetAtom(appOverlayAtom);
+  const open = overlay === 'tabJump';
   const store = useStore();
   const wsId = useAtomValue(currentWorkspaceIdAtom);
   const groups = useAtomValue(tabGroupsAtom);
   const tabs = useAtomValue(tabsAtom);
   const setCurrentTabId = useSetAtom(currentTabIdAtom);
   const setActivePane = useSetAtom(activePaneAtom);
-  const setNodeSearchOpen = useSetAtom(nodeSearchPaletteOpenAtom);
   const workspaceTabs = useMemo(() => orderedWorkspaceTabs(store), [store, wsId, groups, tabs]);
 
   useHotkeys(
     'mod+p',
     (e) => {
       e.preventDefault();
-      setOpen(true);
+      setOverlay('tabJump');
     },
-    [setNodeSearchOpen, setOpen],
+    [setOverlay],
   );
 
   if (!open) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/50 pt-24">
-      <Command className="w-[36rem] rounded-lg border border-(--color-border) bg-(--color-bg-2) p-2 shadow-xl" onKeyDown={(e) => {
-        if (e.key === 'Escape') {
-          e.preventDefault();
-          e.stopPropagation();
-          setOpen(false);
-        }
-      }}>
+      <Command
+        className="w-[36rem] rounded-lg border border-(--color-border) bg-(--color-bg-2) p-2 shadow-xl"
+        onKeyDown={(e) => {
+          if (e.key === 'Escape') {
+            e.preventDefault();
+            e.stopPropagation();
+            setOverlay('none');
+          }
+        }}
+      >
         <Command.Input
           autoFocus
           placeholder="Open tab…"
@@ -58,7 +62,7 @@ export function TabJumpPalette() {
                 onSelect={() => {
                   setCurrentTabId(t.id);
                   setActivePane('primary');
-                  setOpen(false);
+                  setOverlay('none');
                 }}
                 className="rounded px-2 py-1 text-sm aria-selected:bg-(--color-bg-3)"
               >
@@ -68,6 +72,6 @@ export function TabJumpPalette() {
           </Command.Group>
         </Command.List>
       </Command>
-    </div >
+    </div>
   );
 }

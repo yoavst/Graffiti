@@ -15,7 +15,6 @@ import {
   EDGE_COLORS,
   NODE_EXTRA_INSPECTOR_HIDDEN_KEYS,
   THEMES,
-  usedPaletteColorIds,
   type ArrowKind,
   type GNode,
   type GraphConfig,
@@ -150,7 +149,6 @@ function ColorLegendPanel({ tabId }: { tabId: string }) {
   const rt = useAtomValue(tabRuntimeAtom(tabId));
   const tick = useAtomValue(tabTickAtom(tabId));
   void tick;
-  const used = usedPaletteColorIds(rt.doc);
 
   const actions = useMemo(
     () =>
@@ -178,7 +176,6 @@ function ColorLegendPanel({ tabId }: { tabId: string }) {
   return (
     <div className="flex flex-col gap-2">
       {EDGE_COLORS.filter((c) => c.id !== 'auto').map((c) => {
-        const isUsed = used.has(c.id);
         const desc = rt.doc.config?.colorLegend?.[c.id] ?? '';
         return (
           <div key={c.id} className="flex items-center gap-2">

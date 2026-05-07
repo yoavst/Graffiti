@@ -1,12 +1,13 @@
 import { Command } from 'cmdk';
 import { useEffect, useMemo, useState } from 'react';
-import { useAtom, useAtomValue, useStore } from 'jotai';
+import { useAtomValue, useSetAtom, useStore } from 'jotai';
 import { useHotkeys } from 'react-hotkeys-hook';
 import { THEMES } from '@/graph/model';
 import { openNodeSearchInAllTabs, openNodeSearchInCurrentTab } from '@/commands/commands';
 import { loadNavNodeHits, orderedWorkspaceTabs, type NavNodeHit } from '@/navigation/collectNavItems';
 import { jumpToNodeInWorkspace } from '@/navigation/jumpToNode';
-import { nodeSearchPaletteOpenAtom, nodeSearchScopeAtom } from '@/state/quickOpenPalettes';
+import { appOverlayAtom } from '@/state/appOverlay';
+import { nodeSearchScopeAtom } from '@/state/quickOpenPalettes';
 import { tabTickAtom } from '@/state/graph';
 import {
   activePaneAtom,
@@ -26,7 +27,9 @@ function ThemeDot({ theme, flavor }: { theme?: number; flavor: NavNodeHit['flavo
 }
 
 export function NodeSearchPalette() {
-  const [open, setOpen] = useAtom(nodeSearchPaletteOpenAtom);
+  const overlay = useAtomValue(appOverlayAtom);
+  const setOverlay = useSetAtom(appOverlayAtom);
+  const open = overlay === 'nodeSearch';
   const scope = useAtomValue(nodeSearchScopeAtom);
   const [nodeHits, setNodeHits] = useState<NavNodeHit[]>([]);
   const [loading, setLoading] = useState(false);
@@ -62,14 +65,6 @@ export function NodeSearchPalette() {
   );
 
   useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setOpen(false);
-    };
-    if (open) document.addEventListener('keydown', handler);
-    return () => document.removeEventListener('keydown', handler);
-  }, [open, setOpen]);
-
-  useEffect(() => {
     if (!open) return;
     let cancelled = false;
     setLoading(true);
@@ -101,7 +96,17 @@ export function NodeSearchPalette() {
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/50 pt-24">
-      <Command key={scope} className="w-[36rem] rounded-lg border border-(--color-border) bg-(--color-bg-2) p-2 shadow-xl">
+      <Command
+        key={scope}
+        className="w-[36rem] rounded-lg border border-(--color-border) bg-(--color-bg-2) p-2 shadow-xl"
+        onKeyDown={(e) => {
+          if (e.key === 'Escape') {
+            e.preventDefault();
+            e.stopPropagation();
+            setOverlay('none');
+          }
+        }}
+      >
         <Command.Input
           autoFocus
           placeholder={placeholder}
@@ -124,7 +129,7 @@ export function NodeSearchPalette() {
                   value={h.searchValue}
                   onSelect={() => {
                     jumpToNodeInWorkspace(h.tabId, h.nodeId, store, { openOnPrimary: scope === 'allTabs' });
-                    queueMicrotask(() => setOpen(false));
+                    queueMicrotask(() => setOverlay('none'));
                   }}
                   className="flex items-start gap-2 rounded px-2 py-1 text-sm aria-selected:bg-(--color-bg-3)"
                 >

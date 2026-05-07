@@ -38,17 +38,11 @@ export interface GraphRow {
   // is more confusing than useful.
 }
 
-export interface SettingsRow {
-  key: string;
-  value: unknown;
-}
-
 export class GraffitiDB extends Dexie {
   workspaces!: EntityTable<WorkspaceRow, 'id'>;
   tabGroups!: EntityTable<TabGroupRow, 'id'>;
   tabs!: EntityTable<TabRow, 'id'>;
   graphs!: EntityTable<GraphRow, 'tabId'>;
-  settings!: EntityTable<SettingsRow, 'key'>;
 
   constructor() {
     super('graffiti');
@@ -58,6 +52,12 @@ export class GraffitiDB extends Dexie {
       tabs: 'id, tabGroupId, orderIndex',
       graphs: 'tabId',
       settings: 'key',
+    });
+    this.version(2).stores({
+      workspaces: 'id, orderIndex',
+      tabGroups: 'id, workspaceId, orderIndex',
+      tabs: 'id, tabGroupId, orderIndex',
+      graphs: 'tabId',
     });
   }
 }

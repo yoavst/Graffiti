@@ -1,34 +1,26 @@
 import { Command } from 'cmdk';
-import { useEffect, useState } from 'react';
-import { useStore } from 'jotai';
+import { useAtomValue, useSetAtom, useStore } from 'jotai';
 import { useHotkeys } from 'react-hotkeys-hook';
 import { buildCommands } from '@/commands/commands';
+import { appOverlayAtom } from '@/state/appOverlay';
 
-export function CommandPalette({
-  onOpenHelp,
-  onOpenToken,
-}: {
-  onOpenHelp: () => void;
-  onOpenToken: () => void;
-}) {
-  const [open, setOpen] = useState(false);
+export function CommandPalette() {
   const store = useStore();
+  const overlay = useAtomValue(appOverlayAtom);
+  const setOverlay = useSetAtom(appOverlayAtom);
+  const open = overlay === 'commandPalette';
 
-  useHotkeys('mod+shift+p', (e) => {
-    e.preventDefault();
-    setOpen((o) => !o);
-  });
-
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setOpen(false);
-    };
-    if (open) document.addEventListener('keydown', handler);
-    return () => document.removeEventListener('keydown', handler);
-  }, [open]);
+  useHotkeys(
+    'mod+shift+p',
+    (e) => {
+      e.preventDefault();
+      setOverlay((o) => (o === 'commandPalette' ? 'none' : 'commandPalette'));
+    },
+    [setOverlay],
+  );
 
   if (!open) return null;
-  const cmds = buildCommands(store, onOpenHelp, onOpenToken);
+  const cmds = buildCommands(store);
   const groups = new Map<string, typeof cmds>();
   for (const c of cmds) {
     const k = c.section ?? 'Other';
@@ -39,7 +31,16 @@ export function CommandPalette({
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/50 pt-24">
-      <Command className="w-[36rem] rounded-lg border border-(--color-border) bg-(--color-bg-2) p-2 shadow-xl">
+      <Command
+        className="w-[36rem] rounded-lg border border-(--color-border) bg-(--color-bg-2) p-2 shadow-xl"
+        onKeyDown={(e) => {
+          if (e.key === 'Escape') {
+            e.preventDefault();
+            e.stopPropagation();
+            setOverlay('none');
+          }
+        }}
+      >
         <Command.Input
           autoFocus
           placeholder="Run command…"
@@ -54,7 +55,7 @@ export function CommandPalette({
                   key={c.id}
                   value={[c.title, c.hint, c.hotkey].filter(Boolean).join(' ')}
                   onSelect={() => {
-                    setOpen(false);
+                    setOverlay('none');
                     void c.run();
                   }}
                   className="flex items-center justify-between rounded px-2 py-1 text-sm aria-selected:bg-(--color-bg-3)"

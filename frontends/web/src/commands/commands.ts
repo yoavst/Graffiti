@@ -13,14 +13,9 @@ import {
   inspectorVisibleAtom,
   isCurvedEdgesAtom,
   sidebarVisibleAtom,
-  darkModeAtom,
 } from '@/state/settings';
-import { shareGraphDialogOpenAtom } from '@/state/shareGraphDialog';
-import {
-  nodeSearchPaletteOpenAtom,
-  nodeSearchScopeAtom,
-  tabJumpPaletteOpenAtom,
-} from '@/state/quickOpenPalettes';
+import { appOverlayAtom } from '@/state/appOverlay';
+import { nodeSearchScopeAtom } from '@/state/quickOpenPalettes';
 import { exportAllTabsToTar, exportTabToFile } from '@/persistence/importExport';
 import { db } from '@/persistence/db';
 import { toMermaid } from '@/graph/mermaidExport';
@@ -54,8 +49,7 @@ export async function runCopyCurrentTabMermaid(store: JotaiStore): Promise<void>
   if (!id) return;
   const g = await db.graphs.get(id);
   if (!g) return;
-  const dark = store.get(darkModeAtom);
-  const s = toMermaid(g.doc, { gui: true, elkRenderer: true, darkMode: dark });
+  const s = toMermaid(g.doc, { gui: true, elkRenderer: true, darkMode: true });
   try {
     await navigator.clipboard.writeText(s);
   } catch {
@@ -64,25 +58,22 @@ export async function runCopyCurrentTabMermaid(store: JotaiStore): Promise<void>
 }
 
 export function openTabJumpPalette(store: JotaiStore): void {
-  store.set(nodeSearchPaletteOpenAtom, false);
-  store.set(tabJumpPaletteOpenAtom, true);
+  store.set(appOverlayAtom, 'tabJump');
 }
 
 /** Mod+F — search only the graph in the focused pane (primary or side). */
 export function openNodeSearchInCurrentTab(store: JotaiStore): void {
-  store.set(tabJumpPaletteOpenAtom, false);
   store.set(nodeSearchScopeAtom, 'currentTab');
-  store.set(nodeSearchPaletteOpenAtom, true);
+  store.set(appOverlayAtom, 'nodeSearch');
 }
 
 /** Mod+Shift+F — search all workspace graphs; choosing a result opens that tab on primary and jumps. */
 export function openNodeSearchInAllTabs(store: JotaiStore): void {
-  store.set(tabJumpPaletteOpenAtom, false);
   store.set(nodeSearchScopeAtom, 'allTabs');
-  store.set(nodeSearchPaletteOpenAtom, true);
+  store.set(appOverlayAtom, 'nodeSearch');
 }
 
-export function buildCommands(store: JotaiStore, openHelp: () => void, openToken: () => void): Command[] {
+export function buildCommands(store: JotaiStore): Command[] {
   const toggle = <T>(atom: import('jotai').PrimitiveAtom<T>, mapper: (v: T) => T) => () => {
     store.set(atom, mapper as never);
   };
@@ -166,7 +157,7 @@ export function buildCommands(store: JotaiStore, openHelp: () => void, openToken
       title: 'Share graph…',
       section: 'File',
       run: () => {
-        store.set(shareGraphDialogOpenAtom, true);
+        store.set(appOverlayAtom, 'shareGraph');
       },
     },
     {
@@ -227,14 +218,18 @@ export function buildCommands(store: JotaiStore, openHelp: () => void, openToken
       title: 'Show help',
       hotkey: '?',
       section: 'Help',
-      run: openHelp,
+      run: () => {
+        store.set(appOverlayAtom, 'help');
+      },
     },
     {
       id: 'token',
       title: 'Manage auth token',
       hotkey: 'Ctrl+K',
       section: 'Help',
-      run: openToken,
+      run: () => {
+        store.set(appOverlayAtom, 'token');
+      },
     },
   ];
 }

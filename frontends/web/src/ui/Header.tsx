@@ -1,5 +1,5 @@
 import { useAtom, useAtomValue, useSetAtom, useStore } from 'jotai';
-import { shareGraphDialogOpenAtom } from '@/state/shareGraphDialog';
+import { appOverlayAtom } from '@/state/appOverlay';
 import { useEffect, useRef, type ChangeEvent } from 'react';
 import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
@@ -46,7 +46,7 @@ import { loadAll, tabsAtom, currentTabIdAtom } from '@/state/workspaces';
 import { dialogs } from '@/ui/dialogs/Dialogs';
 import { ShareGraphDialog } from '@/ui/dialogs/ShareGraphDialog';
 
-export function Header({ onOpenToken, onOpenHelp }: { onOpenToken: () => void; onOpenHelp: () => void }) {
+export function Header() {
   const [url, setUrl] = useAtom(connectionUrlAtom);
   const status = useAtomValue(connectionStatusAtom);
   const setStatus = useSetAtom(connectionStatusAtom);
@@ -60,7 +60,7 @@ export function Header({ onOpenToken, onOpenHelp }: { onOpenToken: () => void; o
   const store = useStore();
   const setTabs = useSetAtom(tabsAtom);
   const setCurrentTabId = useSetAtom(currentTabIdAtom);
-  const setShareGraphOpen = useSetAtom(shareGraphDialogOpenAtom);
+  const setOverlay = useSetAtom(appOverlayAtom);
   const importInputRef = useRef<HTMLInputElement>(null);
 
   // Initial url
@@ -97,7 +97,7 @@ export function Header({ onOpenToken, onOpenHelp }: { onOpenToken: () => void; o
       },
       onAuthRequired: () => {
         if (!token) {
-          onOpenToken();
+          setOverlay('token');
           return null;
         }
         return token;
@@ -171,7 +171,7 @@ export function Header({ onOpenToken, onOpenHelp }: { onOpenToken: () => void; o
           </IconButton>
         </Tooltip>
         <Tooltip title="Share graph (JPEG, SVG, Mermaid)…">
-          <IconButton size="small" onClick={() => setShareGraphOpen(true)}>
+          <IconButton size="small" onClick={() => setOverlay('shareGraph')}>
             <ShareOutlinedIcon fontSize="small" />
           </IconButton>
         </Tooltip>
@@ -264,12 +264,12 @@ export function Header({ onOpenToken, onOpenHelp }: { onOpenToken: () => void; o
       </Tooltip>
 
       <Tooltip title="Manage token (Ctrl+K)">
-        <IconButton size="small" onClick={onOpenToken}>
+        <IconButton size="small" onClick={() => setOverlay('token')}>
           <KeyOutlinedIcon fontSize="small" />
         </IconButton>
       </Tooltip>
       <Tooltip title="Help (?)">
-        <IconButton size="small" onClick={onOpenHelp}>
+        <IconButton size="small" onClick={() => setOverlay('help')}>
           <HelpIcon fontSize="small" />
         </IconButton>
       </Tooltip>

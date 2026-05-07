@@ -1,10 +1,5 @@
-import { atom } from 'jotai';
 import { atomWithStorage } from 'jotai/utils';
 
-// Dark mode is always on; light mode is intentionally not supported. We
-// keep the atom (read-only, always true) so existing call sites still
-// compile.
-export const darkModeAtom = atom(true);
 export const isCurvedEdgesAtom = atomWithStorage<boolean>('isCurvedEdges', false);
 export const isKeymapReversedAtom = atomWithStorage<boolean>('isKeymapReversed', false);
 export const hoverDocAtom = atomWithStorage<boolean>('hoverDoc', false);
