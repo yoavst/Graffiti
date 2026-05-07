@@ -1,44 +1,44 @@
-import { getStore } from '@/state/store';
+import { getStore, type JotaiStore } from '@/state/store';
 import { getActiveTabFromStore } from '@/state/registry';
-import { currentTabIdAtom, currentWorkspaceIdAtom } from '@/state/workspaces';
-import { db } from '@/persistence/db';
+import {
+  currentTabIdAtom,
+  currentWorkspaceIdAtom,
+  currentWorkspaceGroupsAtom,
+  tabsAtom,
+} from '@/state/workspaces';
 import { importFile } from '@/persistence/importExport';
 
-export async function resolveImportTargetGroupId(): Promise<string | null> {
-  let targetGroupId: string | null = null;
-  const cur = getActiveTabFromStore(getStore());
+export function resolveImportTargetGroupId(store: JotaiStore): string | null {
+  const cur = getActiveTabFromStore(store);
   if (cur) {
-    const tab = await db.tabs.get(cur.tabId);
-    if (tab) targetGroupId = tab.tabGroupId;
+    const tab = store.get(tabsAtom).find((t) => t.id === cur.tabId);
+    if (tab) return tab.tabGroupId;
   }
-  if (!targetGroupId) {
-    const tabIdFromAtom = getStore().get(currentTabIdAtom);
-    if (tabIdFromAtom) {
-      const tab = await db.tabs.get(tabIdFromAtom);
-      if (tab) targetGroupId = tab.tabGroupId;
-    }
+  const tabIdFromAtom = store.get(currentTabIdAtom);
+  if (tabIdFromAtom) {
+    const tab = store.get(tabsAtom).find((t) => t.id === tabIdFromAtom);
+    if (tab) return tab.tabGroupId;
   }
-  if (!targetGroupId) {
-    const wid = getStore().get(currentWorkspaceIdAtom);
-    if (wid) {
-      const g = await db.tabGroups.where('workspaceId').equals(wid).first();
-      if (g) targetGroupId = g.id;
-    }
+  const wid = store.get(currentWorkspaceIdAtom);
+  if (wid) {
+    const groups = store.get(currentWorkspaceGroupsAtom);
+    return groups[0]?.id ?? null;
   }
-  return targetGroupId;
+  return null;
 }
 
 export async function importUserPickedFiles(
   files: readonly File[],
 ): Promise<{ firstTabId: string | null; targetMissing: boolean }> {
-  const targetGroupId = await resolveImportTargetGroupId();
+  const store = getStore();
+  const targetGroupId = resolveImportTargetGroupId(store);
   if (!targetGroupId) {
     return { firstTabId: null, targetMissing: true };
   }
   let firstImportedTabId: string | null = null;
   for (const f of files) {
     try {
-      const importedIds = await importFile(f, targetGroupId);
+      const importedIds = await importFile(store, f, targetGroupId);
       if (!firstImportedTabId && importedIds[0]) firstImportedTabId = importedIds[0];
     } catch (err) {
       console.error('import failed for', f.name, err);

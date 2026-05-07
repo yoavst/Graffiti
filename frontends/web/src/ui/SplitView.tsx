@@ -9,7 +9,7 @@ import {
   sidePaneTabIdAtom,
   tabsAtom,
 } from '@/state/workspaces';
-import type { TabRow } from '@/persistence/db';
+import type { TabRow } from '@/state/workspaceTypes';
 
 function PaneTitle({ tab, label }: { tab: TabRow | undefined; label: string }) {
   return (

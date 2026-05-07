@@ -1,13 +1,25 @@
-// Import / export of tabs as legacy-compatible JSON and TAR bundles.
-//
-// JSON format (per tab):  [idCounter, nodes, edges, config?]
-// TAR bundle: one entry per tab, named "<tabName>.json".
+// Import / export: legacy per-tab JSON `[idCounter, nodes, edges, config?]`, TAR bundles,
+// and `graffiti-v2` TAR with manifest (workspaces, tab metadata, notes) + `graphs/<tabId>.json`.
 
-import { db } from './db';
 import { newId } from '@/util/ids';
 import { normalizePendingNodeTheme, type GraphDoc } from '@/graph/model';
-import type { TabRow } from './db';
+import type { JotaiStore } from '@/state/store';
+import { graphDocAtomFamily } from '@/state/graphDocAtoms';
+import {
+  updateWorkspaceBundle,
+  workspaceBundleAtomFamily,
+  workspaceIdsAtom,
+} from '@/state/workspaces';
+import { emptyGraphDoc, type TabRow, type WorkspaceBundle, type WorkspaceRow } from '@/state/workspaceTypes';
 import { isTarBuffer, packTar, unpackTar } from './tar';
+
+export const TAR_MANIFEST_NAME = 'manifest.json';
+
+export interface GraffitiTarManifestV2 {
+  format: 'graffiti-v2';
+  workspaceIds: string[];
+  bundles: Record<string, WorkspaceBundle>;
+}
 
 // --- JSON encode/decode -------------------------------------------------
 
@@ -27,7 +39,12 @@ export function encodeTabJson(name: string, doc: GraphDoc, tab: TabRow): string 
 export function decodeTabJson(s: string): GraphDoc {
   const arr = JSON.parse(s);
   if (!Array.isArray(arr) || arr.length < 3) throw new Error('invalid tab JSON');
-  const [idCounter, nodes, edges, config] = arr as [number, GraphDoc['nodes'], GraphDoc['edges'], GraphDoc['config']?];
+  const [idCounter, nodes, edges, config] = arr as [
+    number,
+    GraphDoc['nodes'],
+    GraphDoc['edges'],
+    GraphDoc['config']?,
+  ];
   return {
     idCounter: typeof idCounter === 'number' ? idCounter : 1,
     nodes: nodes ?? [],
@@ -49,74 +66,144 @@ function download(filename: string, blob: Blob) {
   URL.revokeObjectURL(url);
 }
 
-export async function exportTabToFile(tabId: string) {
-  const tab = await db.tabs.get(tabId);
-  const graph = await db.graphs.get(tabId);
-  if (!tab || !graph) return;
-  const json = encodeTabJson(tab.name, graph.doc, tab);
-  download(`${tab.name}.json`, new Blob([json], { type: 'application/json' }));
+export function exportTabToFile(store: JotaiStore, tabId: string): void {
+  let row: TabRow | undefined;
+  for (const wid of store.get(workspaceIdsAtom)) {
+    row = store.get(workspaceBundleAtomFamily(wid)).tabs.find((x) => x.id === tabId);
+    if (row) break;
+  }
+  if (!row) return;
+  const doc = store.get(graphDocAtomFamily(tabId));
+  const json = encodeTabJson(row.name, doc, row);
+  download(`${row.name}.json`, new Blob([json], { type: 'application/json' }));
 }
 
-export async function exportAllTabsToTar() {
-  const tabs = await db.tabs.toArray();
-  const graphs = await db.graphs.toArray();
-  const graphsById = new Map(graphs.map((g) => [g.tabId, g.doc]));
-  const used = new Set<string>();
-  const files: Array<{ name: string; content: string }> = [];
-
-  for (const tab of tabs) {
-    const doc = graphsById.get(tab.id);
-    if (!doc) continue;
-    let name = tab.name;
-    let suffix = 1;
-    while (used.has(name)) {
-      name = `${tab.name}_${suffix++}`;
-    }
-    used.add(name);
-    files.push({ name: `${name}.json`, content: encodeTabJson(name, doc, tab) });
+export function exportAllWorkspacesToTar(store: JotaiStore): void {
+  const ids = store.get(workspaceIdsAtom);
+  const bundles: Record<string, WorkspaceBundle> = {};
+  for (const id of ids) {
+    bundles[id] = store.get(workspaceBundleAtomFamily(id));
   }
-
+  const manifest: GraffitiTarManifestV2 = {
+    format: 'graffiti-v2',
+    workspaceIds: [...ids],
+    bundles,
+  };
+  const files: Array<{ name: string; content: string }> = [
+    { name: TAR_MANIFEST_NAME, content: JSON.stringify(manifest, null, 2) },
+  ];
+  for (const wid of ids) {
+    const b = bundles[wid]!;
+    for (const t of b.tabs) {
+      const doc = store.get(graphDocAtomFamily(t.id));
+      files.push({ name: `graphs/${t.id}.json`, content: encodeTabJson(t.name, doc, t) });
+    }
+  }
   const bytes = packTar(files);
   download('graffiti_export.tar', new Blob([bytes as BlobPart], { type: 'application/x-tar' }));
 }
 
-// --- File-based import --------------------------------------------------
+export function exportAllTabsToTar(store: JotaiStore): void {
+  exportAllWorkspacesToTar(store);
+}
 
-export async function importFile(file: File, targetGroupId: string): Promise<string[]> {
-  const buf = await file.arrayBuffer();
-  const ids: string[] = [];
-  if (isTarBuffer(buf)) {
-    const entries = unpackTar(buf);
-    for (const entry of entries) {
-      try {
-        const doc = decodeTabJson(entry.content);
-        const id = await persistImportedTab(stripJson(entry.name), doc, targetGroupId);
-        ids.push(id);
-      } catch (e) {
-        console.warn('skipped tar entry', entry.name, e);
-      }
-    }
-  } else {
-    const text = new TextDecoder().decode(buf);
-    const doc = decodeTabJson(text);
-    const id = await persistImportedTab(stripJson(file.name), doc, targetGroupId);
-    ids.push(id);
+function importV2Tar(store: JotaiStore, entries: Array<{ name: string; content: string }>): string[] {
+  const m = entries.find((e) => e.name === TAR_MANIFEST_NAME || e.name.endsWith(`/${TAR_MANIFEST_NAME}`));
+  if (!m) return [];
+  let manifest: GraffitiTarManifestV2;
+  try {
+    const p = JSON.parse(m.content) as GraffitiTarManifestV2;
+    if (p.format !== 'graffiti-v2' || !Array.isArray(p.workspaceIds) || typeof p.bundles !== 'object') return [];
+    manifest = p;
+  } catch {
+    return [];
   }
-  return ids;
+
+  const graphFiles = new Map<string, string>();
+  for (const e of entries) {
+    const norm = e.name.replace(/^\.\//, '');
+    const match = /^graphs\/([^/]+)\.json$/.exec(norm);
+    if (match) graphFiles.set(match[1]!, e.content);
+  }
+
+  const wsIdMap = new Map<string, string>();
+  const groupIdMap = new Map<string, string>();
+  const tabIdMap = new Map<string, string>();
+
+  for (const oldW of manifest.workspaceIds) {
+    wsIdMap.set(oldW, newId());
+  }
+  for (const oldW of manifest.workspaceIds) {
+    const b = manifest.bundles[oldW];
+    if (!b) continue;
+    for (const g of b.groups) {
+      groupIdMap.set(g.id, newId());
+    }
+    for (const t of b.tabs) {
+      tabIdMap.set(t.id, newId());
+    }
+  }
+
+  const newTabIds: string[] = [];
+  const nextWorkspaceList = [...store.get(workspaceIdsAtom)];
+
+  for (const oldW of manifest.workspaceIds) {
+    const b = manifest.bundles[oldW];
+    if (!b) continue;
+    const newW = wsIdMap.get(oldW)!;
+    const now = Date.now();
+    const workspace: WorkspaceRow = {
+      ...b.workspace,
+      id: newW,
+      orderIndex: nextWorkspaceList.length,
+      updatedAt: now,
+    };
+    const groups = b.groups.map((g) => ({
+      ...g,
+      id: groupIdMap.get(g.id)!,
+      workspaceId: newW,
+    }));
+    const tabs = b.tabs.map((t) => {
+      const nid = tabIdMap.get(t.id)!;
+      newTabIds.push(nid);
+      return {
+        ...t,
+        id: nid,
+        tabGroupId: groupIdMap.get(t.tabGroupId)!,
+        updatedAt: now,
+      };
+    });
+    store.set(workspaceBundleAtomFamily(newW), { workspace, groups, tabs });
+    nextWorkspaceList.push(newW);
+
+    for (const t of b.tabs) {
+      const newTid = tabIdMap.get(t.id)!;
+      const raw = graphFiles.get(t.id);
+      const doc = raw ? decodeTabJson(raw) : emptyGraphDoc();
+      store.set(graphDocAtomFamily(newTid), doc);
+    }
+  }
+
+  store.set(workspaceIdsAtom, nextWorkspaceList);
+  return newTabIds;
 }
 
-function stripJson(s: string): string {
-  return s.endsWith('.json') ? s.slice(0, -5) : s;
-}
-
-async function persistImportedTab(
-  name: string,
-  doc: GraphDoc,
-  targetGroupId: string,
-): Promise<string> {
-  const existing = await db.tabs.where('tabGroupId').equals(targetGroupId).toArray();
+function persistImportedTab(store: JotaiStore, name: string, doc: GraphDoc, targetGroupId: string): string {
+  let targetWid: string | null = null;
+  for (const wid of store.get(workspaceIdsAtom)) {
+    const b = store.get(workspaceBundleAtomFamily(wid));
+    if (b.groups.some((g) => g.id === targetGroupId)) {
+      targetWid = wid;
+      break;
+    }
+  }
+  if (!targetWid) {
+    throw new Error('import: target group not found');
+  }
+  const bundle = store.get(workspaceBundleAtomFamily(targetWid));
+  const existing = bundle.tabs.filter((t) => t.tabGroupId === targetGroupId);
   const id = newId();
-  await db.tabs.put({
+  const tab: TabRow = {
     id,
     tabGroupId: targetGroupId,
     name,
@@ -125,7 +212,44 @@ async function persistImportedTab(
     pendingNodeTheme: normalizePendingNodeTheme(doc.config?.pendingNodeTheme as unknown),
     orderIndex: existing.length,
     updatedAt: Date.now(),
-  });
-  await db.graphs.put({ tabId: id, doc });
+  };
+  updateWorkspaceBundle(store, targetWid, (b) => ({
+    ...b,
+    tabs: [...b.tabs, tab],
+  }));
+  store.set(graphDocAtomFamily(id), doc);
   return id;
+}
+
+// --- File-based import --------------------------------------------------
+
+export function importFile(store: JotaiStore, file: File, targetGroupId: string): Promise<string[]> {
+  return file.arrayBuffer().then((buf) => {
+    if (isTarBuffer(buf)) {
+      const entries = unpackTar(buf);
+      const v2Ids = importV2Tar(store, entries);
+      if (v2Ids.length > 0) return v2Ids;
+
+      const ids: string[] = [];
+      for (const entry of entries) {
+        const norm = entry.name.replace(/^\.\//, '');
+        if (norm === TAR_MANIFEST_NAME || norm.endsWith(`/${TAR_MANIFEST_NAME}`)) continue;
+        if (norm.startsWith('graphs/')) continue;
+        try {
+          const doc = decodeTabJson(entry.content);
+          ids.push(persistImportedTab(store, stripJson(entry.name), doc, targetGroupId));
+        } catch (e) {
+          console.warn('skipped tar entry', entry.name, e);
+        }
+      }
+      return ids;
+    }
+    const text = new TextDecoder().decode(buf);
+    const doc = decodeTabJson(text);
+    return [persistImportedTab(store, stripJson(file.name), doc, targetGroupId)];
+  });
+}
+
+function stripJson(s: string): string {
+  return s.endsWith('.json') ? s.slice(0, -5) : s;
 }

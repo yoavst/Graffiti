@@ -1,10 +1,9 @@
 import { useSetAtom } from 'jotai';
 import { useEffect, useState } from 'react';
 import { importUserPickedFiles } from '@/persistence/tabImport';
-import { currentTabIdAtom, loadAll, tabsAtom } from '@/state/workspaces';
+import { currentTabIdAtom } from '@/state/workspaces';
 
 export function FileDropImport() {
-  const setTabs = useSetAtom(tabsAtom);
   const setCurrentTabId = useSetAtom(currentTabIdAtom);
 
   // Capture-phase listeners on `window` win against React Flow's own drag
@@ -52,8 +51,6 @@ export function FileDropImport() {
         return;
       }
 
-      const all = await loadAll();
-      setTabs(all.tabs);
       if (firstImportedTabId) setCurrentTabId(firstImportedTabId);
     }
 
@@ -67,7 +64,7 @@ export function FileDropImport() {
       window.removeEventListener('dragleave', onDragLeave, true);
       window.removeEventListener('drop', onDrop, true);
     };
-  }, [setTabs, setCurrentTabId]);
+  }, [setCurrentTabId]);
 
   if (!dragHover) return null;
 

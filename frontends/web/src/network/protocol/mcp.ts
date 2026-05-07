@@ -15,7 +15,12 @@ import {
 } from '@/graph/reducer';
 import type { GEdge, GNode, NodeExtra } from '@/graph/model';
 import type { DispatchEnv } from './dispatch';
-import { db } from '@/persistence/db';
+import { graphDocAtomFamily } from '@/state/graphDocAtoms';
+import {
+  workspaceBundleAtomFamily,
+  workspaceIdsAtom,
+} from '@/state/workspaces';
+import type { TabRow, WorkspaceBundle } from '@/state/workspaceTypes';
 import { newId } from '@/util/ids';
 import type { SelectionV1, SelectionV2 } from './selection';
 
@@ -47,44 +52,48 @@ function targetTab(env: DispatchEnv, req: Req) {
 }
 
 export async function handleMcp(env: DispatchEnv, req: Req) {
+  const store = env.store;
   switch (req.type) {
     case 'mcp_list_workspaces': {
-      const ws = await db.workspaces.orderBy('orderIndex').toArray();
-      const groups = await db.tabGroups.orderBy('orderIndex').toArray();
-      const tabs = await db.tabs.orderBy('orderIndex').toArray();
-      const out = ws.map((w) => ({
-        id: w.id,
-        name: w.name,
-        tabGroups: groups
-          .filter((g) => g.workspaceId === w.id)
-          .map((g) => ({
+      const ids = store.get(workspaceIdsAtom);
+      const out = ids.map((wid) => {
+        const b = store.get(workspaceBundleAtomFamily(wid));
+        const groups = [...b.groups].sort((a, c) => a.orderIndex - c.orderIndex);
+        return {
+          id: wid,
+          name: b.workspace.name,
+          tabGroups: groups.map((g) => ({
             id: g.id,
             name: g.name,
             color: g.color,
-            tabs: tabs
+            tabs: b.tabs
               .filter((t) => t.tabGroupId === g.id)
+              .sort((a, c) => a.orderIndex - c.orderIndex)
               .map((t) => ({ id: t.id, name: t.name })),
           })),
-      }));
+        };
+      });
       return reply(env, req, { workspaces: out });
     }
 
     case 'mcp_list_tabs': {
       const wsid = req.workspaceId as string | undefined;
-      let tabs = await db.tabs.orderBy('orderIndex').toArray();
-      if (wsid) {
-        const groups = await db.tabGroups.where('workspaceId').equals(wsid).toArray();
-        const groupIds = new Set(groups.map((g) => g.id));
-        tabs = tabs.filter((t) => groupIds.has(t.tabGroupId));
+      const wids = store.get(workspaceIdsAtom);
+      const tabRows: TabRow[] = [];
+      for (const wid of wids) {
+        if (wsid !== undefined && wid !== wsid) continue;
+        const b = store.get(workspaceBundleAtomFamily(wid));
+        tabRows.push(...b.tabs);
       }
-      const graphs = await db.graphs.toArray();
-      const counts = new Map(graphs.map((g) => [g.tabId, g.doc.nodes.length] as const));
+      tabRows.sort((a, b) =>
+        a.orderIndex !== b.orderIndex ? a.orderIndex - b.orderIndex : a.id.localeCompare(b.id),
+      );
       return reply(env, req, {
-        tabs: tabs.map((t) => ({
+        tabs: tabRows.map((t) => ({
           id: t.id,
           name: t.name,
           tabGroupId: t.tabGroupId,
-          nodeCount: counts.get(t.id) ?? 0,
+          nodeCount: store.get(graphDocAtomFamily(t.id)).nodes.length,
         })),
       });
     }
@@ -179,13 +188,20 @@ export async function handleMcp(env: DispatchEnv, req: Req) {
 
     case 'mcp_create_workspace': {
       const id = newId();
-      await db.workspaces.put({
-        id,
-        name: (req.name as string) ?? 'Workspace',
-        orderIndex: (await db.workspaces.count()),
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
-      });
+      const now = Date.now();
+      const bundle: WorkspaceBundle = {
+        workspace: {
+          id,
+          name: (req.name as string) ?? 'Workspace',
+          orderIndex: store.get(workspaceIdsAtom).length,
+          createdAt: now,
+          updatedAt: now,
+        },
+        groups: [],
+        tabs: [],
+      };
+      store.set(workspaceIdsAtom, [...store.get(workspaceIdsAtom), id]);
+      store.set(workspaceBundleAtomFamily(id), bundle);
       return reply(env, req, { workspaceId: id });
     }
 

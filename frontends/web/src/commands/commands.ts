@@ -19,7 +19,7 @@ import {
 import { appOverlayAtom } from '@/state/appOverlay';
 import { nodeSearchScopeAtom } from '@/state/quickOpenPalettes';
 import { exportAllTabsToTar, exportTabToFile } from '@/persistence/importExport';
-import { db } from '@/persistence/db';
+import { graphDocAtomFamily } from '@/state/graphDocAtoms';
 import { toMermaid } from '@/graph/mermaidExport';
 import { addCommentAction, addTextNodeAction } from './addNodeActions';
 import { dialogs } from '@/ui/dialogs/Dialogs';
@@ -41,19 +41,23 @@ export function runGraphRedo(): void {
   getActiveTabFromStore(getStore())?.actions.redo();
 }
 
-export async function runExportCurrentTabJson(store: JotaiStore): Promise<void> {
+export function runExportCurrentTabJson(store: JotaiStore): void {
   const id = store.get(activeTabIdAtom);
   if (!id) return;
-  await getTabFull(id)?.actions.flushAsync();
-  await exportTabToFile(id);
+  getTabFull(id)?.actions.flush();
+  exportTabToFile(store, id);
 }
 
 export async function runCopyCurrentTabMermaid(store: JotaiStore): Promise<void> {
   const id = store.get(currentTabIdAtom);
   if (!id) return;
-  const g = await db.graphs.get(id);
-  if (!g) return;
-  const s = toMermaid(g.doc, { gui: true, elkRenderer: true, darkMode: true });
+  const tab = store.get(tabsAtom).find((t) => t.id === id);
+  const doc = store.get(graphDocAtomFamily(id));
+  const s = toMermaid(doc, {
+    gui: true,
+    elkRenderer: tab?.layout !== 'dagre',
+    darkMode: true,
+  });
   try {
     await navigator.clipboard.writeText(s);
   } catch {
@@ -146,7 +150,7 @@ export function buildCommands(store: JotaiStore): Command[] {
       title: 'Export all tabs to TAR',
       hotkey: 'Ctrl+Alt+S',
       section: 'File',
-      run: () => void exportAllTabsToTar(),
+      run: () => void exportAllTabsToTar(store),
     },
     {
       id: 'export.mermaid',

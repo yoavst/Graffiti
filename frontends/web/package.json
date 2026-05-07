@@ -21,7 +21,6 @@
     "@xyflow/react": "^12.3.6",
     "cmdk": "^1.0.4",
     "comlink": "^4.4.2",
-    "dexie": "^4.0.10",
     "elkjs": "^0.9.3",
     "html-to-image": "^1.11.13",
     "jotai": "^2.10.4",

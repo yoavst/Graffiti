@@ -1,4 +1,4 @@
-import { useAtom, useAtomValue, useSetAtom, useStore } from 'jotai';
+import { useAtom, useAtomValue, useStore } from 'jotai';
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import Button from '@mui/material/Button';
 import Select from '@mui/material/Select';
@@ -8,9 +8,9 @@ import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { inspectorVisibleAtom } from '@/state/settings';
-import { activeTabAtom, loadAll, tabsAtom } from '@/state/workspaces';
+import { activeTabAtom, patchTabRow } from '@/state/workspaces';
 import { makeTabActions, tabRuntimeAtom, tabTickAtom, type TabActions, type TabRuntime } from '@/state/graph';
-import { db, type TabRow } from '@/persistence/db';
+import type { TabRow } from '@/state/workspaceTypes';
 import {
   EDGE_COLORS,
   NODE_EXTRA_INSPECTOR_HIDDEN_KEYS,
@@ -136,6 +136,7 @@ export function Inspector() {
       tabId
         ? makeTabActions(
             tabId,
+            store,
             () => store.get(tabRuntimeAtom(tabId)),
             () => store.set(tabTickAtom(tabId), (n) => n + 1),
           )
@@ -197,6 +198,7 @@ function ColorLegendPanel({ tabId }: { tabId: string }) {
     () =>
       makeTabActions(
         tabId,
+        store,
         () => store.get(tabRuntimeAtom(tabId)),
         () => store.set(tabTickAtom(tabId), (n) => n + 1),
       ),
@@ -609,24 +611,17 @@ function NotesEditor({ tabId, initial }: { tabId: string; initial: string }) {
   const [v, setV] = useState(initial);
   const vRef = useRef(v);
   vRef.current = v;
-  const setTabs = useSetAtom(tabsAtom);
+  const store = useStore();
 
   useEffect(() => {
     const id = tabId;
     return () => {
-      const notes = vRef.current;
-      void (async () => {
-        await db.tabs.update(id, { notes });
-        const all = await loadAll();
-        setTabs(all.tabs);
-      })();
+      patchTabRow(store, id, { notes: vRef.current });
     };
-  }, [tabId, setTabs]);
+  }, [tabId, store]);
 
-  async function save() {
-    await db.tabs.update(tabId, { notes: v });
-    const all = await loadAll();
-    setTabs(all.tabs);
+  function save() {
+    patchTabRow(store, tabId, { notes: v });
   }
   return (
     <div className="flex flex-col gap-2">

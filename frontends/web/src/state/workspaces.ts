@@ -1,17 +1,47 @@
 import { atom } from 'jotai';
-import { db, type WorkspaceRow, type TabGroupRow, type TabRow, pickColor } from '@/persistence/db';
+import { atomFamily } from 'jotai-family';
+import { atomWithStorage } from 'jotai/utils';
 import { normalizePendingNodeTheme } from '@/graph/model';
 import { newId } from '@/util/ids';
-import { atomWithStorage } from 'jotai/utils';
+import type { JotaiStore } from '@/state/store';
+import { graphStorageKey, STORAGE_WORKSPACE_IDS, workspaceStorageKey } from '@/state/storageKeys';
+import {
+  emptyGraphDoc,
+  pickColor,
+  type TabGroupRow,
+  type TabRow,
+  type WorkspaceBundle,
+} from '@/state/workspaceTypes';
+import { graphDocAtomFamily } from '@/state/graphDocAtoms';
 
 // --------------------------------------------------------------------------
-// Live caches loaded from Dexie at startup, then mutated through helpers
-// that also write back to Dexie.
+// localStorage-backed workspace index + per-workspace bundles
 // --------------------------------------------------------------------------
 
-export const workspacesAtom = atom<WorkspaceRow[]>([]);
-export const tabGroupsAtom = atom<TabGroupRow[]>([]);
-export const tabsAtom = atom<TabRow[]>([]);
+export const workspaceIdsAtom = atomWithStorage<string[]>(STORAGE_WORKSPACE_IDS, [], undefined, {
+  getOnInit: true,
+});
+
+function defaultBundle(workspaceId: string): WorkspaceBundle {
+  const now = Date.now();
+  return {
+    workspace: {
+      id: workspaceId,
+      name: '',
+      orderIndex: 0,
+      createdAt: now,
+      updatedAt: now,
+    },
+    groups: [],
+    tabs: [],
+  };
+}
+
+export const workspaceBundleAtomFamily = atomFamily((workspaceId: string) =>
+  atomWithStorage<WorkspaceBundle>(workspaceStorageKey(workspaceId), defaultBundle(workspaceId), undefined, {
+    getOnInit: true,
+  }),
+);
 
 export const currentWorkspaceIdAtom = atomWithStorage<string | null>(
   'currentWorkspaceId',
@@ -26,14 +56,37 @@ export const sidePaneTabIdAtom = atomWithStorage<string | null>('sidePaneTabId',
   getOnInit: true,
 });
 
-// Which split pane is "active" — used by the inspector and global commands so
-// they target the pane the user last interacted with rather than always the
-// primary one. Resets to 'primary' whenever there is no side pane.
 export const activePaneAtom = atom<'primary' | 'side'>('primary');
 
 // --------------------------------------------------------------------------
-// Derived selectors
+// Derived selectors (read-only)
 // --------------------------------------------------------------------------
+
+export const workspacesAtom = atom((get) => {
+  const ids = get(workspaceIdsAtom);
+  return ids.map((id, idx) => {
+    const b = get(workspaceBundleAtomFamily(id));
+    return { ...b.workspace, id, orderIndex: idx };
+  });
+});
+
+export const tabGroupsAtom = atom((get) => {
+  const ids = get(workspaceIdsAtom);
+  const out: TabGroupRow[] = [];
+  for (const id of ids) {
+    out.push(...get(workspaceBundleAtomFamily(id)).groups);
+  }
+  return out;
+});
+
+export const tabsAtom = atom((get) => {
+  const ids = get(workspaceIdsAtom);
+  const out: TabRow[] = [];
+  for (const id of ids) {
+    out.push(...get(workspaceBundleAtomFamily(id)).tabs);
+  }
+  return out;
+});
 
 export const currentWorkspaceAtom = atom((get) => {
   const id = get(currentWorkspaceIdAtom);
@@ -80,132 +133,220 @@ export const activeTabAtom = atom((get) => {
 });
 
 // --------------------------------------------------------------------------
-// CRUD helpers — each writes to Dexie then refreshes the atoms.
+// Store helpers
 // --------------------------------------------------------------------------
 
-export async function loadAll(): Promise<{
-  workspaces: WorkspaceRow[];
-  groups: TabGroupRow[];
-  tabs: TabRow[];
-}> {
-  const [workspaces, groups, tabsRaw] = await Promise.all([
-    db.workspaces.orderBy('orderIndex').toArray(),
-    db.tabGroups.orderBy('orderIndex').toArray(),
-    db.tabs.orderBy('orderIndex').toArray(),
-  ]);
-  const fixWrites: Promise<unknown>[] = [];
-  const tabs = tabsRaw.map((t) => {
-    const n = normalizePendingNodeTheme(t.pendingNodeTheme as unknown);
-    if (t.pendingNodeTheme !== n) {
-      fixWrites.push(db.tabs.update(t.id, { pendingNodeTheme: n }));
-    }
-    return { ...t, pendingNodeTheme: n };
-  });
-  if (fixWrites.length > 0) await Promise.all(fixWrites);
-  return { workspaces, groups, tabs };
+export function flattenTabsFromStore(store: JotaiStore): TabRow[] {
+  const ids = store.get(workspaceIdsAtom);
+  const out: TabRow[] = [];
+  for (const wid of ids) {
+    out.push(...store.get(workspaceBundleAtomFamily(wid)).tabs);
+  }
+  return out;
 }
 
-/**
- * Clean up empty workspaces (no tab groups). These are usually leftovers
- * from a long-fixed StrictMode race that double-created the default
- * workspace. Safe because we only delete rows that have nothing in them.
- */
-export async function pruneEmptyWorkspaces(): Promise<void> {
-  const [workspaces, groups] = await Promise.all([
-    db.workspaces.toArray(),
-    db.tabGroups.toArray(),
-  ]);
-  if (workspaces.length <= 1) return;
-  const usedIds = new Set(groups.map((g) => g.workspaceId));
-  const toDelete = workspaces.filter((w) => !usedIds.has(w.id));
-  for (const w of toDelete) {
-    await db.workspaces.delete(w.id);
+export function findWorkspaceIdForTab(store: JotaiStore, tabId: string): string | null {
+  for (const wid of store.get(workspaceIdsAtom)) {
+    const b = store.get(workspaceBundleAtomFamily(wid));
+    if (b.tabs.some((t) => t.id === tabId)) return wid;
+  }
+  return null;
+}
+
+export function firstTabIdInWorkspace(store: JotaiStore, workspaceId: string): string | null {
+  const b = store.get(workspaceBundleAtomFamily(workspaceId));
+  const sorted = [...b.tabs].sort((a, c) => a.orderIndex - c.orderIndex);
+  return sorted[0]?.id ?? null;
+}
+
+export function ensureDefaultGroupInStore(store: JotaiStore, workspaceId: string): TabGroupRow {
+  const atom = workspaceBundleAtomFamily(workspaceId);
+  const b = store.get(atom);
+  const sorted = [...b.groups].sort((a, c) => a.orderIndex - c.orderIndex);
+  if (sorted[0]) return sorted[0];
+  const groupId = newId();
+  const g: TabGroupRow = {
+    id: groupId,
+    workspaceId,
+    name: 'Default',
+    color: pickColor(0),
+    collapsed: false,
+    orderIndex: 0,
+  };
+  store.set(atom, {
+    ...b,
+    groups: [...b.groups, g],
+    workspace: { ...b.workspace, updatedAt: Date.now() },
+  });
+  return g;
+}
+
+export function updateWorkspaceBundle(
+  store: JotaiStore,
+  workspaceId: string,
+  fn: (b: WorkspaceBundle) => WorkspaceBundle,
+): void {
+  const atom = workspaceBundleAtomFamily(workspaceId);
+  store.set(atom, fn(store.get(atom)));
+}
+
+export function patchTabRow(store: JotaiStore, tabId: string, patch: Partial<TabRow>): void {
+  const wid = findWorkspaceIdForTab(store, tabId);
+  if (!wid) return;
+  updateWorkspaceBundle(store, wid, (b) => ({
+    ...b,
+    tabs: b.tabs.map((t) => (t.id === tabId ? { ...t, ...patch } : t)),
+  }));
+}
+
+export function touchTabUpdatedAt(store: JotaiStore, tabId: string): void {
+  patchTabRow(store, tabId, { updatedAt: Date.now() });
+}
+
+export function normalizeAllTabThemes(store: JotaiStore): void {
+  for (const wid of store.get(workspaceIdsAtom)) {
+    updateWorkspaceBundle(store, wid, (b) => {
+      let changed = false;
+      const tabs = b.tabs.map((t) => {
+        const n = normalizePendingNodeTheme(t.pendingNodeTheme as unknown);
+        if (t.pendingNodeTheme !== n) {
+          changed = true;
+          return { ...t, pendingNodeTheme: n };
+        }
+        return t;
+      });
+      return changed ? { ...b, tabs } : b;
+    });
   }
 }
 
-// Guard against React StrictMode running our boot effect twice in dev: the
-// second invocation could race with the first's async DB writes and end up
-// creating a second "Default" workspace.
-let ensurePromise: Promise<{
-  workspaceId: string;
-  tabGroupId: string;
-  tabId: string;
-}> | null = null;
-
-export function ensureDefaultWorkspace() {
-  if (!ensurePromise) ensurePromise = ensureDefaultWorkspaceImpl();
-  return ensurePromise;
+export function removeGraphStorageForTab(_store: JotaiStore, tabId: string): void {
+  graphDocAtomFamily.remove(tabId);
+  try {
+    localStorage.removeItem(graphStorageKey(tabId));
+  } catch {
+    /* ignore */
+  }
 }
 
-async function ensureDefaultWorkspaceImpl(): Promise<{
-  workspaceId: string;
-  tabGroupId: string;
-  tabId: string;
-}> {
-  const w = await db.workspaces.toArray();
-  if (w.length > 0) {
-    const ws = w[0]!;
-    let group = await db.tabGroups.where('workspaceId').equals(ws.id).first();
-    if (!group) {
-      group = {
-        id: newId(),
-        workspaceId: ws.id,
+export function pruneEmptyWorkspacesInStore(store: JotaiStore): void {
+  const ids = [...store.get(workspaceIdsAtom)];
+  if (ids.length <= 1) return;
+  const next = ids.filter((wid) => {
+    const b = store.get(workspaceBundleAtomFamily(wid));
+    return b.groups.length > 0;
+  });
+  if (next.length === ids.length) return;
+  for (const wid of ids) {
+    if (next.includes(wid)) continue;
+    const b = store.get(workspaceBundleAtomFamily(wid));
+    for (const t of b.tabs) {
+      removeGraphStorageForTab(store, t.id);
+    }
+    localStorage.removeItem(workspaceStorageKey(wid));
+    workspaceBundleAtomFamily.remove(wid);
+  }
+  store.set(workspaceIdsAtom, next);
+}
+
+export function ensureDefaultWorkspaceInStore(store: JotaiStore): void {
+  const ids = store.get(workspaceIdsAtom);
+  if (ids.length > 0) {
+    const wid = ids[0]!;
+    const atom = workspaceBundleAtomFamily(wid);
+    let b = store.get(atom);
+    if (b.groups.length === 0) {
+      const groupId = newId();
+      const group: TabGroupRow = {
+        id: groupId,
+        workspaceId: wid,
         name: 'Default',
         color: pickColor(0),
         collapsed: false,
         orderIndex: 0,
       };
-      await db.tabGroups.put(group);
+      b = {
+        ...b,
+        workspace: {
+          ...b.workspace,
+          name: b.workspace.name || 'Default',
+          updatedAt: Date.now(),
+        },
+        groups: [group],
+      };
+      store.set(atom, b);
     }
-    let tab = await db.tabs.where('tabGroupId').equals(group.id).first();
-    if (!tab) {
-      tab = {
-        id: newId(),
+    b = store.get(atom);
+    const group = b.groups[0]!;
+    if (b.tabs.length === 0) {
+      const tabId = newId();
+      const now = Date.now();
+      const tab: TabRow = {
+        id: tabId,
         tabGroupId: group.id,
         name: 'untitled',
         layout: 'elk',
         orderIndex: 0,
-        updatedAt: Date.now(),
+        updatedAt: now,
       };
-      await db.tabs.put(tab);
-      await db.graphs.put({
-        tabId: tab.id,
-        doc: { idCounter: 1, nodes: [], edges: [], config: {} },
-      });
+      store.set(atom, { ...b, tabs: [tab] });
+      store.set(graphDocAtomFamily(tabId), emptyGraphDoc());
     }
-    return { workspaceId: ws.id, tabGroupId: group.id, tabId: tab.id };
+    return;
   }
 
   const now = Date.now();
   const workspaceId = newId();
   const tabGroupId = newId();
   const tabId = newId();
-  await db.workspaces.put({
-    id: workspaceId,
-    name: 'Default',
-    orderIndex: 0,
-    createdAt: now,
-    updatedAt: now,
-  });
-  await db.tabGroups.put({
-    id: tabGroupId,
-    workspaceId,
-    name: 'Default',
-    color: pickColor(0),
-    collapsed: false,
-    orderIndex: 0,
-  });
-  await db.tabs.put({
-    id: tabId,
-    tabGroupId,
-    name: 'untitled',
-    layout: 'elk',
-    orderIndex: 0,
-    updatedAt: now,
-  });
-  await db.graphs.put({
-    tabId,
-    doc: { idCounter: 1, nodes: [], edges: [], config: {} },
-  });
-  return { workspaceId, tabGroupId, tabId };
+  const bundle: WorkspaceBundle = {
+    workspace: {
+      id: workspaceId,
+      name: 'Default',
+      orderIndex: 0,
+      createdAt: now,
+      updatedAt: now,
+    },
+    groups: [
+      {
+        id: tabGroupId,
+        workspaceId,
+        name: 'Default',
+        color: pickColor(0),
+        collapsed: false,
+        orderIndex: 0,
+      },
+    ],
+    tabs: [
+      {
+        id: tabId,
+        tabGroupId,
+        name: 'untitled',
+        layout: 'elk',
+        orderIndex: 0,
+        updatedAt: now,
+      },
+    ],
+  };
+  store.set(workspaceIdsAtom, [workspaceId]);
+  store.set(workspaceBundleAtomFamily(workspaceId), bundle);
+  store.set(graphDocAtomFamily(tabId), emptyGraphDoc());
+}
+
+export function reconcileNavigationPointers(store: JotaiStore): void {
+  const ids = store.get(workspaceIdsAtom);
+  const tabs = flattenTabsFromStore(store);
+  let wid = store.get(currentWorkspaceIdAtom);
+  if (!wid || !ids.includes(wid)) {
+    wid = ids[0] ?? null;
+    store.set(currentWorkspaceIdAtom, wid);
+  }
+  const tid = store.get(currentTabIdAtom);
+  if (!tid || !tabs.some((t) => t.id === tid)) {
+    store.set(currentTabIdAtom, wid ? firstTabIdInWorkspace(store, wid) : null);
+  }
+  const side = store.get(sidePaneTabIdAtom);
+  if (side && !tabs.some((t) => t.id === side)) {
+    store.set(sidePaneTabIdAtom, null);
+  }
 }

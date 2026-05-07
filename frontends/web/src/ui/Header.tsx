@@ -37,7 +37,7 @@ import { addCommentAction, addTextNodeAction } from '@/commands/addNodeActions';
 import { openNodeSearchInCurrentTab, runExportCurrentTabJson } from '@/commands/commands';
 import { importUserPickedFiles } from '@/persistence/tabImport';
 import { exportAllTabsToTar } from '@/persistence/importExport';
-import { activeTabIdAtom, loadAll, tabsAtom, currentTabIdAtom } from '@/state/workspaces';
+import { activeTabIdAtom, currentTabIdAtom } from '@/state/workspaces';
 import { dialogs } from '@/ui/dialogs/Dialogs';
 import { ShareGraphDialog } from '@/ui/dialogs/ShareGraphDialog';
 
@@ -53,7 +53,6 @@ export function Header() {
   const [newWillBeSelected, setNewWillBeSelected] = useAtom(isNewWillBeSelectedAtom);
   const [client, setClient] = useAtom(wsClientAtom);
   const store = useStore();
-  const setTabs = useSetAtom(tabsAtom);
   const setCurrentTabId = useSetAtom(currentTabIdAtom);
   const activeTabId = useAtomValue(activeTabIdAtom);
   const setOverlay = useSetAtom(appOverlayAtom);
@@ -119,8 +118,6 @@ export function Header() {
       });
       return;
     }
-    const all = await loadAll();
-    setTabs(all.tabs);
     if (firstTabId) setCurrentTabId(firstTabId);
   }
 
@@ -160,7 +157,7 @@ export function Header() {
             onClick={() => void runExportCurrentTabJson(store)}
             onContextMenu={(e) => {
               e.preventDefault();
-              void exportAllTabsToTar();
+              void exportAllTabsToTar(store);
             }}
           >
             <DownloadOutlinedIcon fontSize="small" />

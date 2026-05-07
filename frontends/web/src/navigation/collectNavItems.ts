@@ -1,5 +1,5 @@
 import type { JotaiStore } from '@/state/store';
-import type { TabRow } from '@/persistence/db';
+import type { TabRow } from '@/state/workspaceTypes';
 import type { NodeSearchScope } from '@/state/quickOpenPalettes';
 import {
   activeTabIdAtom,
@@ -9,7 +9,7 @@ import {
   tabsByGroupAtom,
 } from '@/state/workspaces';
 import { getTab } from '@/state/registry';
-import { db } from '@/persistence/db';
+import { graphDocAtomFamily } from '@/state/graphDocAtoms';
 import type { GNode } from '@/graph/model';
 
 export function orderedWorkspaceTabs(store: JotaiStore): TabRow[] {
@@ -34,9 +34,9 @@ export type NavNodeHit = {
   flavor: 'code' | 'markdown' | 'comment';
 };
 
-async function nodesForTab(tabId: string, tabName: string): Promise<NavNodeHit[]> {
+function nodesForTab(store: JotaiStore, tabId: string, tabName: string): NavNodeHit[] {
   const reg = getTab(tabId);
-  const nodes: GNode[] = reg ? reg.rt.doc.nodes : ((await db.graphs.get(tabId))?.doc.nodes ?? []);
+  const nodes: GNode[] = reg ? reg.rt.doc.nodes : store.get(graphDocAtomFamily(tabId)).nodes;
   return nodes.map((n) => {
     const displayLabel = (n.overrideLabel ?? n.label).trim() || `#${n.id}`;
     return {
@@ -55,14 +55,13 @@ async function nodesForTab(tabId: string, tabName: string): Promise<NavNodeHit[]
 }
 
 /** `currentTab` = focused pane’s graph (`activeTabIdAtom`). `allTabs` = every tab in the workspace. */
-export async function loadNavNodeHits(store: JotaiStore, scope: NodeSearchScope): Promise<NavNodeHit[]> {
+export function loadNavNodeHits(store: JotaiStore, scope: NodeSearchScope): NavNodeHit[] {
   if (scope === 'currentTab') {
     const tabId = store.get(activeTabIdAtom);
     if (!tabId) return [];
     const tab = store.get(tabsAtom).find((t) => t.id === tabId);
-    return nodesForTab(tabId, tab?.name ?? 'Graph');
+    return nodesForTab(store, tabId, tab?.name ?? 'Graph');
   }
   const ordered = orderedWorkspaceTabs(store);
-  const batches = await Promise.all(ordered.map((t) => nodesForTab(t.id, t.name)));
-  return batches.flat();
+  return ordered.flatMap((t) => nodesForTab(store, t.id, t.name));
 }

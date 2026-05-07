@@ -1,15 +1,14 @@
 import { useRef, useState } from 'react';
-import { useAtomValue, useSetAtom } from 'jotai';
+import { useAtomValue, useStore } from 'jotai';
 import Popover from '@mui/material/Popover';
 import Tooltip from '@mui/material/Tooltip';
-import { db } from '@/persistence/db';
 import { THEMES, normalizePendingNodeTheme } from '@/graph/model';
-import { loadAll, tabsAtom } from '@/state/workspaces';
+import { patchTabRow, tabsAtom } from '@/state/workspaces';
 
 export function PenColorSwatch({ tabId }: { tabId: string }) {
+  const store = useStore();
   const tabs = useAtomValue(tabsAtom);
   const tab = tabs.find((t) => t.id === tabId);
-  const setTabs = useSetAtom(tabsAtom);
   const anchorRef = useRef<HTMLButtonElement>(null);
   const [open, setOpen] = useState(false);
 
@@ -17,14 +16,10 @@ export function PenColorSwatch({ tabId }: { tabId: string }) {
   const current = normalizePendingNodeTheme(tab.pendingNodeTheme as unknown);
   const swatchBg = THEMES[current]!.bg;
 
-  async function set(themeIndex: number) {
+  function set(themeIndex: number) {
     if (!tab) return;
     const n = normalizePendingNodeTheme(themeIndex);
-    await db.tabs.update(tab.id, { pendingNodeTheme: n });
-    // Reload the tabs atom so the swatch (and the dispatcher that reads
-    // pendingNodeTheme to color new WS-created nodes) sees the new value.
-    const all = await loadAll();
-    setTabs(all.tabs);
+    patchTabRow(store, tab.id, { pendingNodeTheme: n });
     setOpen(false);
   }
 

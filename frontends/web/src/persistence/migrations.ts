@@ -1,12 +1,17 @@
-// One-shot migration of legacy localStorage tabs into Dexie.
-// The legacy keys (`__SAVED_DATA`, `__SAVED_DATA_VERSION`, `__SAVED_TAB_INDEX`)
-// are LEFT IN PLACE — we just stop reading them after the first run.
+// One-shot migration of the original localStorage tab format (`__SAVED_DATA` / version).
+// Does not read IndexedDB; users who only had Dexie data are not migrated here.
 
-import { db, pickColor, type TabRow } from './db';
 import { normalizePendingNodeTheme, type GraphDoc } from '@/graph/model';
 import { newId } from '@/util/ids';
+import type { JotaiStore } from '@/state/store';
+import { workspaceBundleAtomFamily, workspaceIdsAtom } from '@/state/workspaces';
+import { pickColor, type TabRow, type WorkspaceBundle } from '@/state/workspaceTypes';
+import { graphDocAtomFamily } from '@/state/graphDocAtoms';
 
-const MIGRATION_FLAG = 'graffiti.migratedToDexie';
+/** Set after this migration runs successfully or is skipped as unnecessary. */
+const LEGACY_SAVE_MIGRATED_KEY = 'graffiti.migratedLegacySavedState';
+/** Historical: marked when the app previously migrated into Dexie; treat as "no __SAVED_DATA import". */
+const LEGACY_DEXIE_MARKER = 'graffiti.migratedToDexie';
 
 export interface MigrationResult {
   imported: boolean;
@@ -14,12 +19,16 @@ export interface MigrationResult {
   tabIds?: string[];
 }
 
-export async function migrateLegacyIfNeeded(): Promise<MigrationResult> {
-  if (localStorage.getItem(MIGRATION_FLAG)) return { imported: false };
+export function migrateLegacyIfNeeded(store: JotaiStore): MigrationResult {
+  if (localStorage.getItem(LEGACY_SAVE_MIGRATED_KEY)) return { imported: false };
+  if (localStorage.getItem(LEGACY_DEXIE_MARKER)) {
+    localStorage.setItem(LEGACY_SAVE_MIGRATED_KEY, '1');
+    return { imported: false };
+  }
 
   const raw = localStorage.getItem('__SAVED_DATA');
   if (!raw) {
-    localStorage.setItem(MIGRATION_FLAG, '1');
+    localStorage.setItem(LEGACY_SAVE_MIGRATED_KEY, '1');
     return { imported: false };
   }
 
@@ -27,19 +36,16 @@ export async function migrateLegacyIfNeeded(): Promise<MigrationResult> {
   try {
     parsed = JSON.parse(raw);
   } catch {
-    localStorage.setItem(MIGRATION_FLAG, '1');
+    localStorage.setItem(LEGACY_SAVE_MIGRATED_KEY, '1');
     return { imported: false };
   }
   const version = parseInt(localStorage.getItem('__SAVED_DATA_VERSION') ?? '1', 10) || 1;
 
-  // Reconstruct (name, GraphDoc) pairs.
   const pairs: Array<{ name: string; doc: GraphDoc }> = [];
   if (version === 1) {
-    // Whole storage is a single (id, nodes, edges) tuple under the name "untitled".
     const doc = parseInnerDoc(JSON.stringify(parsed));
     if (doc) pairs.push({ name: 'untitled', doc });
   } else {
-    // version 2: array of [name, innerJsonString]
     if (Array.isArray(parsed)) {
       for (const entry of parsed) {
         if (Array.isArray(entry) && entry.length === 2) {
@@ -52,7 +58,7 @@ export async function migrateLegacyIfNeeded(): Promise<MigrationResult> {
   }
 
   if (pairs.length === 0) {
-    localStorage.setItem(MIGRATION_FLAG, '1');
+    localStorage.setItem(LEGACY_SAVE_MIGRATED_KEY, '1');
     return { imported: false };
   }
 
@@ -71,37 +77,38 @@ export async function migrateLegacyIfNeeded(): Promise<MigrationResult> {
     updatedAt: now,
   }));
 
-  await db.transaction('rw', db.workspaces, db.tabGroups, db.tabs, db.graphs, async () => {
-    await db.workspaces.put({
+  const bundle: WorkspaceBundle = {
+    workspace: {
       id: workspaceId,
       name: 'Imported',
       orderIndex: 0,
       createdAt: now,
       updatedAt: now,
-    });
-    await db.tabGroups.put({
-      id: groupId,
-      workspaceId,
-      name: 'Default',
-      color: pickColor(0),
-      collapsed: false,
-      orderIndex: 0,
-    });
-    for (let i = 0; i < tabRows.length; i++) {
-      const row = tabRows[i]!;
-      const doc = pairs[i]!.doc;
-      await db.tabs.put(row);
-      await db.graphs.put({ tabId: row.id, doc });
-    }
-  });
+    },
+    groups: [
+      {
+        id: groupId,
+        workspaceId,
+        name: 'Default',
+        color: pickColor(0),
+        collapsed: false,
+        orderIndex: 0,
+      },
+    ],
+    tabs: tabRows,
+  };
 
-  localStorage.setItem(MIGRATION_FLAG, '1');
+  store.set(workspaceIdsAtom, [workspaceId]);
+  store.set(workspaceBundleAtomFamily(workspaceId), bundle);
+  for (let i = 0; i < tabRows.length; i++) {
+    const row = tabRows[i]!;
+    store.set(graphDocAtomFamily(row.id), pairs[i]!.doc);
+  }
+
+  localStorage.setItem(LEGACY_SAVE_MIGRATED_KEY, '1');
   return { imported: true, workspaceId, tabIds: tabRows.map((r) => r.id) };
 }
 
-/**
- * Parse the legacy per-tab JSON string `[idCounter, nodes, edges, config?]`.
- */
 export function parseInnerDoc(s: string): GraphDoc | null {
   try {
     const arr = JSON.parse(s);

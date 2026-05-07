@@ -68,18 +68,12 @@ export function NodeSearchPalette() {
 
   useEffect(() => {
     if (!open) return;
-    let cancelled = false;
     startTransition(() => setLoading(true));
-    void (async () => {
-      const hits = await loadNavNodeHits(store, scope);
-      if (!cancelled) {
-        setNodeHits(hits);
-        setLoading(false);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
+    const hits = loadNavNodeHits(store, scope);
+    startTransition(() => {
+      setNodeHits(hits);
+      setLoading(false);
+    });
   }, [open, scope, activeTabId, tickActive, tickPrimary, tickSide, workspaceTabsKey, store]);
 
   const paneHint = (tabId: string) => {

@@ -7,7 +7,7 @@
 // doesn't re-run ELK.
 
 import { useAtomValue, useStore } from 'jotai';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import { GraphCanvas } from '@/flow/GraphCanvas';
 import { useSubscribeTabDocMutations } from '@/hooks/useSubscribeTabDocMutations';
 import { tabRuntimeAtom, tabTickAtom, makeTabActions } from '@/state/graph';
@@ -15,7 +15,7 @@ import { tabsAtom } from '@/state/workspaces';
 import { registerTab, unregisterTab } from '@/state/registry';
 import { wsClientAtom } from '@/state/wsClient';
 import { jumpToPayload } from '@/network/protocol/legacy';
-import type { TabRow } from '@/persistence/db';
+import type { TabRow } from '@/state/workspaceTypes';
 import type { FlowPane } from '@/state/pendingNodeFocus';
 
 export function TabHost({
@@ -59,6 +59,7 @@ function MountedTab({
     () =>
       makeTabActions(
         tabId,
+        store,
         () => store.get(tabRuntimeAtom(tabId)),
         () => store.set(tabTickAtom(tabId), (n) => n + 1),
       ),
@@ -67,18 +68,9 @@ function MountedTab({
 
   const [hydrated, setHydrated] = useState(rt.loaded);
 
-  // Hydrate on every mount. If already loaded (atomFamily kept the runtime
-  // from a previous visit) we just bump the tick + flip the local hydrated
-  // flag so the canvas mounts.
-  useEffect(() => {
-    let cancelled = false;
-    void (async () => {
-      await actions.hydrate();
-      if (!cancelled) setHydrated(true);
-    })();
-    return () => {
-      cancelled = true;
-    };
+  useLayoutEffect(() => {
+    actions.hydrate();
+    setHydrated(true);
   }, [actions]);
 
   // Register with the global tab registry for the WS dispatcher.

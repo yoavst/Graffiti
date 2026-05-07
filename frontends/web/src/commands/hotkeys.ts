@@ -3,12 +3,10 @@ import { useAtomValue, useSetAtom } from 'jotai';
 import {
   sidePaneTabIdAtom,
   currentTabIdAtom,
-  tabsAtom,
   activeTabIdAtom,
   activePaneAtom,
-  loadAll,
+  patchTabRow,
 } from '@/state/workspaces';
-import { db } from '@/persistence/db';
 import { getTabFull } from '@/state/registry';
 import { requestFitViewForTab } from '@/flow/flowFitViewBridge';
 import { useStore } from 'jotai';
@@ -38,7 +36,6 @@ export function useHotkeys() {
   const activeTabId = useAtomValue(activeTabIdAtom);
   const setInspector = useSetAtom(inspectorVisibleAtom);
   const inspector = useAtomValue(inspectorVisibleAtom);
-  const tabs = useAtomValue(tabsAtom);
   const store = useStore();
 
   useHotkeysHook(
@@ -166,9 +163,9 @@ export function useHotkeys() {
     'mod+alt+s',
     (e) => {
       e.preventDefault();
-      void exportAllTabsToTar();
+      void exportAllTabsToTar(store);
     },
-    [],
+    [store],
   );
   useHotkeysHook(
     'home',
@@ -202,13 +199,8 @@ export function useHotkeys() {
         return;
       }
       e.preventDefault();
-      void (async () => {
-        await db.tabs.update(t.tabId, { pendingNodeTheme: idx });
-        const all = await loadAll();
-        store.set(tabsAtom, all.tabs);
-      })();
+      patchTabRow(store, t.tabId, { pendingNodeTheme: idx });
     },
     [store, activeTabId],
   );
-  void tabs;
 }

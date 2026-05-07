@@ -1,9 +1,11 @@
 // Per-tab graph state held in memory: an `atomFamily` keyed by tabId.
-// Persistence to Dexie is debounced and runs on idle.
+// Graph JSON is persisted via `graphDocAtomFamily` (atomWithStorage).
 
 import { atom } from 'jotai';
 import { atomFamily } from 'jotai-family';
-import { db } from '@/persistence/db';
+import { graphDocAtomFamily } from '@/state/graphDocAtoms';
+import { touchTabUpdatedAt } from '@/state/workspaces';
+import type { JotaiStore } from '@/state/store';
 import {
   applyAndRecord,
   applyTransaction,
@@ -53,9 +55,8 @@ export interface TabActions {
   select: (nodeId: number | null) => void;
   selectEdge: (edgeId: number | null) => void;
   setFarHighlight: (nodeId: number | null) => void;
-  hydrate: () => Promise<void>;
+  hydrate: () => void;
   flush: () => void;
-  flushAsync: () => Promise<void>;
 }
 
 const persistTimers = new Map<string, ReturnType<typeof setTimeout>>();
@@ -63,13 +64,14 @@ const PERSIST_DEBOUNCE_MS = 250;
 
 export function makeTabActions(
   tabId: string,
+  store: JotaiStore,
   getRuntime: () => TabRuntime,
   bumpTick: () => void,
 ): TabActions {
-  async function persistNow() {
+  function persistNow() {
     const rt = getRuntime();
-    await db.graphs.put({ tabId, doc: snapshotDoc(rt.doc) });
-    await db.tabs.update(tabId, { updatedAt: Date.now() });
+    store.set(graphDocAtomFamily(tabId), snapshotDoc(rt.doc));
+    touchTabUpdatedAt(store, tabId);
   }
 
   function schedulePersist() {
@@ -77,7 +79,7 @@ export function makeTabActions(
     if (old) clearTimeout(old);
     const t = setTimeout(() => {
       persistTimers.delete(tabId);
-      void persistNow();
+      persistNow();
     }, PERSIST_DEBOUNCE_MS);
     persistTimers.set(tabId, t);
   }
@@ -132,19 +134,15 @@ export function makeTabActions(
       rt.farHighlightNodeId = nodeId;
       bumpTick();
     },
-    async hydrate() {
+    hydrate() {
       const rt = getRuntime();
       if (rt.loaded) {
-        // Even if already loaded in memory, bump the tick so any newly
-        // mounted subscribers re-render with the cached doc.
         bumpTick();
         return;
       }
       try {
-        const row = await db.graphs.get(tabId);
-        if (row?.doc) {
-          rt.doc = row.doc;
-        }
+        const doc = store.get(graphDocAtomFamily(tabId));
+        rt.doc = snapshotDoc(doc);
       } catch (e) {
         console.error('hydrate failed for tab', tabId, e);
       }
@@ -156,15 +154,7 @@ export function makeTabActions(
       if (t) {
         clearTimeout(t);
         persistTimers.delete(tabId);
-        void persistNow();
-      }
-    },
-    async flushAsync() {
-      const t = persistTimers.get(tabId);
-      if (t) {
-        clearTimeout(t);
-        persistTimers.delete(tabId);
-        await persistNow();
+        persistNow();
       }
     },
   };

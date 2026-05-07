@@ -16,7 +16,8 @@ import {
   downloadJpeg,
   safeExportBasename,
 } from '@/flow/exportFlowCapture';
-import { db } from '@/persistence/db';
+import { graphDocAtomFamily } from '@/state/graphDocAtoms';
+import { tabsAtom } from '@/state/workspaces';
 import { toMermaid } from '@/graph/mermaidExport';
 import { dialogs } from '@/ui/dialogs/Dialogs';
 import { isModEnter } from '@/util/keyboard';
@@ -65,7 +66,7 @@ export function ShareGraphDialog() {
         restore = await bridge.prepareFullGraphSnapshot();
         const el = bridge.getViewportElement();
         if (!el) throw new Error('Viewport not ready');
-        const tab = await db.tabs.get(tabId);
+        const tab = store.get(tabsAtom).find((t) => t.id === tabId);
         const base = safeExportBasename(tab?.name);
         if (kind === 'jpeg') {
           const blob = await captureViewportToJpegBlob(el, dpi);
@@ -94,12 +95,9 @@ export function ShareGraphDialog() {
       await dialogs.alert('No active tab to export.', { title: 'Share graph' });
       return;
     }
-    const [g, tab] = await Promise.all([db.graphs.get(tabId), db.tabs.get(tabId)]);
-    if (!g) {
-      await dialogs.alert('No graph data for this tab.', { title: 'Share graph' });
-      return;
-    }
-    const text = toMermaid(g.doc, {
+    const tab = store.get(tabsAtom).find((t) => t.id === tabId);
+    const doc = store.get(graphDocAtomFamily(tabId));
+    const text = toMermaid(doc, {
       gui: true,
       elkRenderer: tab?.layout === 'elk',
       darkMode: true,

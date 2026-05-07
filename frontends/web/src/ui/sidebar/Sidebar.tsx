@@ -1,4 +1,4 @@
-import { useAtom, useAtomValue, useSetAtom } from 'jotai';
+import { useAtom, useAtomValue, useSetAtom, useStore } from 'jotai';
 import { startTransition, useEffect, useMemo, useState } from 'react';
 import TextField from '@mui/material/TextField';
 import AddIcon from '@mui/icons-material/Add';
@@ -10,39 +10,28 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import {
   currentTabIdAtom,
   currentWorkspaceIdAtom,
-  loadAll,
+  ensureDefaultGroupInStore,
+  findWorkspaceIdForTab,
+  reconcileNavigationPointers,
+  removeGraphStorageForTab,
   sidePaneTabIdAtom,
   tabGroupsAtom,
   tabsAtom,
+  updateWorkspaceBundle,
+  workspaceBundleAtomFamily,
+  workspaceIdsAtom,
   workspacesAtom,
 } from '@/state/workspaces';
-import { db, pickColor, type TabRow, type TabGroupRow } from '@/persistence/db';
+import { workspaceStorageKey } from '@/state/storageKeys';
+import { graphDocAtomFamily } from '@/state/graphDocAtoms';
 import { newId } from '@/util/ids';
+import { emptyGraphDoc, pickColor, type TabGroupRow, type TabRow, type WorkspaceRow } from '@/state/workspaceTypes';
 import { sidebarVisibleAtom } from '@/state/settings';
 import { ContextMenu, type ContextMenuItem } from '@/ui/ContextMenu';
 import { dialogs } from '@/ui/dialogs/Dialogs';
 
-// Tab groups are no longer surfaced in the UI: every workspace is treated as
-// having a single implicit "default" group. The DB still has a tabGroupId
-// column on tabs (legacy schema), so we resolve a workspace's home group
-// lazily and create one on demand if missing.
-async function ensureDefaultGroup(workspaceId: string): Promise<TabGroupRow> {
-  const existing = await db.tabGroups.where('workspaceId').equals(workspaceId).toArray();
-  existing.sort((a, b) => a.orderIndex - b.orderIndex);
-  if (existing[0]) return existing[0];
-  const g: TabGroupRow = {
-    id: newId(),
-    workspaceId,
-    name: 'Default',
-    color: pickColor(0),
-    collapsed: false,
-    orderIndex: 0,
-  };
-  await db.tabGroups.put(g);
-  return g;
-}
-
 export function Sidebar() {
+  const store = useStore();
   const visible = useAtomValue(sidebarVisibleAtom);
   const setVisible = useSetAtom(sidebarVisibleAtom);
   const workspaces = useAtomValue(workspacesAtom);
@@ -51,16 +40,10 @@ export function Sidebar() {
   const [currentWsId, setCurrentWsId] = useAtom(currentWorkspaceIdAtom);
   const [currentTabId, setCurrentTabId] = useAtom(currentTabIdAtom);
   const sidePaneTabId = useAtomValue(sidePaneTabIdAtom);
-  const setWorkspaces = useSetAtom(workspacesAtom);
-  const setGroups = useSetAtom(tabGroupsAtom);
-  const setTabs = useSetAtom(tabsAtom);
 
-  // Per-workspace expanded state. Defaults to "expanded" the first time we
-  // see a workspace, and the current workspace is always expanded.
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>(() => ({}));
   const [search, setSearch] = useState('');
 
-  // Group workspaceId → tabs sorted by orderIndex.
   const tabsByWorkspace = useMemo(() => {
     const groupToWs = new Map<string, string>();
     for (const g of groups) groupToWs.set(g.id, g.workspaceId);
@@ -76,8 +59,6 @@ export function Sidebar() {
     return out;
   }, [tabs, groups]);
 
-  // Auto-switch the current workspace whenever the current tab moves to a
-  // different workspace (e.g., via "Move to" in the context menu).
   useEffect(() => {
     if (!currentTabId) return;
     const t = tabs.find((x) => x.id === currentTabId);
@@ -89,10 +70,6 @@ export function Sidebar() {
 
   const query = search.trim().toLowerCase();
 
-  // While a search is active, persist auto-expansion: any workspace that is
-  // currently collapsed but has matching tabs becomes uncollapsed in the
-  // shared state. That way, when the user clears the search the expansion
-  // state they saw during the search sticks rather than snapping back.
   useEffect(() => {
     if (!query) return;
     startTransition(() => {
@@ -126,43 +103,41 @@ export function Sidebar() {
     );
   }
 
-  async function refresh() {
-    const all = await loadAll();
-    setWorkspaces(all.workspaces);
-    setGroups(all.groups);
-    setTabs(all.tabs);
-  }
-
   async function addWorkspace() {
     const name = (await dialogs.prompt('Workspace name', { title: 'New workspace' }))?.trim();
     if (!name) return;
     const now = Date.now();
-    const w = {
-      id: newId(),
-      name,
-      orderIndex: workspaces.length,
-      createdAt: now,
-      updatedAt: now,
-    };
+    const workspaceId = newId();
     const group: TabGroupRow = {
       id: newId(),
-      workspaceId: w.id,
+      workspaceId,
       name: 'Default',
       color: pickColor(0),
       collapsed: false,
       orderIndex: 0,
     };
-    await db.workspaces.put(w);
-    await db.tabGroups.put(group);
-    await refresh();
-    setCurrentWsId(w.id);
+    const w: WorkspaceRow = {
+      id: workspaceId,
+      name,
+      orderIndex: store.get(workspaceIdsAtom).length,
+      createdAt: now,
+      updatedAt: now,
+    };
+    store.set(workspaceIdsAtom, [...store.get(workspaceIdsAtom), workspaceId]);
+    store.set(workspaceBundleAtomFamily(workspaceId), {
+      workspace: w,
+      groups: [group],
+      tabs: [],
+    });
+    setCurrentWsId(workspaceId);
   }
 
   async function addTab(workspaceId: string) {
     const name =
       (await dialogs.prompt('Tab name', { title: 'New tab' }))?.trim() || 'untitled';
-    const group = await ensureDefaultGroup(workspaceId);
-    const existing = await db.tabs.where('tabGroupId').equals(group.id).toArray();
+    const group = ensureDefaultGroupInStore(store, workspaceId);
+    const b = store.get(workspaceBundleAtomFamily(workspaceId));
+    const existing = b.tabs.filter((t) => t.tabGroupId === group.id);
     const nextOrder = existing.reduce((m, t) => Math.max(m, t.orderIndex + 1), 0);
     const t: TabRow = {
       id: newId(),
@@ -172,12 +147,11 @@ export function Sidebar() {
       orderIndex: nextOrder,
       updatedAt: Date.now(),
     };
-    await db.tabs.put(t);
-    await db.graphs.put({
-      tabId: t.id,
-      doc: { idCounter: 1, nodes: [], edges: [], config: {} },
-    });
-    await refresh();
+    updateWorkspaceBundle(store, workspaceId, (cur) => ({
+      ...cur,
+      tabs: [...cur.tabs, t],
+    }));
+    store.set(graphDocAtomFamily(t.id), emptyGraphDoc());
     setCurrentWsId(workspaceId);
     setCurrentTabId(t.id);
   }
@@ -189,7 +163,7 @@ export function Sidebar() {
         <div className="flex gap-1">
           <button
             className="flex items-center rounded px-2 py-1 hover:bg-black/20"
-            onClick={addWorkspace}
+            onClick={() => void addWorkspace()}
             title="Add workspace"
           >
             <AddIcon fontSize="small" />
@@ -219,14 +193,9 @@ export function Sidebar() {
           const filtered = query
             ? wsTabs.filter((t) => t.name.toLowerCase().includes(query))
             : wsTabs;
-          // Hide entire workspace blocks while searching if they have no
-          // matching tabs — much cleaner than leaving empty headers behind.
           if (query && filtered.length === 0) return null;
           const isCurrent = w.id === currentWsId;
           const userCollapsed = !!collapsed[w.id];
-          // While searching, force-expand workspaces that have any matches
-          // even before the persistence effect runs (avoids a flash of
-          // collapsed state on the first keystroke).
           const isExpanded =
             query && filtered.length > 0 ? true : !userCollapsed;
           return (
@@ -248,7 +217,6 @@ export function Sidebar() {
                 if (!isCurrent) setCurrentWsId(w.id);
                 setCurrentTabId(t.id);
               }}
-              onChanged={refresh}
             />
           );
         })}
@@ -269,21 +237,21 @@ function WorkspaceItem({
   onToggle,
   onAddTab,
   onSelectTab,
-  onChanged,
 }: {
-  workspace: import('@/persistence/db').WorkspaceRow;
+  workspace: WorkspaceRow;
   isCurrent: boolean;
   isExpanded: boolean;
   tabs: TabRow[];
   tabCount: number;
   currentTabId: string | null;
   sidePaneTabId: string | null;
-  allWorkspaces: import('@/persistence/db').WorkspaceRow[];
+  allWorkspaces: WorkspaceRow[];
   onToggle: () => void;
   onAddTab: () => void;
   onSelectTab: (t: TabRow) => void;
-  onChanged: () => void | Promise<void>;
 }) {
+  const store = useStore();
+
   const menuItems: ContextMenuItem[] = [
     { label: 'Add tab', onSelect: onAddTab },
     { label: 'Rename', onSelect: () => void rename() },
@@ -303,8 +271,10 @@ function WorkspaceItem({
       })
     )?.trim();
     if (!name || name === workspace.name) return;
-    await db.workspaces.update(workspace.id, { name });
-    await onChanged();
+    updateWorkspaceBundle(store, workspace.id, (b) => ({
+      ...b,
+      workspace: { ...b.workspace, name, updatedAt: Date.now() },
+    }));
   }
 
   async function remove() {
@@ -317,19 +287,17 @@ function WorkspaceItem({
       { title: 'Delete workspace', destructive: true, confirmLabel: 'Delete' },
     );
     if (!ok) return;
-    const groups = await db.tabGroups.where('workspaceId').equals(workspace.id).toArray();
-    const groupIds = groups.map((g) => g.id);
-    const tabsToDelete = await db.tabs.where('tabGroupId').anyOf(groupIds).toArray();
-    const tabIds = tabsToDelete.map((t) => t.id);
-    await db.transaction('rw', db.workspaces, db.tabGroups, db.tabs, db.graphs, async () => {
-      for (const id of tabIds) {
-        await db.tabs.delete(id);
-        await db.graphs.delete(id);
-      }
-      for (const id of groupIds) await db.tabGroups.delete(id);
-      await db.workspaces.delete(workspace.id);
-    });
-    await onChanged();
+    const b = store.get(workspaceBundleAtomFamily(workspace.id));
+    for (const t of b.tabs) {
+      removeGraphStorageForTab(store, t.id);
+    }
+    localStorage.removeItem(workspaceStorageKey(workspace.id));
+    workspaceBundleAtomFamily.remove(workspace.id);
+    store.set(
+      workspaceIdsAtom,
+      store.get(workspaceIdsAtom).filter((id) => id !== workspace.id),
+    );
+    reconcileNavigationPointers(store);
   }
 
   return (
@@ -356,7 +324,6 @@ function WorkspaceItem({
           >
             <span className=" text-sm font-medium">{workspace.name}</span>
             <span className="px-2 text-xs opacity-50">({tabCount})</span>
-
           </button>
 
           <div className="flex gap-0.5 opacity-0 group-hover:opacity-100">
@@ -397,7 +364,6 @@ function WorkspaceItem({
                 onSelect={() => onSelectTab(t)}
                 currentWorkspaceId={workspace.id}
                 allWorkspaces={allWorkspaces}
-                onChanged={onChanged}
               />
             ))}
           </div>
@@ -414,16 +380,15 @@ function SidebarTab({
   onSelect,
   currentWorkspaceId,
   allWorkspaces,
-  onChanged,
 }: {
   tab: TabRow;
   isCurrent: boolean;
   isInSidePane: boolean;
   onSelect: () => void;
   currentWorkspaceId: string;
-  allWorkspaces: import('@/persistence/db').WorkspaceRow[];
-  onChanged: () => void | Promise<void>;
+  allWorkspaces: WorkspaceRow[];
 }) {
+  const store = useStore();
   const setSidePane = useSetAtom(sidePaneTabIdAtom);
 
   async function rename() {
@@ -431,8 +396,12 @@ function SidebarTab({
       await dialogs.prompt('Rename tab', { title: 'Rename tab', initial: tab.name })
     )?.trim();
     if (!name || name === tab.name) return;
-    await db.tabs.update(tab.id, { name });
-    await onChanged();
+    const wid = findWorkspaceIdForTab(store, tab.id);
+    if (!wid) return;
+    updateWorkspaceBundle(store, wid, (b) => ({
+      ...b,
+      tabs: b.tabs.map((x) => (x.id === tab.id ? { ...x, name } : x)),
+    }));
   }
 
   async function remove() {
@@ -442,19 +411,22 @@ function SidebarTab({
       confirmLabel: 'Remove',
     });
     if (!ok) return;
-    await db.tabs.delete(tab.id);
-    await db.graphs.delete(tab.id);
-    await onChanged();
+    const wid = findWorkspaceIdForTab(store, tab.id);
+    if (!wid) return;
+    removeGraphStorageForTab(store, tab.id);
+    updateWorkspaceBundle(store, wid, (b) => ({
+      ...b,
+      tabs: b.tabs.filter((x) => x.id !== tab.id),
+    }));
+    reconcileNavigationPointers(store);
   }
 
   async function showLinkedProjects() {
-    const g = await db.graphs.get(tab.id);
+    const doc = store.get(graphDocAtomFamily(tab.id));
     const projects = new Set<string>();
-    if (g?.doc) {
-      for (const n of g.doc.nodes) {
-        const p = (n.extra as { project?: string }).project;
-        if (p) projects.add(p);
-      }
+    for (const n of doc.nodes) {
+      const p = (n.extra as { project?: string }).project;
+      if (p) projects.add(p);
     }
     if (projects.size === 0) {
       await dialogs.alert(`Tab "${tab.name}" has no linked projects.`, {
@@ -468,11 +440,24 @@ function SidebarTab({
   }
 
   async function moveToWorkspace(workspaceId: string) {
-    const group = await ensureDefaultGroup(workspaceId);
-    const existing = await db.tabs.where('tabGroupId').equals(group.id).toArray();
-    const nextOrder = existing.reduce((m, t) => Math.max(m, t.orderIndex + 1), 0);
-    await db.tabs.update(tab.id, { tabGroupId: group.id, orderIndex: nextOrder });
-    await onChanged();
+    const sourceWid = findWorkspaceIdForTab(store, tab.id);
+    if (!sourceWid || sourceWid === workspaceId) return;
+    const group = ensureDefaultGroupInStore(store, workspaceId);
+    const targetBundle = store.get(workspaceBundleAtomFamily(workspaceId));
+    const existing = targetBundle.tabs.filter((x) => x.tabGroupId === group.id);
+    const nextOrder = existing.reduce((m, x) => Math.max(m, x.orderIndex + 1), 0);
+
+    updateWorkspaceBundle(store, sourceWid, (b) => ({
+      ...b,
+      tabs: b.tabs.filter((x) => x.id !== tab.id),
+    }));
+    updateWorkspaceBundle(store, workspaceId, (b) => ({
+      ...b,
+      tabs: [
+        ...b.tabs,
+        { ...tab, tabGroupId: group.id, orderIndex: nextOrder, updatedAt: Date.now() },
+      ],
+    }));
   }
 
   const moveSubmenu = allWorkspaces
@@ -494,8 +479,6 @@ function SidebarTab({
     { label: 'Remove', destructive: true, onSelect: () => void remove() },
   ];
 
-  // Encode pane membership in the tab background. Stronger tint for the
-  // primary pane, lighter tint for the side pane, strongest when both.
   const paneTint =
     isCurrent && isInSidePane
       ? 'bg-(--color-accent)/30 font-medium'
