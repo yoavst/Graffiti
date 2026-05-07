@@ -4,11 +4,13 @@
 import { getStore, type JotaiStore } from '@/state/store';
 import { getActiveTabFromStore } from '@/state/registry';
 import {
+  activeTabIdAtom,
   currentTabIdAtom,
   currentWorkspaceIdAtom,
   sidePaneTabIdAtom,
   tabsAtom,
 } from '@/state/workspaces';
+import { getTabFull } from '@/state/registry';
 import {
   inspectorVisibleAtom,
   isCurvedEdgesAtom,
@@ -39,9 +41,11 @@ export function runGraphRedo(): void {
   getActiveTabFromStore(getStore())?.actions.redo();
 }
 
-export function runExportCurrentTabJson(store: JotaiStore): void {
-  const id = store.get(currentTabIdAtom);
-  if (id) void exportTabToFile(id);
+export async function runExportCurrentTabJson(store: JotaiStore): Promise<void> {
+  const id = store.get(activeTabIdAtom);
+  if (!id) return;
+  await getTabFull(id)?.actions.flushAsync();
+  await exportTabToFile(id);
 }
 
 export async function runCopyCurrentTabMermaid(store: JotaiStore): Promise<void> {
@@ -133,9 +137,9 @@ export function buildCommands(store: JotaiStore): Command[] {
     {
       id: 'export.tab',
       title: 'Export current tab to JSON',
-      hotkey: 'Ctrl+S',
+      hotkey: 'Mod+S',
       section: 'File',
-      run: () => runExportCurrentTabJson(store),
+      run: () => void runExportCurrentTabJson(store),
     },
     {
       id: 'export.all',

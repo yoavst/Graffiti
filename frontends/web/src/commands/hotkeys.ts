@@ -18,7 +18,7 @@ import {
   isNewWillBeSelectedAtom,
 } from '@/state/settings';
 import { addCommentAction, addTextNodeAction } from './addNodeActions';
-import { runGraphRedo, runGraphUndo } from './commands';
+import { runExportCurrentTabJson, runGraphRedo, runGraphUndo } from './commands';
 import { exportAllTabsToTar } from '@/persistence/importExport';
 import { THEMES } from '@/graph/model';
 import { appOverlayAtom } from '@/state/appOverlay';
@@ -151,6 +151,14 @@ export function useHotkeys() {
     (e) => {
       e.preventDefault();
       void addTextNodeAction(store);
+    },
+    [store],
+  );
+  useHotkeysHook(
+    'mod+s',
+    (e) => {
+      e.preventDefault();
+      void runExportCurrentTabJson(store);
     },
     [store],
   );

@@ -55,6 +55,7 @@ export interface TabActions {
   setFarHighlight: (nodeId: number | null) => void;
   hydrate: () => Promise<void>;
   flush: () => void;
+  flushAsync: () => Promise<void>;
 }
 
 const persistTimers = new Map<string, ReturnType<typeof setTimeout>>();
@@ -65,15 +66,18 @@ export function makeTabActions(
   getRuntime: () => TabRuntime,
   bumpTick: () => void,
 ): TabActions {
+  async function persistNow() {
+    const rt = getRuntime();
+    await db.graphs.put({ tabId, doc: snapshotDoc(rt.doc) });
+    await db.tabs.update(tabId, { updatedAt: Date.now() });
+  }
+
   function schedulePersist() {
     const old = persistTimers.get(tabId);
     if (old) clearTimeout(old);
     const t = setTimeout(() => {
       persistTimers.delete(tabId);
-      const rt = getRuntime();
-      // structuredClone-ish snapshot to avoid Dexie holding our live doc
-      void db.graphs.put({ tabId, doc: snapshotDoc(rt.doc) });
-      void db.tabs.update(tabId, { updatedAt: Date.now() });
+      void persistNow();
     }, PERSIST_DEBOUNCE_MS);
     persistTimers.set(tabId, t);
   }
@@ -152,8 +156,15 @@ export function makeTabActions(
       if (t) {
         clearTimeout(t);
         persistTimers.delete(tabId);
-        const rt = getRuntime();
-        void db.graphs.put({ tabId, doc: snapshotDoc(rt.doc) });
+        void persistNow();
+      }
+    },
+    async flushAsync() {
+      const t = persistTimers.get(tabId);
+      if (t) {
+        clearTimeout(t);
+        persistTimers.delete(tabId);
+        await persistNow();
       }
     },
   };

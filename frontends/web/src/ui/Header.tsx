@@ -152,12 +152,12 @@ export function Header() {
           </IconButton>
         </Tooltip>
         <Tooltip
-          title={`Export current tab as JSON (click)\nExport all tabs as TAR (right-click or Ctrl+Alt+S)`}
+          title={`Export current tab as JSON (click or Mod+S)\nExport all tabs as TAR (right-click or Ctrl+Alt+S)`}
           slotProps={{ tooltip: { sx: { whiteSpace: 'pre-line' } } }}
         >
           <IconButton
             size="small"
-            onClick={() => runExportCurrentTabJson(store)}
+            onClick={() => void runExportCurrentTabJson(store)}
             onContextMenu={(e) => {
               e.preventDefault();
               void exportAllTabsToTar();
