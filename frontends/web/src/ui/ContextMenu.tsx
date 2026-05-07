@@ -4,6 +4,8 @@ import MenuItem from '@mui/material/MenuItem';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 
 export interface ContextMenuItem {
+  /** Stable list key; defaults to `label` when omitted. */
+  id?: string;
   label: string;
   onSelect: () => void;
   destructive?: boolean;
@@ -47,7 +49,7 @@ export function ContextMenu({
         slotProps={{ list: { dense: true } }}
       >
         {pos !== null &&
-          items.map((it, i) => <Item key={i} item={it} onSelected={close} />)}
+          items.map((it) => <Item key={it.id ?? it.label} item={it} onSelected={close} />)}
       </Menu>
     </div>
   );
@@ -90,8 +92,8 @@ function Item({ item, onSelected }: { item: ContextMenuItem; onSelected: () => v
             root: { sx: { pointerEvents: 'none' } },
           }}
         >
-          {submenu.map((sub, i) => (
-            <Item key={i} item={sub} onSelected={onSelected} />
+          {submenu.map((sub) => (
+            <Item key={sub.id ?? sub.label} item={sub} onSelected={onSelected} />
           ))}
         </Menu>
       </>

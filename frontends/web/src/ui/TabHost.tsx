@@ -9,6 +9,7 @@
 import { useAtomValue, useStore } from 'jotai';
 import { useEffect, useMemo, useState } from 'react';
 import { GraphCanvas } from '@/flow/GraphCanvas';
+import { useSubscribeTabDocMutations } from '@/hooks/useSubscribeTabDocMutations';
 import { tabRuntimeAtom, tabTickAtom, makeTabActions } from '@/state/graph';
 import { tabsAtom } from '@/state/workspaces';
 import { registerTab, unregisterTab } from '@/state/registry';
@@ -52,8 +53,7 @@ function MountedTab({
 }) {
   const store = useStore();
   const rt = useAtomValue(tabRuntimeAtom(tabId));
-  const tick = useAtomValue(tabTickAtom(tabId));
-  void tick;
+  useSubscribeTabDocMutations(tabId);
 
   const actions = useMemo(
     () =>

@@ -66,7 +66,7 @@ const EDGE_PAN_DRAG_THRESHOLD_PX = 3;
  */
 function useEdgeStrokePan() {
   const { getViewport, setViewport } = useReactFlow();
-  const panSession = useRef<{
+  const panSessionRef = useRef<{
     pointerId: number;
     startX: number;
     startY: number;
@@ -78,7 +78,7 @@ function useEdgeStrokePan() {
   const onPointerDown = useCallback(
     (e: ReactPointerEvent<SVGPathElement>) => {
       if (e.button !== 0) return;
-      panSession.current = {
+      panSessionRef.current = {
         pointerId: e.pointerId,
         startX: e.clientX,
         startY: e.clientY,
@@ -96,7 +96,7 @@ function useEdgeStrokePan() {
 
   const onPointerMove = useCallback(
     (e: ReactPointerEvent<SVGPathElement>) => {
-      const s = panSession.current;
+      const s = panSessionRef.current;
       if (!s || e.pointerId !== s.pointerId) return;
       const dx = e.clientX - s.startX;
       const dy = e.clientY - s.startY;
@@ -111,7 +111,7 @@ function useEdgeStrokePan() {
   );
 
   const endPointer = useCallback((e: ReactPointerEvent<SVGPathElement>) => {
-    const s = panSession.current;
+    const s = panSessionRef.current;
     if (!s || e.pointerId !== s.pointerId) return;
     try {
       e.currentTarget.releasePointerCapture(e.pointerId);
@@ -121,12 +121,12 @@ function useEdgeStrokePan() {
     if (!s.dragging) {
       suppressClickRef.current = false;
     }
-    panSession.current = null;
+    panSessionRef.current = null;
   }, []);
 
   const onLostPointerCapture = useCallback((e: ReactPointerEvent<SVGPathElement>) => {
-    if (panSession.current?.pointerId === e.pointerId) {
-      panSession.current = null;
+    if (panSessionRef.current?.pointerId === e.pointerId) {
+      panSessionRef.current = null;
     }
   }, []);
 

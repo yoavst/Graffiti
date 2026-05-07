@@ -1,8 +1,8 @@
 // Single source of truth for commands. Both the command palette and the
 // hotkey hook consume this list.
 
-import type { JotaiStore } from '@/state/store';
-import { getCurrentTab } from '@/state/registry';
+import { getStore, type JotaiStore } from '@/state/store';
+import { getActiveTabFromStore } from '@/state/registry';
 import {
   currentTabIdAtom,
   currentWorkspaceIdAtom,
@@ -32,11 +32,11 @@ export interface Command {
 }
 
 export function runGraphUndo(): void {
-  getCurrentTab()?.actions.undo();
+  getActiveTabFromStore(getStore())?.actions.undo();
 }
 
 export function runGraphRedo(): void {
-  getCurrentTab()?.actions.redo();
+  getActiveTabFromStore(getStore())?.actions.redo();
 }
 
 export function runExportCurrentTabJson(store: JotaiStore): void {

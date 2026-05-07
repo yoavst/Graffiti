@@ -1,5 +1,5 @@
 import { Command } from 'cmdk';
-import { useEffect, useMemo, useState } from 'react';
+import { startTransition, useEffect, useMemo, useState } from 'react';
 import { useAtomValue, useSetAtom, useStore } from 'jotai';
 import { useHotkeys } from 'react-hotkeys-hook';
 import { THEMES } from '@/graph/model';
@@ -45,6 +45,8 @@ export function NodeSearchPalette() {
   const tickPrimary = useAtomValue(tabTickAtom(primary ?? ''));
   const tickSide = useAtomValue(tabTickAtom(side ?? ''));
 
+  // Store identity is stable; include workspace snapshots so the memo invalidates when tabs change.
+  // eslint-disable-next-line @eslint-react/exhaustive-deps -- wsId/groups/tabs intentionally bust the cache
   const workspaceTabsKey = useMemo(() => orderedWorkspaceTabs(store).map((t) => t.id).join(','), [store, wsId, groups, tabs]);
 
   useHotkeys(
@@ -67,7 +69,7 @@ export function NodeSearchPalette() {
   useEffect(() => {
     if (!open) return;
     let cancelled = false;
-    setLoading(true);
+    startTransition(() => setLoading(true));
     void (async () => {
       const hits = await loadNavNodeHits(store, scope);
       if (!cancelled) {

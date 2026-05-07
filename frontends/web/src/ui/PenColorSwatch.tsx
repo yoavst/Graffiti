@@ -48,7 +48,7 @@ export function PenColorSwatch({ tabId }: { tabId: string }) {
       >
         {THEMES.map((t, i) => (
           <button
-            key={i}
+            key={t.bg}
             className={`h-7 w-7 rounded-full ${
               current === i ? 'ring-2 ring-(--color-accent)' : 'border border-(--color-border)'
             }`}

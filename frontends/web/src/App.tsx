@@ -5,7 +5,6 @@ import { ThemeProvider } from '@mui/material/styles';
 import { getStore } from '@/state/store';
 import { theme } from '@/ui/theme';
 import {
-  activeTabIdAtom,
   currentTabIdAtom,
   currentWorkspaceIdAtom,
   ensureDefaultWorkspace,
@@ -25,7 +24,6 @@ import { TokenDialog } from './ui/dialogs/TokenDialog';
 import { HelpDialog } from './ui/dialogs/HelpDialog';
 import { DialogHost } from './ui/dialogs/Dialogs';
 import { useHotkeys } from './commands/hotkeys';
-import { setCurrentTab } from './state/registry';
 import { CommandPalette } from './ui/CommandPalette';
 import { NodeSearchPalette } from './ui/NodeSearchPalette';
 import { TabJumpPalette } from './ui/TabJumpPalette';
@@ -78,15 +76,7 @@ function Inner() {
         setBootDone(true);
       }
     })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // Track the *active* tab (the one in the pane the user last clicked) for
-  // global hotkeys, network dispatch, and MCP — not just the primary pane.
-  const activeTabId = useAtomValue(activeTabIdAtom);
-  useEffect(() => {
-    setCurrentTab(activeTabId ?? null);
-  }, [activeTabId]);
+  }, [setCurrentWsId, setCurrentTabId, setBootDone, setWorkspaces, setGroups, setTabs]);
 
   // URL state — read on boot, write on changes
   const sidePane = useAtomValue(sidePaneTabIdAtom);

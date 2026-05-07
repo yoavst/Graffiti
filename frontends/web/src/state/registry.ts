@@ -1,11 +1,13 @@
 // A small singleton that maps tabId -> live runtime + actions, so the
 // websocket dispatcher (and command palette) can target tabs without
-// going through React.
+// going through React. The active tab id is always `activeTabIdAtom` in Jotai
+// (pane-aware); resolve it with `useAtomValue` in React or `getActiveTabFromStore(store)` elsewhere.
 
 import type { TabActions, TabRuntime } from './graph';
+import type { JotaiStore } from './store';
+import { activeTabIdAtom } from './workspaces';
 
 const runtimes = new Map<string, { rt: TabRuntime; actions: TabActions; refcount: number }>();
-let currentTabId: string | null = null;
 
 export function registerTab(tabId: string, rt: TabRuntime, actions: TabActions) {
   const cur = runtimes.get(tabId);
@@ -30,17 +32,14 @@ export function getTab(tabId: string) {
   return e ? { rt: e.rt, actions: e.actions } : null;
 }
 
-export function setCurrentTab(tabId: string | null) {
-  currentTabId = tabId;
-}
-
-export function getCurrentTab() {
-  if (currentTabId == null) return null;
-  const e = runtimes.get(currentTabId);
-  return e ? { tabId: currentTabId, ...e } : null;
-}
-
 export function getTabFull(tabId: string) {
   const e = runtimes.get(tabId);
   return e ? { tabId, rt: e.rt, actions: e.actions } : null;
+}
+
+/** Non-React entry: read `activeTabIdAtom` from `store`, then the live registry row. */
+export function getActiveTabFromStore(store: JotaiStore) {
+  const id = store.get(activeTabIdAtom);
+  if (id == null) return null;
+  return getTabFull(id);
 }

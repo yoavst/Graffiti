@@ -32,17 +32,12 @@ import { connect } from '@/network/websocket';
 import { wsClientAtom } from '@/state/wsClient';
 import { dispatchInbound } from '@/network/protocol/dispatch';
 import { getStore } from '@/state/store';
-import { getCurrentTab, getTabFull } from '@/state/registry';
+import { getActiveTabFromStore, getTabFull } from '@/state/registry';
 import { addCommentAction, addTextNodeAction } from '@/commands/addNodeActions';
-import {
-  openNodeSearchInCurrentTab,
-  runExportCurrentTabJson,
-  runGraphRedo,
-  runGraphUndo,
-} from '@/commands/commands';
+import { openNodeSearchInCurrentTab, runExportCurrentTabJson } from '@/commands/commands';
 import { importUserPickedFiles } from '@/persistence/tabImport';
 import { exportAllTabsToTar } from '@/persistence/importExport';
-import { loadAll, tabsAtom, currentTabIdAtom } from '@/state/workspaces';
+import { activeTabIdAtom, loadAll, tabsAtom, currentTabIdAtom } from '@/state/workspaces';
 import { dialogs } from '@/ui/dialogs/Dialogs';
 import { ShareGraphDialog } from '@/ui/dialogs/ShareGraphDialog';
 
@@ -60,6 +55,7 @@ export function Header() {
   const store = useStore();
   const setTabs = useSetAtom(tabsAtom);
   const setCurrentTabId = useSetAtom(currentTabIdAtom);
+  const activeTabId = useAtomValue(activeTabIdAtom);
   const setOverlay = useSetAtom(appOverlayAtom);
   const importInputRef = useRef<HTMLInputElement>(null);
 
@@ -86,7 +82,7 @@ export function Header() {
         dispatchInbound(
           {
             store,
-            getCurrentTab: () => getCurrentTab(),
+            getCurrentTab: () => getActiveTabFromStore(store),
             getTab: getTabFull,
             ws: c,
             isExistingToNew: () => store.get(isExistingToNewAtom),
@@ -186,12 +182,24 @@ export function Header() {
           </IconButton>
         </Tooltip>
         <Tooltip title="Undo (Ctrl+Z)">
-          <IconButton size="small" onClick={() => runGraphUndo()}>
+          <IconButton
+            size="small"
+            onClick={() => {
+              if (!activeTabId) return;
+              getTabFull(activeTabId)?.actions.undo();
+            }}
+          >
             <UndoOutlinedIcon fontSize="small" />
           </IconButton>
         </Tooltip>
         <Tooltip title="Redo (Ctrl+Y / Ctrl+Shift+Z)">
-          <IconButton size="small" onClick={() => runGraphRedo()}>
+          <IconButton
+            size="small"
+            onClick={() => {
+              if (!activeTabId) return;
+              getTabFull(activeTabId)?.actions.redo();
+            }}
+          >
             <RedoOutlinedIcon fontSize="small" />
           </IconButton>
         </Tooltip>

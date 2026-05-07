@@ -9,8 +9,7 @@ export type SelectionV2 = Array<Array<[string, unknown]>>;
 function matchAnd(extra: NodeExtra, clauses: Array<[string, unknown]>): boolean {
   for (const [key, value] of clauses) {
     if (!(key in extra)) return false;
-    // legacy uses `!=` (loose), preserve that.
-    // eslint-disable-next-line eqeqeq
+    // Legacy uses loose inequality; preserve that for selection matching.
     if ((extra as Record<string, unknown>)[key] != value) return false;
   }
   return true;

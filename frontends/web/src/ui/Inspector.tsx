@@ -9,8 +9,8 @@ import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { inspectorVisibleAtom } from '@/state/settings';
 import { activeTabAtom, loadAll, tabsAtom } from '@/state/workspaces';
-import { makeTabActions, tabRuntimeAtom, tabTickAtom } from '@/state/graph';
-import { db } from '@/persistence/db';
+import { makeTabActions, tabRuntimeAtom, tabTickAtom, type TabActions, type TabRuntime } from '@/state/graph';
+import { db, type TabRow } from '@/persistence/db';
 import {
   EDGE_COLORS,
   NODE_EXTRA_INSPECTOR_HIDDEN_KEYS,
@@ -19,51 +19,39 @@ import {
   type GNode,
   type GraphConfig,
 } from '@/graph/model';
-import { getTabFull } from '@/state/registry';
+import { useSubscribeTabDocMutations } from '@/hooks/useSubscribeTabDocMutations';
+import type { WSClient } from '@/network/websocket';
 import { wsClientAtom } from '@/state/wsClient';
 import { jumpToPayload } from '@/network/protocol/legacy';
 
-export function Inspector() {
-  const [visible, setVisible] = useAtom(inspectorVisibleAtom);
-  const tab = useAtomValue(activeTabAtom);
-  const ws = useAtomValue(wsClientAtom);
-  const rt = useAtomValue(tabRuntimeAtom(tab?.id ?? ''));
-  const tick = useAtomValue(tabTickAtom(tab?.id ?? ''));
-  void tick;
-
-  if (!tab || !visible) {
-    return (
-      <div className="flex w-9 flex-col items-center border-l border-(--color-border) bg-(--color-bg-2) p-1">
-        <button
-          className="flex items-center rounded px-1.5 py-0.5"
-          onClick={() => setVisible(true)}
-          title="Show inspector"
-        >
-          <ChevronLeftIcon fontSize="small" />
-        </button>
-      </div>
-    );
-  }
-
+function InspectorEditorColumn({
+  tab,
+  ws,
+  rt,
+  actions,
+  onHide,
+}: {
+  tab: TabRow;
+  ws: WSClient | null;
+  rt: TabRuntime;
+  actions: TabActions;
+  onHide: () => void;
+}) {
   const selectedNode =
-    rt.selectedNodeId != null ? rt.doc.nodes.find((n) => n.id === rt.selectedNodeId) : null;
+    rt.selectedNodeId != null ? rt.doc.nodes.find((n) => n.id === rt.selectedNodeId) ?? null : null;
   const selectedEdge =
-    rt.selectedEdgeId != null ? rt.doc.edges.find((e) => e.id === rt.selectedEdgeId) : null;
+    rt.selectedEdgeId != null ? rt.doc.edges.find((e) => e.id === rt.selectedEdgeId) ?? null : null;
   const hasSelection = !!(selectedNode ?? selectedEdge);
   const [sheet, setSheet] = useState<'selection' | 'notes'>('selection');
-  useEffect(() => {
-    if (hasSelection) setSheet('selection');
-  }, [hasSelection, selectedNode?.id, selectedEdge?.id]);
-
   const headerLabel =
     !hasSelection || sheet === 'notes' ? 'Tab notes' : selectedNode ? 'Node' : 'Edge';
 
   return (
-    <aside className="flex h-full min-h-0 w-72 flex-col border-l border-(--color-border) bg-(--color-bg-2) text-base">
+    <>
       <div className="flex shrink-0 items-center justify-between border-b border-(--color-border) px-3 py-2">
         <span className="text-sm font-semibold uppercase text-(--color-fg-dim)">{headerLabel}</span>
         <button
-          onClick={() => setVisible(false)}
+          onClick={onHide}
           title="Hide inspector"
           className="flex items-center rounded px-2 py-1 hover:bg-(--color-bg-3)"
         >
@@ -94,9 +82,9 @@ export function Inspector() {
             {!hasSelection || sheet === 'notes' ? (
               <NotesEditor key={tab.id} tabId={tab.id} initial={tab.notes ?? ''} />
             ) : selectedNode ? (
-              <NodeInspector key={`${tab.id}-${selectedNode.id}`} tabId={tab.id} />
+              <NodeInspector key={`${tab.id}-${selectedNode.id}`} tabId={tab.id} actions={actions} />
             ) : selectedEdge ? (
-              <EdgeInspector key={`${tab.id}-${selectedEdge.id}`} tabId={tab.id} />
+              <EdgeInspector key={`${tab.id}-${selectedEdge.id}`} tabId={tab.id} actions={actions} />
             ) : null}
           </div>
           {sheet === 'selection' && ((selectedNode?.extra.address && ws) || selectedEdge) ? (
@@ -121,8 +109,7 @@ export function Inspector() {
                   color="error"
                   startIcon={<DeleteIcon />}
                   onClick={() => {
-                    const tabFull = getTabFull(tab.id);
-                    if (tabFull) tabFull.actions.apply({ type: 'removeEdge', data: selectedEdge });
+                    actions.apply({ type: 'removeEdge', data: selectedEdge });
                   }}
                 >
                   Remove edge
@@ -130,6 +117,63 @@ export function Inspector() {
               )}
             </div>
           ) : null}
+        </div>
+      </div>
+    </>
+  );
+}
+
+export function Inspector() {
+  const [visible, setVisible] = useAtom(inspectorVisibleAtom);
+  const tab = useAtomValue(activeTabAtom);
+  const ws = useAtomValue(wsClientAtom);
+  const store = useStore();
+  const tabId = tab?.id ?? '';
+  useSubscribeTabDocMutations(tabId);
+  const rt = useAtomValue(tabRuntimeAtom(tabId));
+  const actions = useMemo(
+    () =>
+      tabId
+        ? makeTabActions(
+            tabId,
+            () => store.get(tabRuntimeAtom(tabId)),
+            () => store.set(tabTickAtom(tabId), (n) => n + 1),
+          )
+        : null,
+    [tabId, store],
+  );
+
+  if (!tab || !visible) {
+    return (
+      <div className="flex w-9 flex-col items-center border-l border-(--color-border) bg-(--color-bg-2) p-1">
+        <button
+          className="flex items-center rounded px-1.5 py-0.5"
+          onClick={() => setVisible(true)}
+          title="Show inspector"
+        >
+          <ChevronLeftIcon fontSize="small" />
+        </button>
+      </div>
+    );
+  }
+
+  if (!actions) {
+    return null;
+  }
+
+  const selectionRemountKey = `${rt.selectedNodeId ?? ''}:${rt.selectedEdgeId ?? ''}`;
+
+  return (
+    <aside className="flex h-full min-h-0 w-72 flex-col border-l border-(--color-border) bg-(--color-bg-2) text-base">
+      <div className="flex min-h-0 flex-1 flex-col">
+        <div key={selectionRemountKey} className="flex min-h-0 flex-1 flex-col">
+          <InspectorEditorColumn
+            tab={tab}
+            ws={ws}
+            rt={rt}
+            actions={actions}
+            onHide={() => setVisible(false)}
+          />
         </div>
         <div className="flex min-h-0 flex-1 flex-col">
           <div className="shrink-0 border-b border-(--color-border) px-3 py-1.5 text-xs font-semibold uppercase text-(--color-fg-dim)">
@@ -146,9 +190,8 @@ export function Inspector() {
 
 function ColorLegendPanel({ tabId }: { tabId: string }) {
   const store = useStore();
+  useSubscribeTabDocMutations(tabId);
   const rt = useAtomValue(tabRuntimeAtom(tabId));
-  const tick = useAtomValue(tabTickAtom(tabId));
-  void tick;
 
   const actions = useMemo(
     () =>
@@ -185,7 +228,7 @@ function ColorLegendPanel({ tabId }: { tabId: string }) {
               title={c.label}
             />
             <LegendDescriptionField
-              key={`${tabId}::${c.id}`}
+              key={`${tabId}::${c.id}::${desc}`}
               colorId={c.id}
               committed={desc}
               placeholder={c.label}
@@ -225,10 +268,6 @@ function LegendDescriptionField({
     committedRef.current = l;
   }
 
-  useEffect(() => {
-    setLocal(committed);
-  }, [committed, colorId]);
-
   useLayoutEffect(() => {
     return () => flushIfDirty();
   }, [colorId]);
@@ -260,15 +299,12 @@ function nodeThemeSwatchActive(node: GNode, i: number): boolean {
   return (node.theme ?? 0) === i;
 }
 
-function NodeInspector({ tabId }: { tabId: string }) {
-  const t = getTabFull(tabId);
+function NodeInspector({ tabId, actions }: { tabId: string; actions: TabActions }) {
+  useSubscribeTabDocMutations(tabId);
   const rt = useAtomValue(tabRuntimeAtom(tabId));
-  const tick = useAtomValue(tabTickAtom(tabId));
-  void tick;
-  if (!t || rt.selectedNodeId == null) return null;
+  if (rt.selectedNodeId == null) return null;
   const node = rt.doc.nodes.find((n) => n.id === rt.selectedNodeId);
   if (!node) return null;
-  const actions = t.actions;
 
   function setKey(key: string, value: unknown) {
     if (!node) return;
@@ -291,10 +327,10 @@ function NodeInspector({ tabId }: { tabId: string }) {
         <div className="mt-1.5 flex flex-wrap gap-1.5">
           {THEMES.map((th, i) => (
             <button
-              key={i}
+              key={th.bg}
               className={`h-7 w-7 rounded-full ${nodeThemeSwatchActive(node, i)
-                  ? 'ring-2 ring-(--color-accent)'
-                  : 'border border-(--color-border)'
+                ? 'ring-2 ring-(--color-accent)'
+                : 'border border-(--color-border)'
                 }`}
               style={{ background: th.bg }}
               onClick={() =>
@@ -480,15 +516,12 @@ function NewPropertyRow({ onAdd }: { onAdd: (k: string, v: unknown) => void }) {
   );
 }
 
-function EdgeInspector({ tabId }: { tabId: string }) {
-  const t = getTabFull(tabId);
+function EdgeInspector({ tabId, actions }: { tabId: string; actions: TabActions }) {
+  useSubscribeTabDocMutations(tabId);
   const rt = useAtomValue(tabRuntimeAtom(tabId));
-  const tick = useAtomValue(tabTickAtom(tabId));
-  void tick;
-  if (!t || rt.selectedEdgeId == null) return null;
+  if (rt.selectedEdgeId == null) return null;
   const edge = rt.doc.edges.find((e) => e.id === rt.selectedEdgeId);
   if (!edge) return null;
-  const actions = t.actions;
   const targetNode = rt.doc.nodes.find((n) => n.id === edge.to);
   const targetIsComment = targetNode?.extra.isComment === true;
   const arrowValue = edge.arrow ?? (targetIsComment ? 'none' : 'normal');

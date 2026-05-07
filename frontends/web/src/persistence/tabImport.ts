@@ -1,12 +1,12 @@
 import { getStore } from '@/state/store';
-import { getCurrentTab } from '@/state/registry';
+import { getActiveTabFromStore } from '@/state/registry';
 import { currentTabIdAtom, currentWorkspaceIdAtom } from '@/state/workspaces';
 import { db } from '@/persistence/db';
 import { importFile } from '@/persistence/importExport';
 
 export async function resolveImportTargetGroupId(): Promise<string | null> {
   let targetGroupId: string | null = null;
-  const cur = getCurrentTab();
+  const cur = getActiveTabFromStore(getStore());
   if (cur) {
     const tab = await db.tabs.get(cur.tabId);
     if (tab) targetGroupId = tab.tabGroupId;

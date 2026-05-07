@@ -22,6 +22,8 @@ export function TabJumpPalette() {
   const tabs = useAtomValue(tabsAtom);
   const setCurrentTabId = useSetAtom(currentTabIdAtom);
   const setActivePane = useSetAtom(activePaneAtom);
+  // Store identity is stable; include workspace snapshots so the memo invalidates when tabs change.
+  // eslint-disable-next-line @eslint-react/exhaustive-deps -- wsId/groups/tabs intentionally bust the cache
   const workspaceTabs = useMemo(() => orderedWorkspaceTabs(store), [store, wsId, groups, tabs]);
 
   useHotkeys(

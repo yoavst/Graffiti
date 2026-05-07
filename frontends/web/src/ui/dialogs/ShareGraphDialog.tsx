@@ -1,5 +1,5 @@
 import { useAtomValue, useSetAtom, useStore } from 'jotai';
-import { Fragment, useCallback, useEffect, useRef, useState } from 'react';
+import { Fragment, startTransition, useCallback, useEffect, useRef, useState } from 'react';
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
@@ -34,7 +34,7 @@ export function ShareGraphDialog() {
   const dpiInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
-    if (open) setClipboardToast(false);
+    if (open) startTransition(() => setClipboardToast(false));
   }, [open]);
 
   const dpi = (() => {

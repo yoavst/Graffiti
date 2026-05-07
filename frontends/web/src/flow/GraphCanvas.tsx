@@ -157,11 +157,9 @@ function CanvasInner({ tabId, pane, actions, rt, layoutEngine, onJumpToIde, onAc
     return () => {
       cancelled = true;
     };
-    // `flow` and `initialViewport` excluded by design — read via refs.
-    // `positions` excluded so its own setPositions doesn't re-trigger us.
-    // We watch `tick` (bumped after every reducer mutation) instead of the
-    // doc arrays directly because the reducer mutates them in place.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // `flow` read via refs. `positions` omitted so setPositions doesn't re-trigger.
+    // `tick` replaces `rt.doc.*` deps: the doc arrays keep stable references under in-place mutation.
+    // eslint-disable-next-line @eslint-react/exhaustive-deps -- intentional; adding positions.size / rt.doc causes loops or redundant runs
   }, [tick, layoutEngine, curved, tabId]);
 
   // Auto-fit AFTER the new positions have landed AND React Flow has
@@ -273,7 +271,7 @@ function CanvasInner({ tabId, pane, actions, rt, layoutEngine, onJumpToIde, onAc
       }
       return node;
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line @eslint-react/exhaustive-deps -- `tick` re-runs when the doc mutates in place; `rt.doc.nodes` keeps the same reference
   }, [rt.doc.nodes, rt.selectedNodeId, rt.farHighlightNodeId, positions, tick]);
 
   const onEdgeMiddleClick = useCallback(
@@ -326,7 +324,7 @@ function CanvasInner({ tabId, pane, actions, rt, layoutEngine, onJumpToIde, onAc
         },
       };
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line @eslint-react/exhaustive-deps -- `tick` re-runs when the doc mutates in place; edge/node arrays keep stable references
   }, [rt.doc.edges, rt.doc.nodes, rt.selectedEdgeId, tick, positions, onEdgeMiddleClick]);
 
   const onNodeClick: NodeMouseHandler = useCallback(

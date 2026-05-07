@@ -1,5 +1,5 @@
 import { useAtom, useAtomValue, useSetAtom } from 'jotai';
-import { useEffect, useMemo, useState } from 'react';
+import { startTransition, useEffect, useMemo, useState } from 'react';
 import TextField from '@mui/material/TextField';
 import AddIcon from '@mui/icons-material/Add';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
@@ -95,18 +95,20 @@ export function Sidebar() {
   // state they saw during the search sticks rather than snapping back.
   useEffect(() => {
     if (!query) return;
-    setCollapsed((c) => {
-      let next = c;
-      for (const w of workspaces) {
-        if (!c[w.id]) continue;
-        const wsTabs = tabsByWorkspace.get(w.id) ?? [];
-        const hasMatch = wsTabs.some((t) => t.name.toLowerCase().includes(query));
-        if (hasMatch) {
-          if (next === c) next = { ...c };
-          next[w.id] = false;
+    startTransition(() => {
+      setCollapsed((c) => {
+        let next = c;
+        for (const w of workspaces) {
+          if (!c[w.id]) continue;
+          const wsTabs = tabsByWorkspace.get(w.id) ?? [];
+          const hasMatch = wsTabs.some((t) => t.name.toLowerCase().includes(query));
+          if (hasMatch) {
+            if (next === c) next = { ...c };
+            next[w.id] = false;
+          }
         }
-      }
-      return next;
+        return next;
+      });
     });
   }, [query, workspaces, tabsByWorkspace]);
 

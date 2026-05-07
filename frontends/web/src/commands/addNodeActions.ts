@@ -7,14 +7,14 @@ import { normalizePendingNodeTheme } from '@/graph/model';
 import { handleAddData } from '@/network/protocol/legacy';
 import { tabsAtom } from '@/state/workspaces';
 import { isExistingToNewAtom, isNewWillBeSelectedAtom } from '@/state/settings';
-import { getCurrentTab } from '@/state/registry';
+import { getActiveTabFromStore } from '@/state/registry';
 import { dialogs } from '@/ui/dialogs/Dialogs';
 import type { JotaiStore } from '@/state/store';
 
 const TEXTAREA_FOOTER = 'Use **bold** or *italic* — markdown is supported.';
 
 export async function addTextNodeAction(store: JotaiStore): Promise<void> {
-  const target = getCurrentTab();
+  const target = getActiveTabFromStore(store);
   if (!target) {
     await dialogs.alert('No active tab.', { title: 'Add text node' });
     return;
@@ -48,7 +48,7 @@ export async function addTextNodeAction(store: JotaiStore): Promise<void> {
 }
 
 export async function addCommentAction(store: JotaiStore): Promise<void> {
-  const target = getCurrentTab();
+  const target = getActiveTabFromStore(store);
   if (!target) {
     await dialogs.alert('No active tab.', { title: 'Add comment' });
     return;

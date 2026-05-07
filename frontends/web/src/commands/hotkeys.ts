@@ -9,7 +9,7 @@ import {
   loadAll,
 } from '@/state/workspaces';
 import { db } from '@/persistence/db';
-import { getCurrentTab } from '@/state/registry';
+import { getTabFull } from '@/state/registry';
 import { requestFitViewForTab } from '@/flow/flowFitViewBridge';
 import { useStore } from 'jotai';
 import {
@@ -35,6 +35,7 @@ function themeIndexFromDigitKey(key: string): number | null {
 export function useHotkeys() {
   const setSide = useSetAtom(sidePaneTabIdAtom);
   const currentTabId = useAtomValue(currentTabIdAtom);
+  const activeTabId = useAtomValue(activeTabIdAtom);
   const setInspector = useSetAtom(inspectorVisibleAtom);
   const inspector = useAtomValue(inspectorVisibleAtom);
   const tabs = useAtomValue(tabsAtom);
@@ -82,10 +83,10 @@ export function useHotkeys() {
         return;
       }
       e.preventDefault();
-      const t = getCurrentTab();
+      const t = activeTabId ? getTabFull(activeTabId) : null;
       t?.actions.select(null);
     },
-    [store],
+    [store, activeTabId],
   );
   useHotkeysHook(
     'shift+/',
@@ -107,7 +108,7 @@ export function useHotkeys() {
     'delete',
     (e) => {
       e.preventDefault();
-      const t = getCurrentTab();
+      const t = activeTabId ? getTabFull(activeTabId) : null;
       if (!t) return;
       const sel = t.rt.selectedNodeId;
       if (sel == null) return;
@@ -119,7 +120,7 @@ export function useHotkeys() {
         { type: 'removeNode' as const, data: node },
       ]);
     },
-    [],
+    [activeTabId],
   );
   useHotkeysHook(
     'mod+.',
@@ -177,7 +178,7 @@ export function useHotkeys() {
       if (e.ctrlKey || e.metaKey || e.altKey) return;
       const idx = themeIndexFromDigitKey(e.key);
       if (idx === null) return;
-      const t = getCurrentTab();
+      const t = activeTabId ? getTabFull(activeTabId) : null;
       if (!t) return;
       const sel = t.rt.selectedNodeId;
       if (sel != null) {
@@ -199,7 +200,7 @@ export function useHotkeys() {
         store.set(tabsAtom, all.tabs);
       })();
     },
-    [store],
+    [store, activeTabId],
   );
   void tabs;
 }

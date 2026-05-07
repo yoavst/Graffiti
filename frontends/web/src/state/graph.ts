@@ -39,11 +39,11 @@ function emptyRuntime(): TabRuntime {
 }
 
 // Per-tab runtime atom (in-memory only; doc is persisted separately).
-export const tabRuntimeAtom = atomFamily((_tabId: string) => atom<TabRuntime>(emptyRuntime()));
+export const tabRuntimeAtom = atomFamily((_: string) => atom<TabRuntime>(emptyRuntime()));
 
 // "Tick" atom we bump after each mutation so React subscribers re-render.
 // We mutate the doc/history in place for performance and bump this counter.
-export const tabTickAtom = atomFamily((_tabId: string) => atom(0));
+export const tabTickAtom = atomFamily((_: string) => atom(0));
 
 export interface TabActions {
   apply: (op: Op) => Op;
