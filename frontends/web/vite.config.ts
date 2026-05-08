@@ -2,7 +2,7 @@ import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
 import path from 'node:path';
 
-const VERSION = '_VERSION_';
+const VERSION = '2.0';
 
 export default defineConfig({
   plugins: [react()],
@@ -21,6 +21,11 @@ export default defineConfig({
   server: {
     port: 5173,
     open: true,
+    fs: {
+      // When `fs.allow` is set, Vite no longer implicitly allows the project root.
+      // Include the web root so `/index.html` can be served, plus the repo-level docs.
+      allow: [path.resolve(__dirname), path.resolve(__dirname, '..', '..', 'docs')],
+    },
   },
   test: {
     environment: 'jsdom',

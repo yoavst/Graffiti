@@ -273,7 +273,7 @@ export function Header() {
           <KeyOutlinedIcon fontSize="small" />
         </IconButton>
       </Tooltip>
-      <Tooltip title="Help (?)">
+      <Tooltip title="Help">
         <IconButton size="small" onClick={() => setOverlay('help')}>
           <HelpIcon fontSize="small" />
         </IconButton>

@@ -215,7 +215,6 @@ export function buildCommands(store: JotaiStore): Command[] {
     {
       id: 'help',
       title: 'Show help',
-      hotkey: '?',
       section: 'Help',
       run: () => {
         store.set(appOverlayAtom, 'help');

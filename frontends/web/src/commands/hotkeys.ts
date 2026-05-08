@@ -89,14 +89,6 @@ export function useHotkeys() {
     [overlay, setOverlay, activeGraphId],
   );
   useHotkeysHook(
-    'shift+/',
-    () => {
-      setOverlay((o) => (o === 'help' ? 'none' : 'help'));
-    },
-    { preventDefault: true },
-    [setOverlay],
-  );
-  useHotkeysHook(
     'mod+k',
     () => {
       setOverlay((o) => (o === 'token' ? 'none' : 'token'));
