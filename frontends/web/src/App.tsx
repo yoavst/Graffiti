@@ -27,10 +27,10 @@ import { FileDropImport } from './ui/FileDropImport';
 function Inner() {
   const [currentWsId] = useAtom(currentWorkspaceIdAtom);
   const [currentTabId] = useAtom(currentTabIdAtom);
-  const overlay = useAtomValue(appOverlayAtom);
-  const setOverlay = useSetAtom(appOverlayAtom);
+  const [overlay, setOverlay] = useAtom(appOverlayAtom);
   const sidePane = useAtomValue(sidePaneTabIdAtom);
 
+  // Update URL state when workspace/tab/side pane changes
   useEffect(() => {
     writeUrlState({
       workspace: currentWsId ?? null,

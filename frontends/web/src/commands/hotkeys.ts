@@ -1,5 +1,5 @@
 import { useHotkeys as useHotkeysHook } from 'react-hotkeys-hook';
-import { useAtomValue, useSetAtom } from 'jotai';
+import { useAtom, useAtomValue, useSetAtom } from 'jotai';
 import {
   sidePaneTabIdAtom,
   currentTabIdAtom,
@@ -34,83 +34,80 @@ export function useHotkeys() {
   const setSide = useSetAtom(sidePaneTabIdAtom);
   const currentTabId = useAtomValue(currentTabIdAtom);
   const activeTabId = useAtomValue(activeTabIdAtom);
+  const activePane = useAtomValue(activePaneAtom);
   const setInspector = useSetAtom(inspectorVisibleAtom);
-  const inspector = useAtomValue(inspectorVisibleAtom);
+  const setExistingToNew = useSetAtom(isExistingToNewAtom);
+  const setNewWillBeSelected = useSetAtom(isNewWillBeSelectedAtom);
+  const [overlay, setOverlay] = useAtom(appOverlayAtom);
   const store = useStore();
 
   useHotkeysHook(
     'mod+z',
-    (e) => {
-      e.preventDefault();
-      runGraphUndo();
-    },
+    runGraphUndo,
+    { preventDefault: true },
     [],
   );
   useHotkeysHook(
     'mod+shift+z, mod+y',
-    (e) => {
-      e.preventDefault();
-      runGraphRedo();
-    },
+    runGraphRedo,
+    { preventDefault: true },
     [],
   );
   useHotkeysHook(
     'mod+i',
-    (e) => {
-      e.preventDefault();
-      store.set(isExistingToNewAtom, (v) => !v);
+    () => {
+      setExistingToNew((v) => !v);
     },
-    [store],
+    { preventDefault: true },
+    [setExistingToNew],
   );
   useHotkeysHook(
     'mod+alt+shift+i',
-    (e) => {
-      e.preventDefault();
-      store.set(isNewWillBeSelectedAtom, (v) => !v);
+    () => {
+      setNewWillBeSelected((v) => !v);
     },
-    [store],
+    { preventDefault: true },
+    [setNewWillBeSelected],
   );
   useHotkeysHook(
     'esc',
-    (e) => {
-      const o = store.get(appOverlayAtom);
-      if (o !== 'none') {
-        e.preventDefault();
-        store.set(appOverlayAtom, 'none');
+    () => {
+      if (overlay !== 'none') {
+        setOverlay('none');
         return;
       }
-      e.preventDefault();
       const t = activeTabId ? getTabFull(activeTabId) : null;
       t?.actions.select(null);
     },
-    [store, activeTabId],
+    { preventDefault: true },
+    [overlay, setOverlay, activeTabId],
   );
   useHotkeysHook(
     'shift+/',
-    (e) => {
-      e.preventDefault();
-      store.set(appOverlayAtom, 'help');
+    () => {
+      setOverlay('help');
     },
-    [store],
+    { preventDefault: true },
+    [setOverlay],
   );
   useHotkeysHook(
     'mod+k',
-    (e) => {
-      e.preventDefault();
-      store.set(appOverlayAtom, 'token');
+    () => {
+      setOverlay('token');
     },
-    [store],
+    { preventDefault: true },
+    [setOverlay],
   );
   useHotkeysHook(
     'delete',
     (e) => {
-      e.preventDefault();
       const t = activeTabId ? getTabFull(activeTabId) : null;
       if (!t) return;
       const sel = t.rt.selectedNodeId;
       if (sel == null) return;
       const node = t.rt.doc.nodes.find((n) => n.id === sel);
       if (!node) return;
+      e.preventDefault();
       const edges = t.rt.doc.edges.filter((e2) => e2.from === sel || e2.to === sel);
       t.actions.applyTransaction([
         ...edges.map((e2) => ({ type: 'removeEdge' as const, data: e2 })),
@@ -121,61 +118,60 @@ export function useHotkeys() {
   );
   useHotkeysHook(
     'mod+.',
-    (e) => {
-      e.preventDefault();
-      setInspector(!inspector);
+    () => {
+      setInspector((v) => !v);
     },
-    [inspector, setInspector],
+    { preventDefault: true },
+    [setInspector],
   );
   useHotkeysHook(
     'mod+\\',
-    (e) => {
-      e.preventDefault();
+    () => {
       if (currentTabId) setSide(currentTabId);
     },
+    { preventDefault: true },
     [currentTabId, setSide],
   );
   useHotkeysHook(
     'mod+q',
-    (e) => {
-      e.preventDefault();
+    () => {
       void addCommentAction(store);
     },
+    { preventDefault: true },
     [store],
   );
   useHotkeysHook(
     'mod+shift+q',
-    (e) => {
-      e.preventDefault();
+    () => {
       void addTextNodeAction(store);
     },
+    { preventDefault: true },
     [store],
   );
   useHotkeysHook(
     'mod+s',
-    (e) => {
-      e.preventDefault();
+    () => {
       void runExportCurrentTabJson(store);
     },
+    { preventDefault: true },
     [store],
   );
   useHotkeysHook(
     'mod+alt+s',
-    (e) => {
-      e.preventDefault();
+    () => {
       void exportAllTabsToTar(store);
     },
+    { preventDefault: true },
     [store],
   );
   useHotkeysHook(
     'home',
-    (e) => {
-      e.preventDefault();
-      const id = store.get(activeTabIdAtom);
-      if (!id) return;
-      requestFitViewForTab(id, store.get(activePaneAtom));
+    () => {
+      if (!activeTabId) return;
+      requestFitViewForTab(activeTabId, activePane);
     },
-    [store],
+    { preventDefault: true },
+    [activeTabId, activePane],
   );
   useHotkeysHook(
     '1,2,3,4,5,6,7,8,9',
