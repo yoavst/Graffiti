@@ -56,11 +56,6 @@ interface CanvasProps {
   rt: GraphRuntime;
   layoutEngine: 'elk' | 'dagre';
   onJumpToIde?: (nodeId: number) => void;
-  // Fired whenever the user interacts with this canvas (click on node/edge/
-  // pane) so a parent can mark this pane as the "active" one for the
-  // inspector. We don't rely on bubbled mousedown alone because React Flow's
-  // own listeners can interfere.
-  onActivate?: () => void;
 }
 
 type LayoutCacheEntry = {
@@ -76,7 +71,7 @@ const layoutCache = new Map<string, LayoutCacheEntry>();
 // button) the first time each graph is opened.
 const viewportCache = new Map<string, { x: number; y: number; zoom: number }>();
 
-function CanvasInner({ graphId, pane, actions, rt, layoutEngine, onJumpToIde, onActivate }: CanvasProps) {
+function CanvasInner({ graphId, pane, actions, rt, layoutEngine, onJumpToIde }: CanvasProps) {
   // The doc is mutated in place by the reducer (push/splice), so
   // `rt.doc.nodes` keeps the same reference even when nodes are added or
   // removed. We can't use it as a useEffect dep — instead we drive recompute
@@ -276,7 +271,6 @@ function CanvasInner({ graphId, pane, actions, rt, layoutEngine, onJumpToIde, on
 
   const onEdgeMiddleClick = useCallback(
     (e: ReactMouseEvent, farNodeId: number) => {
-      onActivate?.();
       if (e.ctrlKey) {
         actions.select(farNodeId);
         requestAnimationFrame(() => {
@@ -289,7 +283,7 @@ function CanvasInner({ graphId, pane, actions, rt, layoutEngine, onJumpToIde, on
         void smartFitView(farNodeId);
       });
     },
-    [actions, onActivate, smartFitView],
+    [actions, smartFitView],
   );
 
   const edges: Edge<GraffitiEdgeData>[] = useMemo(() => {
@@ -329,7 +323,6 @@ function CanvasInner({ graphId, pane, actions, rt, layoutEngine, onJumpToIde, on
 
   const onNodeClick: NodeMouseHandler = useCallback(
     (e, n) => {
-      onActivate?.();
       const id = parseInt(n.id, 10);
       if ((e.ctrlKey || e.metaKey) && onJumpToIde) {
         e.preventDefault();
@@ -339,29 +332,25 @@ function CanvasInner({ graphId, pane, actions, rt, layoutEngine, onJumpToIde, on
       }
       actions.select(id);
     },
-    [actions, onActivate, onJumpToIde],
+    [actions, onJumpToIde],
   );
 
   const onNodeContextMenu: NodeMouseHandler = useCallback(
     (e, n) => {
       e.preventDefault();
-      onActivate?.();
       onJumpToIde?.(parseInt(n.id, 10));
     },
-    [onJumpToIde, onActivate],
+    [onJumpToIde],
   );
 
   const onEdgeClick: EdgeMouseHandler = useCallback(
     (_e, edge) => {
-      onActivate?.();
       actions.selectEdge(parseInt(edge.id, 10));
     },
-    [actions, onActivate],
+    [actions],
   );
 
-  const onPaneClick = useCallback(() => {
-    onActivate?.();
-  }, [onActivate]);
+  const onPaneClick = useCallback(() => {}, []);
 
   useLayoutEffect(() => {
     const getViewportElement = () =>

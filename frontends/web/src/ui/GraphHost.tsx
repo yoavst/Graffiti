@@ -21,11 +21,9 @@ import type { FlowPane } from '@/state/pendingNodeFocus';
 export function GraphHost({
   graphId,
   pane,
-  onActivate,
 }: {
   graphId: string;
   pane: FlowPane;
-  onActivate?: () => void;
 }) {
   const graphs = useAtomValue(graphsAtom);
   const graph = graphs.find((g) => g.id === graphId);
@@ -43,7 +41,6 @@ export function GraphHost({
       graphId={graphId}
       graph={graph}
       pane={pane}
-      onActivate={onActivate}
     />
   );
 }
@@ -52,12 +49,10 @@ function MountedGraph({
   graphId,
   graph,
   pane,
-  onActivate,
 }: {
   graphId: string;
   graph: GraphRow;
   pane: FlowPane;
-  onActivate?: () => void;
 }) {
   const store = useStore();
   const rt = useAtomValue(graphRuntimeAtom(graphId));
@@ -111,7 +106,6 @@ function MountedGraph({
         actions={actions}
         rt={rt}
         layoutEngine={graph.layout}
-        onActivate={onActivate}
         onJumpToIde={(nodeId) => {
           const node = rt.doc.nodes.find((n) => n.id === nodeId);
           if (!node || !ws) return;

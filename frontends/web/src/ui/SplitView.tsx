@@ -1,5 +1,4 @@
 import { useAtom, useAtomValue } from 'jotai';
-import { Suspense } from 'react';
 import CloseIcon from '@mui/icons-material/Close';
 import { GraphCanvas } from '@/flow/GraphCanvas';
 import { GraphHost } from '@/ui/GraphHost';
@@ -35,21 +34,17 @@ export function SplitView() {
   return (
     <div className="flex flex-col flex-1 min-h-0">
       <div
-        className={`flex-1 min-h-0 relative ${
-          hasSide && activePane === 'primary' ? 'ring-2 ring-(--color-accent) ring-inset' : ''
-        }`}
+        className={`flex-1 min-h-0 relative ${hasSide && activePane === 'primary' ? 'ring-2 ring-(--color-accent) ring-inset' : ''
+          }`}
         onMouseDownCapture={() => setActivePane('primary')}
       >
         {hasSide && <PaneTitle graph={primaryGraph} label="primary" />}
-        <Suspense fallback={null}>
-          <GraphHost graphId={primary} pane="primary" onActivate={() => setActivePane('primary')} />
-        </Suspense>
+        <GraphHost graphId={primary} pane="primary" />
       </div>
       {hasSide && (
         <div
-          className={`flex-1 min-h-0 relative border-t border-(--color-border) ${
-            activePane === 'side' ? 'ring-2 ring-(--color-accent) ring-inset' : ''
-          }`}
+          className={`flex-1 min-h-0 relative border-t border-(--color-border) ${activePane === 'side' ? 'ring-2 ring-(--color-accent) ring-inset' : ''
+            }`}
           onMouseDownCapture={() => setActivePane('side')}
         >
           <PaneTitle graph={sideGraph} label="side" />
@@ -65,9 +60,7 @@ export function SplitView() {
               <CloseIcon fontSize="small" />
             </button>
           </div>
-          <Suspense fallback={null}>
-            <GraphHost graphId={side!} pane="side" onActivate={() => setActivePane('side')} />
-          </Suspense>
+          <GraphHost graphId={side!} pane="side" />
         </div>
       )}
     </div>
