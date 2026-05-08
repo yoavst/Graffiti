@@ -1,69 +1,77 @@
-// Render exactly one tab per pane.
+// Render exactly one graph per pane.
 //
-// The React Flow viewport is cached in memory per tab (in GraphCanvas) so
-// switching back to a tab restores the exact pan/zoom — but only within
-// a session. A page reload starts every tab centered (fitView). The
-// layout is also cached per tab so a re-mount with the same node set
+// The React Flow viewport is cached in memory per graph (in GraphCanvas) so
+// switching back to a graph restores the exact pan/zoom — but only within
+// a session. A page reload starts every graph centered (fitView). The
+// layout is also cached per graph so a re-mount with the same node set
 // doesn't re-run ELK.
 
 import { useAtomValue, useStore } from 'jotai';
 import { useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import { GraphCanvas } from '@/flow/GraphCanvas';
-import { useSubscribeTabDocMutations } from '@/hooks/useSubscribeTabDocMutations';
-import { tabRuntimeAtom, tabTickAtom, makeTabActions } from '@/state/graph';
-import { tabsAtom } from '@/state/workspaces';
-import { registerTab, unregisterTab } from '@/state/registry';
+import { useSubscribeGraphDocMutations } from '@/hooks/useSubscribeTabDocMutations';
+import { graphRuntimeAtom, graphTickAtom, makeGraphActions } from '@/state/graph';
+import { graphsAtom } from '@/state/workspaces';
+import { registerGraph, unregisterGraph } from '@/state/registry';
 import { wsClientAtom } from '@/state/wsClient';
 import { jumpToPayload } from '@/network/protocol/legacy';
-import type { TabRow } from '@/state/workspaceTypes';
+import type { GraphRow } from '@/state/workspaceTypes';
 import type { FlowPane } from '@/state/pendingNodeFocus';
 
-export function TabHost({
-  tabId,
+export function GraphHost({
+  graphId,
   pane,
   onActivate,
 }: {
-  tabId: string;
+  graphId: string;
   pane: FlowPane;
   onActivate?: () => void;
 }) {
-  const tabs = useAtomValue(tabsAtom);
-  const tab = tabs.find((t) => t.id === tabId);
-  if (!tab) {
+  const graphs = useAtomValue(graphsAtom);
+  const graph = graphs.find((g) => g.id === graphId);
+  if (!graph) {
     return (
       <div className="absolute inset-0 flex items-center justify-center text-sm opacity-50">
-        Tab not found ({tabId.slice(0, 8)}…)
+        Graph not found ({graphId.slice(0, 8)}…)
       </div>
     );
   }
-  // key={tabId} → fresh React Flow + clean state on every tab switch.
-  return <MountedTab key={tabId} tabId={tabId} tab={tab} pane={pane} onActivate={onActivate} />;
+  // key={graphId} → fresh React Flow + clean state on every graph switch.
+  return (
+    <MountedGraph
+      key={graphId}
+      graphId={graphId}
+      graph={graph}
+      pane={pane}
+      onActivate={onActivate}
+    />
+  );
 }
 
-function MountedTab({
-  tabId,
-  tab,
+function MountedGraph({
+  graphId,
+  graph,
   pane,
   onActivate,
 }: {
-  tabId: string;
-  tab: TabRow;
+  graphId: string;
+  graph: GraphRow;
   pane: FlowPane;
   onActivate?: () => void;
 }) {
   const store = useStore();
-  const rt = useAtomValue(tabRuntimeAtom(tabId));
-  useSubscribeTabDocMutations(tabId);
+  const rt = useAtomValue(graphRuntimeAtom(graphId));
+  useSubscribeGraphDocMutations(graphId);
 
   const actions = useMemo(
     () =>
-      makeTabActions(
-        tabId,
+      makeGraphActions(
+        graphId,
         store,
-        () => store.get(tabRuntimeAtom(tabId)),
-        () => store.set(tabTickAtom(tabId), (n) => n + 1),
+        () => store.get(graphRuntimeAtom(graphId)),
+        () => store.set(graphTickAtom(graphId), (n) => n + 1),
       ),
-    [tabId, store],
+    [graphId, store],
   );
 
   const [hydrated, setHydrated] = useState(rt.loaded);
@@ -73,24 +81,24 @@ function MountedTab({
     setHydrated(true);
   }, [actions]);
 
-  // Register with the global tab registry for the WS dispatcher.
+  // Register with the global graph registry for the WS dispatcher.
   useEffect(() => {
-    registerTab(tabId, rt, actions);
-    return () => unregisterTab(tabId);
-  }, [tabId, rt, actions]);
+    registerGraph(graphId, rt, actions);
+    return () => unregisterGraph(graphId);
+  }, [graphId, rt, actions]);
 
   useEffect(() => {
     return () => {
-      if (store.get(tabRuntimeAtom(tabId)).loaded) actions.flush();
+      if (store.get(graphRuntimeAtom(graphId)).loaded) actions.flush();
     };
-  }, [actions, tabId, store]);
+  }, [actions, graphId, store]);
 
   const ws = useAtomValue(wsClientAtom);
 
   if (!hydrated) {
     return (
       <div className="absolute inset-0 flex items-center justify-center text-xs opacity-50">
-        loading {tab.name}…
+        loading {graph.name}…
       </div>
     );
   }
@@ -101,11 +109,11 @@ function MountedTab({
       onContextMenu={(e) => e.preventDefault()}
     >
       <GraphCanvas
-        tabId={tabId}
+        graphId={graphId}
         pane={pane}
         actions={actions}
         rt={rt}
-        layoutEngine={tab.layout}
+        layoutEngine={graph.layout}
         onActivate={onActivate}
         onJumpToIde={(nodeId) => {
           const node = rt.doc.nodes.find((n) => n.id === nodeId);

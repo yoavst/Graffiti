@@ -32,12 +32,12 @@ import { connect } from '@/network/websocket';
 import { wsClientAtom } from '@/state/wsClient';
 import { dispatchInbound } from '@/network/protocol/dispatch';
 import { getStore } from '@/state/store';
-import { getActiveTabFromStore, getTabFull } from '@/state/registry';
+import { getActiveGraphFromStore, getGraphFull } from '@/state/registry';
 import { addCommentAction, addTextNodeAction } from '@/commands/addNodeActions';
-import { openNodeSearchInCurrentTab, runExportCurrentTabJson } from '@/commands/commands';
+import { openNodeSearchInCurrentTab, runExportCurrentGraphJson } from '@/commands/commands';
 import { importUserPickedFiles } from '@/persistence/tabImport';
-import { exportAllTabsToTar } from '@/persistence/importExport';
-import { activeTabIdAtom, currentTabIdAtom } from '@/state/workspaces';
+import { exportAllGraphsToTar } from '@/persistence/importExport';
+import { activeGraphIdAtom, currentGraphIdAtom } from '@/state/workspaces';
 import { dialogs } from '@/ui/dialogs/Dialogs';
 import { ShareGraphDialog } from '@/ui/dialogs/ShareGraphDialog';
 
@@ -53,8 +53,8 @@ export function Header() {
   const [newWillBeSelected, setNewWillBeSelected] = useAtom(isNewWillBeSelectedAtom);
   const [client, setClient] = useAtom(wsClientAtom);
   const store = useStore();
-  const setCurrentTabId = useSetAtom(currentTabIdAtom);
-  const activeTabId = useAtomValue(activeTabIdAtom);
+  const setCurrentGraphId = useSetAtom(currentGraphIdAtom);
+  const activeGraphId = useAtomValue(activeGraphIdAtom);
   const setOverlay = useSetAtom(appOverlayAtom);
   const importInputRef = useRef<HTMLInputElement>(null);
 
@@ -81,8 +81,8 @@ export function Header() {
         dispatchInbound(
           {
             store,
-            getCurrentTab: () => getActiveTabFromStore(store),
-            getTab: getTabFull,
+            getCurrentGraph: () => getActiveGraphFromStore(store),
+            getGraph: getGraphFull,
             ws: c,
             isExistingToNew: () => store.get(isExistingToNewAtom),
             isNewWillBeSelected: () => store.get(isNewWillBeSelectedAtom),
@@ -113,12 +113,12 @@ export function Header() {
     if (!list?.length) return;
     const { firstTabId, targetMissing } = await importUserPickedFiles(Array.from(list));
     if (targetMissing) {
-      await dialogs.alert('No tab group to import into. Open a workspace with at least one tab first.', {
+      await dialogs.alert('No graph group to import into. Open a workspace with at least one graph first.', {
         title: 'Import',
       });
       return;
     }
-    if (firstTabId) setCurrentTabId(firstTabId);
+    if (firstTabId) setCurrentGraphId(firstTabId);
   }
 
   const statusColor =
@@ -149,15 +149,15 @@ export function Header() {
           </IconButton>
         </Tooltip>
         <Tooltip
-          title={`Export current tab as JSON (click or Mod+S)\nExport all tabs as TAR (right-click or Ctrl+Alt+S)`}
+          title={`Export current graph as JSON (click or Mod+S)\nExport all graphs as TAR (right-click or Ctrl+Alt+S)`}
           slotProps={{ tooltip: { sx: { whiteSpace: 'pre-line' } } }}
         >
           <IconButton
             size="small"
-            onClick={() => void runExportCurrentTabJson(store)}
+            onClick={() => void runExportCurrentGraphJson(store)}
             onContextMenu={(e) => {
               e.preventDefault();
-              void exportAllTabsToTar(store);
+              void exportAllGraphsToTar(store);
             }}
           >
             <DownloadOutlinedIcon fontSize="small" />
@@ -182,8 +182,8 @@ export function Header() {
           <IconButton
             size="small"
             onClick={() => {
-              if (!activeTabId) return;
-              getTabFull(activeTabId)?.actions.undo();
+              if (!activeGraphId) return;
+              getGraphFull(activeGraphId)?.actions.undo();
             }}
           >
             <UndoOutlinedIcon fontSize="small" />
@@ -193,8 +193,8 @@ export function Header() {
           <IconButton
             size="small"
             onClick={() => {
-              if (!activeTabId) return;
-              getTabFull(activeTabId)?.actions.redo();
+              if (!activeGraphId) return;
+              getGraphFull(activeGraphId)?.actions.redo();
             }}
           >
             <RedoOutlinedIcon fontSize="small" />

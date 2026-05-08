@@ -1,15 +1,15 @@
 import { readUrlState } from '@/routing/url';
 import type { JotaiStore } from '@/state/store';
 import {
-  currentTabIdAtom,
+  currentGraphIdAtom,
   currentWorkspaceIdAtom,
   ensureDefaultWorkspaceInStore,
-  firstTabIdInWorkspace,
-  flattenTabsFromStore,
-  normalizeAllTabThemes,
+  firstGraphIdInWorkspace,
+  flattenGraphsFromStore,
+  normalizeAllGraphThemes,
   pruneEmptyWorkspacesInStore,
   reconcileNavigationPointers,
-  sidePaneTabIdAtom,
+  sidePaneGraphIdAtom,
   workspaceIdsAtom,
 } from '@/state/workspaces';
 import { migrateLegacyIfNeeded } from '@/persistence/migrations';
@@ -23,10 +23,10 @@ export function initPersistence(store: JotaiStore): void {
   migrateLegacyIfNeeded(store);
   pruneEmptyWorkspacesInStore(store);
   ensureDefaultWorkspaceInStore(store);
-  normalizeAllTabThemes(store);
+  normalizeAllGraphThemes(store);
 
   const ids = store.get(workspaceIdsAtom);
-  const tabs = flattenTabsFromStore(store);
+  const graphs = flattenGraphsFromStore(store);
 
   let wid = store.get(currentWorkspaceIdAtom);
   if (!wid || !ids.includes(wid)) {
@@ -34,21 +34,21 @@ export function initPersistence(store: JotaiStore): void {
     store.set(currentWorkspaceIdAtom, wid);
   }
 
-  const tid = store.get(currentTabIdAtom);
-  if (!tid || !tabs.some((t) => t.id === tid)) {
-    const fallback = wid ? firstTabIdInWorkspace(store, wid) : null;
-    store.set(currentTabIdAtom, fallback);
+  const gid = store.get(currentGraphIdAtom);
+  if (!gid || !graphs.some((g) => g.id === gid)) {
+    const fallback = wid ? firstGraphIdInWorkspace(store, wid) : null;
+    store.set(currentGraphIdAtom, fallback);
   }
 
   const url = readUrlState();
   if (url.workspace && ids.includes(url.workspace)) {
     store.set(currentWorkspaceIdAtom, url.workspace);
   }
-  if (url.tab && tabs.some((t) => t.id === url.tab)) {
-    store.set(currentTabIdAtom, url.tab);
+  if (url.tab && graphs.some((g) => g.id === url.tab)) {
+    store.set(currentGraphIdAtom, url.tab);
   }
-  if (url.pane2 && tabs.some((t) => t.id === url.pane2)) {
-    store.set(sidePaneTabIdAtom, url.pane2);
+  if (url.pane2 && graphs.some((g) => g.id === url.pane2)) {
+    store.set(sidePaneGraphIdAtom, url.pane2);
   }
 
   reconcileNavigationPointers(store);

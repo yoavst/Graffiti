@@ -2,15 +2,13 @@
 // hotkey hook consume this list.
 
 import { getStore, type JotaiStore } from '@/state/store';
-import { getActiveTabFromStore } from '@/state/registry';
+import { getActiveGraphFromStore, getGraphFull } from '@/state/registry';
 import {
-  activeTabIdAtom,
-  currentTabIdAtom,
-  currentWorkspaceIdAtom,
-  sidePaneTabIdAtom,
-  tabsAtom,
+  activeGraphIdAtom,
+  currentGraphIdAtom,
+  sidePaneGraphIdAtom,
+  graphsAtom,
 } from '@/state/workspaces';
-import { getTabFull } from '@/state/registry';
 import {
   inspectorVisibleAtom,
   isCurvedEdgesAtom,
@@ -18,7 +16,7 @@ import {
 } from '@/state/settings';
 import { appOverlayAtom } from '@/state/appOverlay';
 import { nodeSearchScopeAtom } from '@/state/quickOpenPalettes';
-import { exportAllTabsToTar, exportTabToFile } from '@/persistence/importExport';
+import { exportAllGraphsToTar, exportGraphToFile } from '@/persistence/importExport';
 import { graphDocAtomFamily } from '@/state/graphDocAtoms';
 import { toMermaid } from '@/graph/mermaidExport';
 import { addCommentAction, addTextNodeAction } from './addNodeActions';
@@ -34,28 +32,28 @@ export interface Command {
 }
 
 export function runGraphUndo(): void {
-  getActiveTabFromStore(getStore())?.actions.undo();
+  getActiveGraphFromStore(getStore())?.actions.undo();
 }
 
 export function runGraphRedo(): void {
-  getActiveTabFromStore(getStore())?.actions.redo();
+  getActiveGraphFromStore(getStore())?.actions.redo();
 }
 
-export function runExportCurrentTabJson(store: JotaiStore): void {
-  const id = store.get(activeTabIdAtom);
+export function runExportCurrentGraphJson(store: JotaiStore): void {
+  const id = store.get(activeGraphIdAtom);
   if (!id) return;
-  getTabFull(id)?.actions.flush();
-  exportTabToFile(store, id);
+  getGraphFull(id)?.actions.flush();
+  exportGraphToFile(store, id);
 }
 
-export async function runCopyCurrentTabMermaid(store: JotaiStore): Promise<void> {
-  const id = store.get(currentTabIdAtom);
+export async function runCopyCurrentGraphMermaid(store: JotaiStore): Promise<void> {
+  const id = store.get(currentGraphIdAtom);
   if (!id) return;
-  const tab = store.get(tabsAtom).find((t) => t.id === id);
+  const graph = store.get(graphsAtom).find((g) => g.id === id);
   const doc = store.get(graphDocAtomFamily(id));
   const s = toMermaid(doc, {
     gui: true,
-    elkRenderer: tab?.layout !== 'dagre',
+    elkRenderer: graph?.layout !== 'dagre',
     darkMode: true,
   });
   try {
@@ -132,32 +130,32 @@ export function buildCommands(store: JotaiStore): Command[] {
     },
     {
       id: 'nav.nodes.workspace',
-      title: 'Search nodes in all tabs',
+      title: 'Search nodes in all graphs',
       hint: 'Opens result on primary',
       hotkey: 'Mod+Shift+F',
       section: 'Navigate',
       run: () => openNodeSearchInAllTabs(store),
     },
     {
-      id: 'export.tab',
-      title: 'Export current tab to JSON',
+      id: 'export.graph',
+      title: 'Export current graph to JSON',
       hotkey: 'Mod+S',
       section: 'File',
-      run: () => void runExportCurrentTabJson(store),
+      run: () => void runExportCurrentGraphJson(store),
     },
     {
       id: 'export.all',
-      title: 'Export all tabs to TAR',
+      title: 'Export all graphs to TAR',
       hotkey: 'Ctrl+Alt+S',
       section: 'File',
-      run: () => void exportAllTabsToTar(store),
+      run: () => void exportAllGraphsToTar(store),
     },
     {
       id: 'export.mermaid',
-      title: 'Copy current tab as Mermaid',
+      title: 'Copy current graph as Mermaid',
       section: 'File',
       run: async () => {
-        await runCopyCurrentTabMermaid(store);
+        await runCopyCurrentGraphMermaid(store);
       },
     },
     {
@@ -189,36 +187,29 @@ export function buildCommands(store: JotaiStore): Command[] {
     },
     {
       id: 'view.split.right',
-      title: 'Open current tab in side pane',
+      title: 'Open current graph in side pane',
       hotkey: 'Ctrl+\\',
       section: 'View',
       run: () => {
-        const id = store.get(currentTabIdAtom);
-        if (id) store.set(sidePaneTabIdAtom, id);
+        const id = store.get(currentGraphIdAtom);
+        if (id) store.set(sidePaneGraphIdAtom, id);
       },
     },
     {
       id: 'view.split.close',
       title: 'Close side pane',
       section: 'View',
-      run: () => store.set(sidePaneTabIdAtom, null),
+      run: () => store.set(sidePaneGraphIdAtom, null),
     },
     {
-      id: 'tab.next',
-      title: 'Switch to next tab',
-      section: 'Tabs',
+      id: 'graph.next',
+      title: 'Switch to next graph',
+      section: 'Navigate',
       run: () => {
-        const tabs = store.get(tabsAtom);
-        const wid = store.get(currentWorkspaceIdAtom);
-        const filtered = tabs.filter((t) => {
-          // Only those in the current workspace.
-          void t;
-          return true;
-        });
-        void wid;
-        const idx = filtered.findIndex((t) => t.id === store.get(currentTabIdAtom));
-        const next = filtered[(idx + 1) % filtered.length];
-        if (next) store.set(currentTabIdAtom, next.id);
+        const graphs = store.get(graphsAtom);
+        const idx = graphs.findIndex((g) => g.id === store.get(currentGraphIdAtom));
+        const next = graphs[(idx + 1) % graphs.length];
+        if (next) store.set(currentGraphIdAtom, next.id);
       },
     },
     {

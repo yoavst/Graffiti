@@ -10,7 +10,7 @@ export interface WorkspaceRow {
   updatedAt: number;
 }
 
-export interface TabGroupRow {
+export interface GraphGroupRow {
   id: string;
   workspaceId: string;
   name: string;
@@ -19,9 +19,9 @@ export interface TabGroupRow {
   orderIndex: number;
 }
 
-export interface TabRow {
+export interface GraphRow {
   id: string;
-  tabGroupId: string;
+  graphGroupId: string;
   name: string;
   layout: 'elk' | 'dagre';
   notes?: string;
@@ -30,14 +30,14 @@ export interface TabRow {
   updatedAt: number;
 }
 
-/** Serialized workspace slice: metadata + nested groups/tabs (graph docs live under `graphStorageKey(tabId)`). */
+/** Serialized workspace slice: metadata + nested groups/graphs (graph docs live under `graphStorageKey(graphId)`). */
 export interface WorkspaceBundle {
   workspace: WorkspaceRow;
-  groups: TabGroupRow[];
-  tabs: TabRow[];
+  groups: GraphGroupRow[];
+  graphs: GraphRow[];
 }
 
-export const TAB_COLORS = [
+export const GRAPH_COLORS = [
   '#7e57c2',
   '#26a69a',
   '#ef5350',
@@ -49,7 +49,7 @@ export const TAB_COLORS = [
 ];
 
 export function pickColor(seed: number): string {
-  return TAB_COLORS[Math.abs(seed) % TAB_COLORS.length]!;
+  return GRAPH_COLORS[Math.abs(seed) % GRAPH_COLORS.length]!;
 }
 
 export function emptyGraphDoc(): GraphDoc {

@@ -8,15 +8,15 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import {
-  currentTabIdAtom,
+  currentGraphIdAtom,
   currentWorkspaceIdAtom,
   ensureDefaultGroupInStore,
-  findWorkspaceIdForTab,
+  findWorkspaceIdForGraph,
   reconcileNavigationPointers,
-  removeGraphStorageForTab,
-  sidePaneTabIdAtom,
+  removeGraphStorageForGraph,
+  sidePaneGraphIdAtom,
   tabGroupsAtom,
-  tabsAtom,
+  graphsAtom,
   updateWorkspaceBundle,
   workspaceBundleAtomFamily,
   workspaceIdsAtom,
@@ -25,7 +25,7 @@ import {
 import { workspaceStorageKey } from '@/state/storageKeys';
 import { graphDocAtomFamily } from '@/state/graphDocAtoms';
 import { newId } from '@/util/ids';
-import { emptyGraphDoc, pickColor, type TabGroupRow, type TabRow, type WorkspaceRow } from '@/state/workspaceTypes';
+import { emptyGraphDoc, pickColor, type GraphGroupRow, type GraphRow, type WorkspaceRow } from '@/state/workspaceTypes';
 import { sidebarVisibleAtom } from '@/state/settings';
 import { ContextMenu, type ContextMenuItem } from '@/ui/ContextMenu';
 import { dialogs } from '@/ui/dialogs/Dialogs';
@@ -36,10 +36,10 @@ export function Sidebar() {
   const setVisible = useSetAtom(sidebarVisibleAtom);
   const workspaces = useAtomValue(workspacesAtom);
   const groups = useAtomValue(tabGroupsAtom);
-  const tabs = useAtomValue(tabsAtom);
+  const graphs = useAtomValue(graphsAtom);
   const [currentWsId, setCurrentWsId] = useAtom(currentWorkspaceIdAtom);
-  const [currentTabId, setCurrentTabId] = useAtom(currentTabIdAtom);
-  const sidePaneTabId = useAtomValue(sidePaneTabIdAtom);
+  const [currentGraphId, setCurrentGraphId] = useAtom(currentGraphIdAtom);
+  const sidePaneGraphId = useAtomValue(sidePaneGraphIdAtom);
 
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>(() => ({}));
   const [search, setSearch] = useState('');
@@ -47,9 +47,9 @@ export function Sidebar() {
   const tabsByWorkspace = useMemo(() => {
     const groupToWs = new Map<string, string>();
     for (const g of groups) groupToWs.set(g.id, g.workspaceId);
-    const out = new Map<string, TabRow[]>();
-    for (const t of tabs) {
-      const wsId = groupToWs.get(t.tabGroupId);
+    const out = new Map<string, GraphRow[]>();
+    for (const t of graphs) {
+      const wsId = groupToWs.get(t.graphGroupId);
       if (!wsId) continue;
       const arr = out.get(wsId) ?? [];
       arr.push(t);
@@ -57,16 +57,16 @@ export function Sidebar() {
     }
     for (const arr of out.values()) arr.sort((a, b) => a.orderIndex - b.orderIndex);
     return out;
-  }, [tabs, groups]);
+  }, [graphs, groups]);
 
   useEffect(() => {
-    if (!currentTabId) return;
-    const t = tabs.find((x) => x.id === currentTabId);
+    if (!currentGraphId) return;
+    const t = graphs.find((x) => x.id === currentGraphId);
     if (!t) return;
-    const g = groups.find((x) => x.id === t.tabGroupId);
+    const g = groups.find((x) => x.id === t.graphGroupId);
     if (!g) return;
     if (g.workspaceId !== currentWsId) setCurrentWsId(g.workspaceId);
-  }, [currentTabId, tabs, groups, currentWsId, setCurrentWsId]);
+  }, [currentGraphId, graphs, groups, currentWsId, setCurrentWsId]);
 
   const query = search.trim().toLowerCase();
 
@@ -108,7 +108,7 @@ export function Sidebar() {
     if (!name) return;
     const now = Date.now();
     const workspaceId = newId();
-    const group: TabGroupRow = {
+    const group: GraphGroupRow = {
       id: newId(),
       workspaceId,
       name: 'Default',
@@ -127,21 +127,21 @@ export function Sidebar() {
     store.set(workspaceBundleAtomFamily(workspaceId), {
       workspace: w,
       groups: [group],
-      tabs: [],
+      graphs: [],
     });
     setCurrentWsId(workspaceId);
   }
 
-  async function addTab(workspaceId: string) {
+  async function addGraph(workspaceId: string) {
     const name =
-      (await dialogs.prompt('Tab name', { title: 'New tab' }))?.trim() || 'untitled';
+      (await dialogs.prompt('Graph name', { title: 'New graph' }))?.trim() || 'untitled';
     const group = ensureDefaultGroupInStore(store, workspaceId);
     const b = store.get(workspaceBundleAtomFamily(workspaceId));
-    const existing = b.tabs.filter((t) => t.tabGroupId === group.id);
-    const nextOrder = existing.reduce((m, t) => Math.max(m, t.orderIndex + 1), 0);
-    const t: TabRow = {
+    const existing = b.graphs.filter((g) => g.graphGroupId === group.id);
+    const nextOrder = existing.reduce((m, g) => Math.max(m, g.orderIndex + 1), 0);
+    const g: GraphRow = {
       id: newId(),
-      tabGroupId: group.id,
+      graphGroupId: group.id,
       name,
       layout: 'elk',
       orderIndex: nextOrder,
@@ -149,11 +149,11 @@ export function Sidebar() {
     };
     updateWorkspaceBundle(store, workspaceId, (cur) => ({
       ...cur,
-      tabs: [...cur.tabs, t],
+      graphs: [...cur.graphs, g],
     }));
-    store.set(graphDocAtomFamily(t.id), emptyGraphDoc());
+    store.set(graphDocAtomFamily(g.id), emptyGraphDoc());
     setCurrentWsId(workspaceId);
-    setCurrentTabId(t.id);
+    setCurrentGraphId(g.id);
   }
 
   return (
@@ -182,7 +182,7 @@ export function Sidebar() {
           fullWidth
           size="small"
           variant="outlined"
-          placeholder="search tabs"
+          placeholder="search graphs"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
@@ -204,18 +204,18 @@ export function Sidebar() {
               workspace={w}
               isCurrent={isCurrent}
               isExpanded={isExpanded}
-              tabs={filtered}
-              tabCount={wsTabs.length}
-              currentTabId={currentTabId}
-              sidePaneTabId={sidePaneTabId}
+              graphs={filtered}
+              graphCount={wsTabs.length}
+              currentGraphId={currentGraphId}
+              sidePaneGraphId={sidePaneGraphId}
               allWorkspaces={workspaces}
               onToggle={() =>
                 setCollapsed((c) => ({ ...c, [w.id]: !c[w.id] }))
               }
-              onAddTab={() => void addTab(w.id)}
-              onSelectTab={(t) => {
+              onAddGraph={() => void addGraph(w.id)}
+              onSelectGraph={(g) => {
                 if (!isCurrent) setCurrentWsId(w.id);
-                setCurrentTabId(t.id);
+                setCurrentGraphId(g.id);
               }}
             />
           );
@@ -229,31 +229,31 @@ function WorkspaceItem({
   workspace,
   isCurrent,
   isExpanded,
-  tabs,
-  tabCount,
-  currentTabId,
-  sidePaneTabId,
+  graphs,
+  graphCount,
+  currentGraphId,
+  sidePaneGraphId,
   allWorkspaces,
   onToggle,
-  onAddTab,
-  onSelectTab,
+  onAddGraph,
+  onSelectGraph,
 }: {
   workspace: WorkspaceRow;
   isCurrent: boolean;
   isExpanded: boolean;
-  tabs: TabRow[];
-  tabCount: number;
-  currentTabId: string | null;
-  sidePaneTabId: string | null;
+  graphs: GraphRow[];
+  graphCount: number;
+  currentGraphId: string | null;
+  sidePaneGraphId: string | null;
   allWorkspaces: WorkspaceRow[];
   onToggle: () => void;
-  onAddTab: () => void;
-  onSelectTab: (t: TabRow) => void;
+  onAddGraph: () => void;
+  onSelectGraph: (g: GraphRow) => void;
 }) {
   const store = useStore();
 
   const menuItems: ContextMenuItem[] = [
-    { label: 'Add tab', onSelect: onAddTab },
+    { label: 'Add graph', onSelect: onAddGraph },
     { label: 'Rename', onSelect: () => void rename() },
     {
       label: 'Delete',
@@ -283,13 +283,13 @@ function WorkspaceItem({
       return;
     }
     const ok = await dialogs.confirm(
-      `Delete workspace "${workspace.name}" and all its ${tabCount} tabs? This cannot be undone.`,
+      `Delete workspace "${workspace.name}" and all its ${graphCount} graphs? This cannot be undone.`,
       { title: 'Delete workspace', destructive: true, confirmLabel: 'Delete' },
     );
     if (!ok) return;
     const b = store.get(workspaceBundleAtomFamily(workspace.id));
-    for (const t of b.tabs) {
-      removeGraphStorageForTab(store, t.id);
+    for (const g of b.graphs) {
+      removeGraphStorageForGraph(store, g.id);
     }
     localStorage.removeItem(workspaceStorageKey(workspace.id));
     workspaceBundleAtomFamily.remove(workspace.id);
@@ -323,14 +323,14 @@ function WorkspaceItem({
             title="Click to expand/collapse"
           >
             <span className=" text-sm font-medium">{workspace.name}</span>
-            <span className="px-2 text-xs opacity-50">({tabCount})</span>
+            <span className="px-2 text-xs opacity-50">({graphCount})</span>
           </button>
 
           <div className="flex gap-0.5 opacity-0 group-hover:opacity-100">
             <button
               className="flex items-center rounded px-1.5 py-0.5 hover:bg-(--color-bg-2)"
-              onClick={onAddTab}
-              title="Add tab"
+              onClick={onAddGraph}
+              title="Add graph"
             >
               <AddIcon fontSize="small" />
             </button>
@@ -352,16 +352,16 @@ function WorkspaceItem({
         </div>
         {isExpanded && (
           <div className="pb-1 pl-4 pr-2">
-            {tabs.length === 0 && (
-              <div className="px-2 py-1 text-xs opacity-50">no tabs</div>
+            {graphs.length === 0 && (
+              <div className="px-2 py-1 text-xs opacity-50">no graphs</div>
             )}
-            {tabs.map((t) => (
-              <SidebarTab
-                key={t.id}
-                tab={t}
-                isCurrent={t.id === currentTabId}
-                isInSidePane={t.id === sidePaneTabId}
-                onSelect={() => onSelectTab(t)}
+            {graphs.map((g) => (
+              <SidebarGraph
+                key={g.id}
+                graph={g}
+                isCurrent={g.id === currentGraphId}
+                isInSidePane={g.id === sidePaneGraphId}
+                onSelect={() => onSelectGraph(g)}
                 currentWorkspaceId={workspace.id}
                 allWorkspaces={allWorkspaces}
               />
@@ -373,15 +373,15 @@ function WorkspaceItem({
   );
 }
 
-function SidebarTab({
-  tab,
+function SidebarGraph({
+  graph,
   isCurrent,
   isInSidePane,
   onSelect,
   currentWorkspaceId,
   allWorkspaces,
 }: {
-  tab: TabRow;
+  graph: GraphRow;
   isCurrent: boolean;
   isInSidePane: boolean;
   onSelect: () => void;
@@ -389,74 +389,71 @@ function SidebarTab({
   allWorkspaces: WorkspaceRow[];
 }) {
   const store = useStore();
-  const setSidePane = useSetAtom(sidePaneTabIdAtom);
+  const setSidePane = useSetAtom(sidePaneGraphIdAtom);
 
   async function rename() {
     const name = (
-      await dialogs.prompt('Rename tab', { title: 'Rename tab', initial: tab.name })
+      await dialogs.prompt('Rename graph', { title: 'Rename graph', initial: graph.name })
     )?.trim();
-    if (!name || name === tab.name) return;
-    const wid = findWorkspaceIdForTab(store, tab.id);
+    if (!name || name === graph.name) return;
+    const wid = findWorkspaceIdForGraph(store, graph.id);
     if (!wid) return;
     updateWorkspaceBundle(store, wid, (b) => ({
       ...b,
-      tabs: b.tabs.map((x) => (x.id === tab.id ? { ...x, name } : x)),
+      graphs: b.graphs.map((x) => (x.id === graph.id ? { ...x, name } : x)),
     }));
   }
 
   async function remove() {
-    const ok = await dialogs.confirm(`Remove tab "${tab.name}"?`, {
-      title: 'Remove tab',
+    const ok = await dialogs.confirm(`Remove graph "${graph.name}"?`, {
+      title: 'Remove graph',
       destructive: true,
       confirmLabel: 'Remove',
     });
     if (!ok) return;
-    const wid = findWorkspaceIdForTab(store, tab.id);
+    const wid = findWorkspaceIdForGraph(store, graph.id);
     if (!wid) return;
-    removeGraphStorageForTab(store, tab.id);
+    removeGraphStorageForGraph(store, graph.id);
     updateWorkspaceBundle(store, wid, (b) => ({
       ...b,
-      tabs: b.tabs.filter((x) => x.id !== tab.id),
+      graphs: b.graphs.filter((x) => x.id !== graph.id),
     }));
     reconcileNavigationPointers(store);
   }
 
   async function showLinkedProjects() {
-    const doc = store.get(graphDocAtomFamily(tab.id));
+    const doc = store.get(graphDocAtomFamily(graph.id));
     const projects = new Set<string>();
     for (const n of doc.nodes) {
       const p = (n.extra as { project?: string }).project;
       if (p) projects.add(p);
     }
     if (projects.size === 0) {
-      await dialogs.alert(`Tab "${tab.name}" has no linked projects.`, {
+      await dialogs.alert(`Graph "${graph.name}" has no linked projects.`, {
         title: 'Linked projects',
       });
     } else {
       await dialogs.alert([...projects].join('\n'), {
-        title: `Linked projects in "${tab.name}"`,
+        title: `Linked projects in "${graph.name}"`,
       });
     }
   }
 
   async function moveToWorkspace(workspaceId: string) {
-    const sourceWid = findWorkspaceIdForTab(store, tab.id);
+    const sourceWid = findWorkspaceIdForGraph(store, graph.id);
     if (!sourceWid || sourceWid === workspaceId) return;
     const group = ensureDefaultGroupInStore(store, workspaceId);
     const targetBundle = store.get(workspaceBundleAtomFamily(workspaceId));
-    const existing = targetBundle.tabs.filter((x) => x.tabGroupId === group.id);
+    const existing = targetBundle.graphs.filter((x) => x.graphGroupId === group.id);
     const nextOrder = existing.reduce((m, x) => Math.max(m, x.orderIndex + 1), 0);
 
     updateWorkspaceBundle(store, sourceWid, (b) => ({
       ...b,
-      tabs: b.tabs.filter((x) => x.id !== tab.id),
+      graphs: b.graphs.filter((x) => x.id !== graph.id),
     }));
     updateWorkspaceBundle(store, workspaceId, (b) => ({
       ...b,
-      tabs: [
-        ...b.tabs,
-        { ...tab, tabGroupId: group.id, orderIndex: nextOrder, updatedAt: Date.now() },
-      ],
+      graphs: [...b.graphs, { ...graph, graphGroupId: group.id, orderIndex: nextOrder, updatedAt: Date.now() }],
     }));
   }
 
@@ -470,10 +467,10 @@ function SidebarTab({
     { label: 'Rename', onSelect: () => void rename() },
     {
       label: isInSidePane ? 'Close side pane' : 'Open in side pane',
-      onSelect: () => setSidePane(isInSidePane ? null : tab.id),
+      onSelect: () => setSidePane(isInSidePane ? null : graph.id),
     },
     ...(moveSubmenu.length > 0
-      ? [{ label: 'Move to workspace', onSelect: () => { }, submenu: moveSubmenu }]
+      ? [{ label: 'Move to workspace', onSelect: () => {}, submenu: moveSubmenu }]
       : []),
     { label: 'Linked projects', onSelect: () => void showLinkedProjects() },
     { label: 'Remove', destructive: true, onSelect: () => void remove() },
@@ -494,16 +491,16 @@ function SidebarTab({
         ? 'Open in primary pane'
         : isInSidePane
           ? 'Open in side pane'
-          : tab.name;
+          : graph.name;
 
   return (
     <ContextMenu items={menuItems}>
       <button
-        className={`group/tab flex w-full items-center gap-1.5 truncate rounded px-1.5 py-1 text-left text-sm ${paneTint}`}
+        className={`group/graph flex w-full items-center gap-1.5 truncate rounded px-1.5 py-1 text-left text-sm ${paneTint}`}
         onClick={onSelect}
         title={paneTitle}
       >
-        <span className="flex-1 truncate">{tab.name}</span>
+        <span className="flex-1 truncate">{graph.name}</span>
       </button>
     </ContextMenu>
   );

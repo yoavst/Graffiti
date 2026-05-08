@@ -8,9 +8,15 @@ import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { inspectorVisibleAtom } from '@/state/settings';
-import { activeTabAtom, patchTabRow } from '@/state/workspaces';
-import { makeTabActions, tabRuntimeAtom, tabTickAtom, type TabActions, type TabRuntime } from '@/state/graph';
-import type { TabRow } from '@/state/workspaceTypes';
+import { activeGraphAtom, patchGraphRow } from '@/state/workspaces';
+import {
+  makeGraphActions,
+  graphRuntimeAtom,
+  graphTickAtom,
+  type GraphActions,
+  type GraphRuntime,
+} from '@/state/graph';
+import type { GraphRow } from '@/state/workspaceTypes';
 import {
   EDGE_COLORS,
   NODE_EXTRA_INSPECTOR_HIDDEN_KEYS,
@@ -19,22 +25,22 @@ import {
   type GNode,
   type GraphConfig,
 } from '@/graph/model';
-import { useSubscribeTabDocMutations } from '@/hooks/useSubscribeTabDocMutations';
+import { useSubscribeGraphDocMutations } from '@/hooks/useSubscribeTabDocMutations';
 import type { WSClient } from '@/network/websocket';
 import { wsClientAtom } from '@/state/wsClient';
 import { jumpToPayload } from '@/network/protocol/legacy';
 
 function InspectorEditorColumn({
-  tab,
+  graph,
   ws,
   rt,
   actions,
   onHide,
 }: {
-  tab: TabRow;
+  graph: GraphRow;
   ws: WSClient | null;
-  rt: TabRuntime;
-  actions: TabActions;
+  rt: GraphRuntime;
+  actions: GraphActions;
   onHide: () => void;
 }) {
   const selectedNode =
@@ -44,7 +50,7 @@ function InspectorEditorColumn({
   const hasSelection = !!(selectedNode ?? selectedEdge);
   const [sheet, setSheet] = useState<'selection' | 'notes'>('selection');
   const headerLabel =
-    !hasSelection || sheet === 'notes' ? 'Tab notes' : selectedNode ? 'Node' : 'Edge';
+    !hasSelection || sheet === 'notes' ? 'Graph notes' : selectedNode ? 'Node' : 'Edge';
 
   return (
     <>
@@ -72,7 +78,7 @@ function InspectorEditorColumn({
             className={`rounded px-2 py-0.5 ${sheet === 'notes' ? 'bg-(--color-bg-3) font-medium' : 'opacity-70 hover:bg-(--color-bg-3)/60'}`}
             onClick={() => setSheet('notes')}
           >
-            Tab notes
+            Graph notes
           </button>
         </div>
       ) : null}
@@ -80,11 +86,11 @@ function InspectorEditorColumn({
         <div className="flex min-h-0 flex-1 flex-col border-b border-(--color-border)">
           <div className="min-h-0 flex-1 overflow-auto p-3">
             {!hasSelection || sheet === 'notes' ? (
-              <NotesEditor key={tab.id} tabId={tab.id} initial={tab.notes ?? ''} />
+              <NotesEditor key={graph.id} graphId={graph.id} initial={graph.notes ?? ''} />
             ) : selectedNode ? (
-              <NodeInspector key={`${tab.id}-${selectedNode.id}`} tabId={tab.id} actions={actions} />
+              <NodeInspector key={`${graph.id}-${selectedNode.id}`} graphId={graph.id} actions={actions} />
             ) : selectedEdge ? (
-              <EdgeInspector key={`${tab.id}-${selectedEdge.id}`} tabId={tab.id} actions={actions} />
+              <EdgeInspector key={`${graph.id}-${selectedEdge.id}`} graphId={graph.id} actions={actions} />
             ) : null}
           </div>
           {sheet === 'selection' && ((selectedNode?.extra.address && ws) || selectedEdge) ? (
@@ -125,26 +131,26 @@ function InspectorEditorColumn({
 
 export function Inspector() {
   const [visible, setVisible] = useAtom(inspectorVisibleAtom);
-  const tab = useAtomValue(activeTabAtom);
+  const graph = useAtomValue(activeGraphAtom);
   const ws = useAtomValue(wsClientAtom);
   const store = useStore();
-  const tabId = tab?.id ?? '';
-  useSubscribeTabDocMutations(tabId);
-  const rt = useAtomValue(tabRuntimeAtom(tabId));
+  const graphId = graph?.id ?? '';
+  useSubscribeGraphDocMutations(graphId);
+  const rt = useAtomValue(graphRuntimeAtom(graphId));
   const actions = useMemo(
     () =>
-      tabId
-        ? makeTabActions(
-            tabId,
+      graphId
+        ? makeGraphActions(
+            graphId,
             store,
-            () => store.get(tabRuntimeAtom(tabId)),
-            () => store.set(tabTickAtom(tabId), (n) => n + 1),
+            () => store.get(graphRuntimeAtom(graphId)),
+            () => store.set(graphTickAtom(graphId), (n) => n + 1),
           )
         : null,
-    [tabId, store],
+    [graphId, store],
   );
 
-  if (!tab || !visible) {
+  if (!graph || !visible) {
     return (
       <div className="flex w-9 flex-col items-center border-l border-(--color-border) bg-(--color-bg-2) p-1">
         <button
@@ -169,7 +175,7 @@ export function Inspector() {
       <div className="flex min-h-0 flex-1 flex-col">
         <div key={selectionRemountKey} className="flex min-h-0 flex-1 flex-col">
           <InspectorEditorColumn
-            tab={tab}
+            graph={graph}
             ws={ws}
             rt={rt}
             actions={actions}
@@ -181,7 +187,7 @@ export function Inspector() {
             Color legend
           </div>
           <div className="min-h-0 flex-1 overflow-auto p-2">
-            <ColorLegendPanel tabId={tab.id} />
+            <ColorLegendPanel graphId={graph.id} />
           </div>
         </div>
       </div>
@@ -189,24 +195,24 @@ export function Inspector() {
   );
 }
 
-function ColorLegendPanel({ tabId }: { tabId: string }) {
+function ColorLegendPanel({ graphId }: { graphId: string }) {
   const store = useStore();
-  useSubscribeTabDocMutations(tabId);
-  const rt = useAtomValue(tabRuntimeAtom(tabId));
+  useSubscribeGraphDocMutations(graphId);
+  const rt = useAtomValue(graphRuntimeAtom(graphId));
 
   const actions = useMemo(
     () =>
-      makeTabActions(
-        tabId,
+      makeGraphActions(
+        graphId,
         store,
-        () => store.get(tabRuntimeAtom(tabId)),
-        () => store.set(tabTickAtom(tabId), (n) => n + 1),
+        () => store.get(graphRuntimeAtom(graphId)),
+        () => store.set(graphTickAtom(graphId), (n) => n + 1),
       ),
-    [tabId, store],
+    [graphId, store],
   );
 
   function commitLegendText(colorId: (typeof EDGE_COLORS)[number]['id'], text: string) {
-    const doc = store.get(tabRuntimeAtom(tabId)).doc;
+    const doc = store.get(graphRuntimeAtom(graphId)).doc;
     const oldConfig = doc.config;
     const merged: GraphConfig = { ...(oldConfig ?? {}) };
     const nextLegend = { ...(merged.colorLegend ?? {}) };
@@ -230,7 +236,7 @@ function ColorLegendPanel({ tabId }: { tabId: string }) {
               title={c.label}
             />
             <LegendDescriptionField
-              key={`${tabId}::${c.id}::${desc}`}
+              key={`${graphId}::${c.id}::${desc}`}
               colorId={c.id}
               committed={desc}
               placeholder={c.label}
@@ -301,9 +307,9 @@ function nodeThemeSwatchActive(node: GNode, i: number): boolean {
   return (node.theme ?? 0) === i;
 }
 
-function NodeInspector({ tabId, actions }: { tabId: string; actions: TabActions }) {
-  useSubscribeTabDocMutations(tabId);
-  const rt = useAtomValue(tabRuntimeAtom(tabId));
+function NodeInspector({ graphId, actions }: { graphId: string; actions: GraphActions }) {
+  useSubscribeGraphDocMutations(graphId);
+  const rt = useAtomValue(graphRuntimeAtom(graphId));
   if (rt.selectedNodeId == null) return null;
   const node = rt.doc.nodes.find((n) => n.id === rt.selectedNodeId);
   if (!node) return null;
@@ -518,9 +524,9 @@ function NewPropertyRow({ onAdd }: { onAdd: (k: string, v: unknown) => void }) {
   );
 }
 
-function EdgeInspector({ tabId, actions }: { tabId: string; actions: TabActions }) {
-  useSubscribeTabDocMutations(tabId);
-  const rt = useAtomValue(tabRuntimeAtom(tabId));
+function EdgeInspector({ graphId, actions }: { graphId: string; actions: GraphActions }) {
+  useSubscribeGraphDocMutations(graphId);
+  const rt = useAtomValue(graphRuntimeAtom(graphId));
   if (rt.selectedEdgeId == null) return null;
   const edge = rt.doc.edges.find((e) => e.id === rt.selectedEdgeId);
   if (!edge) return null;
@@ -607,21 +613,21 @@ function EdgeInspector({ tabId, actions }: { tabId: string; actions: TabActions 
   );
 }
 
-function NotesEditor({ tabId, initial }: { tabId: string; initial: string }) {
+function NotesEditor({ graphId, initial }: { graphId: string; initial: string }) {
   const [v, setV] = useState(initial);
   const vRef = useRef(v);
   vRef.current = v;
   const store = useStore();
 
   useEffect(() => {
-    const id = tabId;
+    const id = graphId;
     return () => {
-      patchTabRow(store, id, { notes: vRef.current });
+      patchGraphRow(store, id, { notes: vRef.current });
     };
-  }, [tabId, store]);
+  }, [graphId, store]);
 
   function save() {
-    patchTabRow(store, tabId, { notes: v });
+    patchGraphRow(store, graphId, { notes: v });
   }
   return (
     <div className="flex flex-col gap-2">

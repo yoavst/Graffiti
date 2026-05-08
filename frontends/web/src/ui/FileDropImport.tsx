@@ -1,10 +1,10 @@
 import { useSetAtom } from 'jotai';
 import { useEffect, useState } from 'react';
 import { importUserPickedFiles } from '@/persistence/tabImport';
-import { currentTabIdAtom } from '@/state/workspaces';
+import { currentGraphIdAtom } from '@/state/workspaces';
 
 export function FileDropImport() {
-  const setCurrentTabId = useSetAtom(currentTabIdAtom);
+  const setCurrentGraphId = useSetAtom(currentGraphIdAtom);
 
   // Capture-phase listeners on `window` win against React Flow's own drag
   // handling on the canvas. We always preventDefault on dragenter/dragover
@@ -51,7 +51,7 @@ export function FileDropImport() {
         return;
       }
 
-      if (firstImportedTabId) setCurrentTabId(firstImportedTabId);
+      if (firstImportedTabId) setCurrentGraphId(firstImportedTabId);
     }
 
     window.addEventListener('dragenter', onDragEnter, true);
@@ -64,7 +64,7 @@ export function FileDropImport() {
       window.removeEventListener('dragleave', onDragLeave, true);
       window.removeEventListener('drop', onDrop, true);
     };
-  }, [setCurrentTabId]);
+  }, [setCurrentGraphId]);
 
   if (!dragHover) return null;
 

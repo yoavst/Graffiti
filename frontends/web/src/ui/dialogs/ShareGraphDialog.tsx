@@ -7,7 +7,7 @@ import DialogActions from '@mui/material/DialogActions';
 import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
 import Snackbar from '@mui/material/Snackbar';
-import { activeTabIdAtom } from '@/state/workspaces';
+import { activeGraphIdAtom } from '@/state/workspaces';
 import { appOverlayAtom } from '@/state/appOverlay';
 import { getFlowExportBridge } from '@/flow/flowExportBridge';
 import {
@@ -17,7 +17,7 @@ import {
   safeExportBasename,
 } from '@/flow/exportFlowCapture';
 import { graphDocAtomFamily } from '@/state/graphDocAtoms';
-import { tabsAtom } from '@/state/workspaces';
+import { graphsAtom } from '@/state/workspaces';
 import { toMermaid } from '@/graph/mermaidExport';
 import { dialogs } from '@/ui/dialogs/Dialogs';
 import { isModEnter } from '@/util/keyboard';
@@ -50,14 +50,14 @@ export function ShareGraphDialog() {
 
   const runRasterOrSvg = useCallback(
     async (kind: 'jpeg' | 'svg') => {
-      const tabId = store.get(activeTabIdAtom);
-      if (!tabId) {
-        await dialogs.alert('No active tab to export.', { title: 'Share graph' });
+      const graphId = store.get(activeGraphIdAtom);
+      if (!graphId) {
+        await dialogs.alert('No active graph to export.', { title: 'Share graph' });
         return;
       }
-      const bridge = getFlowExportBridge(tabId);
+      const bridge = getFlowExportBridge(graphId);
       if (!bridge) {
-        await dialogs.alert('Could not find the graph canvas for this tab.', { title: 'Share graph' });
+        await dialogs.alert('Could not find the graph canvas for this graph.', { title: 'Share graph' });
         return;
       }
       setBusy(true);
@@ -66,8 +66,8 @@ export function ShareGraphDialog() {
         restore = await bridge.prepareFullGraphSnapshot();
         const el = bridge.getViewportElement();
         if (!el) throw new Error('Viewport not ready');
-        const tab = store.get(tabsAtom).find((t) => t.id === tabId);
-        const base = safeExportBasename(tab?.name);
+        const graph = store.get(graphsAtom).find((t) => t.id === graphId);
+        const base = safeExportBasename(graph?.name);
         if (kind === 'jpeg') {
           const blob = await captureViewportToJpegBlob(el, dpi);
           downloadJpeg(`${base}.jpg`, blob);
@@ -90,16 +90,16 @@ export function ShareGraphDialog() {
   );
 
   const runMermaid = useCallback(async () => {
-    const tabId = store.get(activeTabIdAtom);
-    if (!tabId) {
-      await dialogs.alert('No active tab to export.', { title: 'Share graph' });
+    const graphId = store.get(activeGraphIdAtom);
+    if (!graphId) {
+      await dialogs.alert('No active graph to export.', { title: 'Share graph' });
       return;
     }
-    const tab = store.get(tabsAtom).find((t) => t.id === tabId);
-    const doc = store.get(graphDocAtomFamily(tabId));
+    const graph = store.get(graphsAtom).find((t) => t.id === graphId);
+    const doc = store.get(graphDocAtomFamily(graphId));
     const text = toMermaid(doc, {
       gui: true,
-      elkRenderer: tab?.layout === 'elk',
+      elkRenderer: graph?.layout === 'elk',
       darkMode: true,
     });
     if (!text.trim()) {

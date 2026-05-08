@@ -4,8 +4,8 @@ import type { GraphDoc } from '@/graph/model';
 import { graphStorageKey } from '@/state/storageKeys';
 import { emptyGraphDoc } from '@/state/workspaceTypes';
 
-export const graphDocAtomFamily = atomFamily((tabId: string) =>
-  atomWithStorage<GraphDoc>(graphStorageKey(tabId), emptyGraphDoc(), undefined, {
+export const graphDocAtomFamily = atomFamily((graphId: string) =>
+  atomWithStorage<GraphDoc>(graphStorageKey(graphId), emptyGraphDoc(), undefined, {
     getOnInit: true,
   }),
 );

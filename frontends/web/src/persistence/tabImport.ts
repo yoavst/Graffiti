@@ -1,23 +1,23 @@
 import { getStore, type JotaiStore } from '@/state/store';
-import { getActiveTabFromStore } from '@/state/registry';
+import { getActiveGraphFromStore } from '@/state/registry';
 import {
-  currentTabIdAtom,
+  currentGraphIdAtom,
   currentWorkspaceIdAtom,
   currentWorkspaceGroupsAtom,
-  tabsAtom,
+  graphsAtom,
 } from '@/state/workspaces';
 import { importFile } from '@/persistence/importExport';
 
 export function resolveImportTargetGroupId(store: JotaiStore): string | null {
-  const cur = getActiveTabFromStore(store);
+  const cur = getActiveGraphFromStore(store);
   if (cur) {
-    const tab = store.get(tabsAtom).find((t) => t.id === cur.tabId);
-    if (tab) return tab.tabGroupId;
+    const graph = store.get(graphsAtom).find((g) => g.id === cur.graphId);
+    if (graph) return graph.graphGroupId;
   }
-  const tabIdFromAtom = store.get(currentTabIdAtom);
+  const tabIdFromAtom = store.get(currentGraphIdAtom);
   if (tabIdFromAtom) {
-    const tab = store.get(tabsAtom).find((t) => t.id === tabIdFromAtom);
-    if (tab) return tab.tabGroupId;
+    const graph = store.get(graphsAtom).find((g) => g.id === tabIdFromAtom);
+    if (graph) return graph.graphGroupId;
   }
   const wid = store.get(currentWorkspaceIdAtom);
   if (wid) {
@@ -35,14 +35,14 @@ export async function importUserPickedFiles(
   if (!targetGroupId) {
     return { firstTabId: null, targetMissing: true };
   }
-  let firstImportedTabId: string | null = null;
+  let firstImportedGraphId: string | null = null;
   for (const f of files) {
     try {
       const importedIds = await importFile(store, f, targetGroupId);
-      if (!firstImportedTabId && importedIds[0]) firstImportedTabId = importedIds[0];
+      if (!firstImportedGraphId && importedIds[0]) firstImportedGraphId = importedIds[0];
     } catch (err) {
       console.error('import failed for', f.name, err);
     }
   }
-  return { firstTabId: firstImportedTabId, targetMissing: false };
+  return { firstTabId: firstImportedGraphId, targetMissing: false };
 }

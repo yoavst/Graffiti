@@ -2,35 +2,35 @@ import { useAtom, useAtomValue } from 'jotai';
 import { Suspense } from 'react';
 import CloseIcon from '@mui/icons-material/Close';
 import { GraphCanvas } from '@/flow/GraphCanvas';
-import { TabHost } from '@/ui/TabHost';
+import { GraphHost } from '@/ui/TabHost';
 import {
   activePaneAtom,
-  currentTabIdAtom,
-  sidePaneTabIdAtom,
-  tabsAtom,
+  currentGraphIdAtom,
+  sidePaneGraphIdAtom,
+  graphsAtom,
 } from '@/state/workspaces';
-import type { TabRow } from '@/state/workspaceTypes';
+import type { GraphRow } from '@/state/workspaceTypes';
 
-function PaneTitle({ tab, label }: { tab: TabRow | undefined; label: string }) {
+function PaneTitle({ graph, label }: { graph: GraphRow | undefined; label: string }) {
   return (
     <div className="pointer-events-none absolute left-2 top-2 z-10 flex items-center gap-1 rounded bg-(--color-bg-2)/80 px-2 py-0.5 text-xs text-(--color-fg-dim) backdrop-blur">
       <span className="uppercase opacity-70">{label}</span>
-      <span className="text-(--color-fg)">{tab?.name ?? '—'}</span>
+      <span className="text-(--color-fg)">{graph?.name ?? '—'}</span>
     </div>
   );
 }
 
 export function SplitView() {
-  const [primary] = useAtom(currentTabIdAtom);
-  const [side, setSide] = useAtom(sidePaneTabIdAtom);
-  const tabs = useAtomValue(tabsAtom);
+  const [primary] = useAtom(currentGraphIdAtom);
+  const [side, setSide] = useAtom(sidePaneGraphIdAtom);
+  const graphs = useAtomValue(graphsAtom);
   const [activePane, setActivePane] = useAtom(activePaneAtom);
 
   if (!primary) return <div className="flex-1" />;
 
-  const hasSide = !!(side && tabs.find((t) => t.id === side));
-  const primaryTab = tabs.find((t) => t.id === primary);
-  const sideTab = side ? tabs.find((t) => t.id === side) : undefined;
+  const hasSide = !!(side && graphs.find((g) => g.id === side));
+  const primaryGraph = graphs.find((g) => g.id === primary);
+  const sideGraph = side ? graphs.find((g) => g.id === side) : undefined;
 
   return (
     <div className="flex flex-col flex-1 min-h-0">
@@ -40,9 +40,9 @@ export function SplitView() {
         }`}
         onMouseDownCapture={() => setActivePane('primary')}
       >
-        {hasSide && <PaneTitle tab={primaryTab} label="primary" />}
+        {hasSide && <PaneTitle graph={primaryGraph} label="primary" />}
         <Suspense fallback={null}>
-          <TabHost tabId={primary} pane="primary" onActivate={() => setActivePane('primary')} />
+          <GraphHost graphId={primary} pane="primary" onActivate={() => setActivePane('primary')} />
         </Suspense>
       </div>
       {hasSide && (
@@ -52,7 +52,7 @@ export function SplitView() {
           }`}
           onMouseDownCapture={() => setActivePane('side')}
         >
-          <PaneTitle tab={sideTab} label="side" />
+          <PaneTitle graph={sideGraph} label="side" />
           <div className="absolute right-2 top-2 z-20 flex items-center gap-1">
             <button
               className="flex items-center rounded bg-(--color-bg-2) px-2 py-0.5 hover:bg-(--color-bg-3)"
@@ -66,7 +66,7 @@ export function SplitView() {
             </button>
           </div>
           <Suspense fallback={null}>
-            <TabHost tabId={side!} pane="side" onActivate={() => setActivePane('side')} />
+            <GraphHost graphId={side!} pane="side" onActivate={() => setActivePane('side')} />
           </Suspense>
         </div>
       )}

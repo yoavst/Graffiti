@@ -1,6 +1,5 @@
 import { Command } from 'cmdk';
 import { useAtomValue, useSetAtom, useStore } from 'jotai';
-import { useHotkeys } from 'react-hotkeys-hook';
 import { buildCommands } from '@/commands/commands';
 import { appOverlayAtom } from '@/state/appOverlay';
 
@@ -9,15 +8,6 @@ export function CommandPalette() {
   const overlay = useAtomValue(appOverlayAtom);
   const setOverlay = useSetAtom(appOverlayAtom);
   const open = overlay === 'commandPalette';
-
-  useHotkeys(
-    'mod+shift+p',
-    (e) => {
-      e.preventDefault();
-      setOverlay((o) => (o === 'commandPalette' ? 'none' : 'commandPalette'));
-    },
-    [setOverlay],
-  );
 
   if (!open) return null;
   const cmds = buildCommands(store);

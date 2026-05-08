@@ -20,7 +20,7 @@ import {
   workspaceBundleAtomFamily,
   workspaceIdsAtom,
 } from '@/state/workspaces';
-import type { TabRow, WorkspaceBundle } from '@/state/workspaceTypes';
+import type { GraphRow, WorkspaceBundle } from '@/state/workspaceTypes';
 import { newId } from '@/util/ids';
 import type { SelectionV1, SelectionV2 } from './selection';
 
@@ -45,10 +45,10 @@ function err(env: DispatchEnv, req: Req, code: string, message: string) {
   });
 }
 
-function targetTab(env: DispatchEnv, req: Req) {
-  const tabId = req.tabId as string | undefined;
-  if (tabId) return env.getTab(tabId);
-  return env.getCurrentTab();
+function targetGraph(env: DispatchEnv, req: Req) {
+  const graphId = req.graphId as string | undefined;
+  if (graphId) return env.getGraph(graphId);
+  return env.getCurrentGraph();
 }
 
 export async function handleMcp(env: DispatchEnv, req: Req) {
@@ -66,8 +66,8 @@ export async function handleMcp(env: DispatchEnv, req: Req) {
             id: g.id,
             name: g.name,
             color: g.color,
-            tabs: b.tabs
-              .filter((t) => t.tabGroupId === g.id)
+            graphs: b.graphs
+              .filter((t) => t.graphGroupId === g.id)
               .sort((a, c) => a.orderIndex - c.orderIndex)
               .map((t) => ({ id: t.id, name: t.name })),
           })),
@@ -76,31 +76,31 @@ export async function handleMcp(env: DispatchEnv, req: Req) {
       return reply(env, req, { workspaces: out });
     }
 
-    case 'mcp_list_tabs': {
+    case 'mcp_list_graphs': {
       const wsid = req.workspaceId as string | undefined;
       const wids = store.get(workspaceIdsAtom);
-      const tabRows: TabRow[] = [];
+      const graphRows: GraphRow[] = [];
       for (const wid of wids) {
         if (wsid !== undefined && wid !== wsid) continue;
         const b = store.get(workspaceBundleAtomFamily(wid));
-        tabRows.push(...b.tabs);
+        graphRows.push(...b.graphs);
       }
-      tabRows.sort((a, b) =>
+      graphRows.sort((a, b) =>
         a.orderIndex !== b.orderIndex ? a.orderIndex - b.orderIndex : a.id.localeCompare(b.id),
       );
       return reply(env, req, {
-        tabs: tabRows.map((t) => ({
-          id: t.id,
-          name: t.name,
-          tabGroupId: t.tabGroupId,
-          nodeCount: store.get(graphDocAtomFamily(t.id)).nodes.length,
+        graphs: graphRows.map((g) => ({
+          id: g.id,
+          name: g.name,
+          graphGroupId: g.graphGroupId,
+          nodeCount: store.get(graphDocAtomFamily(g.id)).nodes.length,
         })),
       });
     }
 
     case 'mcp_get_graph': {
-      const t = targetTab(env, req);
-      if (!t) return err(env, req, 'no_tab', 'no current tab');
+      const t = targetGraph(env, req);
+      if (!t) return err(env, req, 'no_graph', 'no current graph');
       return reply(env, req, {
         nodes: t.rt.doc.nodes,
         edges: t.rt.doc.edges,
@@ -109,16 +109,16 @@ export async function handleMcp(env: DispatchEnv, req: Req) {
     }
 
     case 'mcp_query_nodes': {
-      const t = targetTab(env, req);
-      if (!t) return err(env, req, 'no_tab', 'no current tab');
+      const t = targetGraph(env, req);
+      if (!t) return err(env, req, 'no_graph', 'no current graph');
       const selection = req.selection as SelectionV1 | SelectionV2;
       // Default to v2 since MCP is new.
       return reply(env, req, { nodes: queryNodes(t.rt.doc, selection, 2) });
     }
 
     case 'mcp_add_node': {
-      const t = targetTab(env, req);
-      if (!t) return err(env, req, 'no_tab', 'no current tab');
+      const t = targetGraph(env, req);
+      if (!t) return err(env, req, 'no_graph', 'no current graph');
       const incoming = req.node as Partial<GNode> & { extra?: NodeExtra };
       const extra: NodeExtra = (incoming?.extra ?? incoming ?? {}) as NodeExtra;
       applyComputedProperties(extra);
@@ -145,8 +145,8 @@ export async function handleMcp(env: DispatchEnv, req: Req) {
     }
 
     case 'mcp_delete_node': {
-      const t = targetTab(env, req);
-      if (!t) return err(env, req, 'no_tab', 'no current tab');
+      const t = targetGraph(env, req);
+      if (!t) return err(env, req, 'no_graph', 'no current graph');
       const id = req.id as number;
       const node = findNode(t.rt.doc, id);
       if (!node) return err(env, req, 'no_node', 'node not found');
@@ -165,8 +165,8 @@ export async function handleMcp(env: DispatchEnv, req: Req) {
     }
 
     case 'mcp_add_edge': {
-      const t = targetTab(env, req);
-      if (!t) return err(env, req, 'no_tab', 'no current tab');
+      const t = targetGraph(env, req);
+      if (!t) return err(env, req, 'no_graph', 'no current graph');
       const id = nextId(t.rt.doc);
       const e: GEdge = {
         id,
@@ -180,8 +180,8 @@ export async function handleMcp(env: DispatchEnv, req: Req) {
     }
 
     case 'mcp_set_selected': {
-      const t = targetTab(env, req);
-      if (!t) return err(env, req, 'no_tab', 'no current tab');
+      const t = targetGraph(env, req);
+      if (!t) return err(env, req, 'no_graph', 'no current graph');
       t.actions.select((req.id as number | null) ?? null);
       return reply(env, req, { ok: true });
     }
@@ -198,7 +198,7 @@ export async function handleMcp(env: DispatchEnv, req: Req) {
           updatedAt: now,
         },
         groups: [],
-        tabs: [],
+        graphs: [],
       };
       store.set(workspaceIdsAtom, [...store.get(workspaceIdsAtom), id]);
       store.set(workspaceBundleAtomFamily(id), bundle);

@@ -16,14 +16,14 @@ import {
   nextId,
   queryNodes,
 } from '@/graph/reducer';
-import type { TabRuntime } from '@/state/graph';
-import type { TabActions } from '@/state/graph';
+import type { GraphRuntime } from '@/state/graph';
+import type { GraphActions } from '@/state/graph';
 import type { AddData, AddDataBulk, IncomingEdge, IncomingNode, UpdateNodes } from './types';
 import type { SelectionV1, SelectionV2 } from './selection';
 
 interface AddCtx {
-  rt: TabRuntime;
-  actions: TabActions;
+  rt: GraphRuntime;
+  actions: GraphActions;
   /** True = arrow goes from the currently-selected node to the new node. */
   isExistingToNew: boolean;
   /** True = the newly-added node becomes selected after the call. */
@@ -75,7 +75,7 @@ function addNodeAndEdge(
       : ctx.isExistingToNew;
 
   const selectedId = rt.selectedNodeId;
-  const selected = selectedId != null ? rt.doc.nodes.find((n) => n.id === selectedId) ?? null : null;
+  const selected = selectedId != null ? rt.doc.nodes.find((n: GNode) => n.id === selectedId) ?? null : null;
 
   // 1. If the incoming node carries an `address`, dedupe against existing.
   const existing =
@@ -134,7 +134,7 @@ export function handleAddDataBulk(ctx: AddCtx, msg: AddDataBulk) {
  * Live rename: find nodes whose `extra` matches `selection` and merge `update`
  * into their extras. Recompute computed properties (e.g. `label`).
  */
-export function handleUpdateNodes(rt: TabRuntime, actions: TabActions, msg: UpdateNodes) {
+export function handleUpdateNodes(rt: GraphRuntime, actions: GraphActions, msg: UpdateNodes) {
   const version = (msg.version ?? 1) as 1 | 2;
   const selection = msg.selection as SelectionV1 | SelectionV2;
   const matched = queryNodes(rt.doc, selection, version);

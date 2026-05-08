@@ -5,7 +5,7 @@ import { normalizePendingNodeTheme, type GraphDoc } from '@/graph/model';
 import { newId } from '@/util/ids';
 import type { JotaiStore } from '@/state/store';
 import { workspaceBundleAtomFamily, workspaceIdsAtom } from '@/state/workspaces';
-import { pickColor, type TabRow, type WorkspaceBundle } from '@/state/workspaceTypes';
+import { pickColor, type GraphRow, type WorkspaceBundle } from '@/state/workspaceTypes';
 import { graphDocAtomFamily } from '@/state/graphDocAtoms';
 
 /** Set after this migration runs successfully or is skipped as unnecessary. */
@@ -66,9 +66,9 @@ export function migrateLegacyIfNeeded(store: JotaiStore): MigrationResult {
   const groupId = newId();
   const now = Date.now();
 
-  const tabRows: TabRow[] = pairs.map((p, i) => ({
+  const graphRows: GraphRow[] = pairs.map((p, i) => ({
     id: newId(),
-    tabGroupId: groupId,
+    graphGroupId: groupId,
     name: p.name,
     layout: p.doc.config?.elkRenderer === false ? 'dagre' : 'elk',
     notes: p.doc.config?.notes,
@@ -95,18 +95,18 @@ export function migrateLegacyIfNeeded(store: JotaiStore): MigrationResult {
         orderIndex: 0,
       },
     ],
-    tabs: tabRows,
+    graphs: graphRows,
   };
 
   store.set(workspaceIdsAtom, [workspaceId]);
   store.set(workspaceBundleAtomFamily(workspaceId), bundle);
-  for (let i = 0; i < tabRows.length; i++) {
-    const row = tabRows[i]!;
+  for (let i = 0; i < graphRows.length; i++) {
+    const row = graphRows[i]!;
     store.set(graphDocAtomFamily(row.id), pairs[i]!.doc);
   }
 
   localStorage.setItem(LEGACY_SAVE_MIGRATED_KEY, '1');
-  return { imported: true, workspaceId, tabIds: tabRows.map((r) => r.id) };
+  return { imported: true, workspaceId, tabIds: graphRows.map((r) => r.id) };
 }
 
 export function parseInnerDoc(s: string): GraphDoc | null {

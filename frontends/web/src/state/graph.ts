@@ -1,10 +1,10 @@
-// Per-tab graph state held in memory: an `atomFamily` keyed by tabId.
+// Per-graph runtime state held in memory: an `atomFamily` keyed by graphId.
 // Graph JSON is persisted via `graphDocAtomFamily` (atomWithStorage).
 
 import { atom } from 'jotai';
 import { atomFamily } from 'jotai-family';
 import { graphDocAtomFamily } from '@/state/graphDocAtoms';
-import { touchTabUpdatedAt } from '@/state/workspaces';
+import { touchGraphUpdatedAt } from '@/state/workspaces';
 import type { JotaiStore } from '@/state/store';
 import {
   applyAndRecord,
@@ -19,7 +19,7 @@ import {
 } from '@/graph/reducer';
 import type { GraphDoc } from '@/graph/model';
 
-export interface TabRuntime {
+export interface GraphRuntime {
   doc: GraphDoc;
   history: History;
   loaded: boolean;
@@ -29,7 +29,7 @@ export interface TabRuntime {
   farHighlightNodeId: number | null;
 }
 
-function emptyRuntime(): TabRuntime {
+function emptyRuntime(): GraphRuntime {
   return {
     doc: makeGraphDoc(),
     history: makeHistory(),
@@ -40,14 +40,14 @@ function emptyRuntime(): TabRuntime {
   };
 }
 
-// Per-tab runtime atom (in-memory only; doc is persisted separately).
-export const tabRuntimeAtom = atomFamily((_: string) => atom<TabRuntime>(emptyRuntime()));
+// Per-graph runtime atom (in-memory only; doc is persisted separately).
+export const graphRuntimeAtom = atomFamily((_: string) => atom<GraphRuntime>(emptyRuntime()));
 
 // "Tick" atom we bump after each mutation so React subscribers re-render.
 // We mutate the doc/history in place for performance and bump this counter.
-export const tabTickAtom = atomFamily((_: string) => atom(0));
+export const graphTickAtom = atomFamily((_: string) => atom(0));
 
-export interface TabActions {
+export interface GraphActions {
   apply: (op: Op) => Op;
   applyTransaction: (ops: Op[]) => void;
   undo: () => void;
@@ -62,26 +62,26 @@ export interface TabActions {
 const persistTimers = new Map<string, ReturnType<typeof setTimeout>>();
 const PERSIST_DEBOUNCE_MS = 250;
 
-export function makeTabActions(
-  tabId: string,
+export function makeGraphActions(
+  graphId: string,
   store: JotaiStore,
-  getRuntime: () => TabRuntime,
+  getRuntime: () => GraphRuntime,
   bumpTick: () => void,
-): TabActions {
+): GraphActions {
   function persistNow() {
     const rt = getRuntime();
-    store.set(graphDocAtomFamily(tabId), snapshotDoc(rt.doc));
-    touchTabUpdatedAt(store, tabId);
+    store.set(graphDocAtomFamily(graphId), snapshotDoc(rt.doc));
+    touchGraphUpdatedAt(store, graphId);
   }
 
   function schedulePersist() {
-    const old = persistTimers.get(tabId);
+    const old = persistTimers.get(graphId);
     if (old) clearTimeout(old);
     const t = setTimeout(() => {
-      persistTimers.delete(tabId);
+      persistTimers.delete(graphId);
       persistNow();
     }, PERSIST_DEBOUNCE_MS);
-    persistTimers.set(tabId, t);
+    persistTimers.set(graphId, t);
   }
 
   return {
@@ -141,19 +141,19 @@ export function makeTabActions(
         return;
       }
       try {
-        const doc = store.get(graphDocAtomFamily(tabId));
+        const doc = store.get(graphDocAtomFamily(graphId));
         rt.doc = snapshotDoc(doc);
       } catch (e) {
-        console.error('hydrate failed for tab', tabId, e);
+        console.error('hydrate failed for graph', graphId, e);
       }
       rt.loaded = true;
       bumpTick();
     },
     flush() {
-      const t = persistTimers.get(tabId);
+      const t = persistTimers.get(graphId);
       if (t) {
         clearTimeout(t);
-        persistTimers.delete(tabId);
+        persistTimers.delete(graphId);
         persistNow();
       }
     },

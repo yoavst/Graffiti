@@ -5,20 +5,20 @@
 import { addDataBulkSchema, addDataSchema, mcpRequestSchema, updateNodesSchema } from './types';
 import { handleAddData, handleAddDataBulk, handleUpdateNodes } from './legacy';
 import { handleMcp } from './mcp';
-import type { TabActions, TabRuntime } from '@/state/graph';
+import type { GraphActions, GraphRuntime } from '@/state/graph';
 import type { WSClient } from '../websocket';
 import type { JotaiStore } from '@/state/store';
-import { tabsAtom } from '@/state/workspaces';
+import { graphsAtom } from '@/state/workspaces';
 
 export interface DispatchEnv {
   store: JotaiStore;
   /**
-   * Look up the active tab runtime + actions. The dispatcher targets the
-   * currently-selected tab for legacy messages; MCP messages may target a
-   * specific `tabId`.
+   * Look up the active graph runtime + actions. The dispatcher targets the
+   * currently-selected graph for legacy messages; MCP messages may target a
+   * specific `graphId`.
    */
-  getCurrentTab: () => { tabId: string; rt: TabRuntime; actions: TabActions } | null;
-  getTab: (tabId: string) => { tabId: string; rt: TabRuntime; actions: TabActions } | null;
+  getCurrentGraph: () => { graphId: string; rt: GraphRuntime; actions: GraphActions } | null;
+  getGraph: (graphId: string) => { graphId: string; rt: GraphRuntime; actions: GraphActions } | null;
   ws: WSClient | null;
   /** Header switches */
   isExistingToNew: () => boolean;
@@ -34,11 +34,11 @@ export function dispatchInbound(env: DispatchEnv, raw: unknown) {
     case 'addData': {
       const parsed = addDataSchema.safeParse(raw);
       if (!parsed.success) return console.warn('addData parse failed', parsed.error);
-      const target = env.getCurrentTab();
+      const target = env.getCurrentGraph();
       if (!target) return;
       const pendingNodeTheme = env.store
-        .get(tabsAtom)
-        .find((t) => t.id === target.tabId)?.pendingNodeTheme;
+        .get(graphsAtom)
+        .find((t) => t.id === target.graphId)?.pendingNodeTheme;
       handleAddData(
         {
           rt: target.rt,
@@ -54,11 +54,11 @@ export function dispatchInbound(env: DispatchEnv, raw: unknown) {
     case 'addDataBulk': {
       const parsed = addDataBulkSchema.safeParse(raw);
       if (!parsed.success) return console.warn('addDataBulk parse failed', parsed.error);
-      const target = env.getCurrentTab();
+      const target = env.getCurrentGraph();
       if (!target) return;
       const pendingNodeTheme = env.store
-        .get(tabsAtom)
-        .find((t) => t.id === target.tabId)?.pendingNodeTheme;
+        .get(graphsAtom)
+        .find((t) => t.id === target.graphId)?.pendingNodeTheme;
       handleAddDataBulk(
         {
           rt: target.rt,
@@ -76,7 +76,7 @@ export function dispatchInbound(env: DispatchEnv, raw: unknown) {
       if (!parsed.success) return console.warn('updateNodes parse failed', parsed.error);
       // Apply to all tabs (matches legacy behavior).
       // In our atoms we don't have a list iterator yet; for now just current.
-      const target = env.getCurrentTab();
+      const target = env.getCurrentGraph();
       if (!target) return;
       handleUpdateNodes(target.rt, target.actions, parsed.data);
       return;

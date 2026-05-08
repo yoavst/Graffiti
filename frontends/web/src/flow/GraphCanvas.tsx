@@ -28,7 +28,7 @@ import { CodeNode, type GraffitiNodeData } from './nodes/CodeNode';
 import { MarkdownNode } from './nodes/MarkdownNode';
 import { CommentNode } from './nodes/CommentNode';
 import { LabeledEdge, type GraffitiEdgeData } from './edges/LabeledEdge';
-import { tabTickAtom, type TabActions, type TabRuntime } from '@/state/graph';
+import { graphTickAtom, type GraphActions, type GraphRuntime } from '@/state/graph';
 import { layout, structuralHash } from '@/graph/layout';
 import { nodesToInput } from '@/graph/layout/types';
 import { isCurvedEdgesAtom } from '@/state/settings';
@@ -49,11 +49,11 @@ const nodeTypes = {
 const edgeTypes = { labeled: LabeledEdge };
 
 interface CanvasProps {
-  tabId: string;
-  /** Which split pane hosts this canvas — required so duplicate tabs can receive the right focus. */
+  graphId: string;
+  /** Which split pane hosts this canvas — required so duplicate graphs can receive the right focus. */
   pane: FlowPane;
-  actions: TabActions;
-  rt: TabRuntime;
+  actions: GraphActions;
+  rt: GraphRuntime;
   layoutEngine: 'elk' | 'dagre';
   onJumpToIde?: (nodeId: number) => void;
   // Fired whenever the user interacts with this canvas (click on node/edge/
@@ -70,18 +70,18 @@ type LayoutCacheEntry = {
 const layoutCache = new Map<string, LayoutCacheEntry>();
 
 // In-memory viewport cache. Updated on every onMoveEnd and read on remount,
-// so switching back to a tab within the same session restores the exact
+// so switching back to a graph within the same session restores the exact
 // pan/zoom the user left it at. Intentionally not persisted: a fresh page
 // load resets to a centered fitView (matching the Controls "fit view"
-// button) the first time each tab is opened.
+// button) the first time each graph is opened.
 const viewportCache = new Map<string, { x: number; y: number; zoom: number }>();
 
-function CanvasInner({ tabId, pane, actions, rt, layoutEngine, onJumpToIde, onActivate }: CanvasProps) {
+function CanvasInner({ graphId, pane, actions, rt, layoutEngine, onJumpToIde, onActivate }: CanvasProps) {
   // The doc is mutated in place by the reducer (push/splice), so
   // `rt.doc.nodes` keeps the same reference even when nodes are added or
   // removed. We can't use it as a useEffect dep — instead we drive recompute
-  // via the per-tab `tick` atom, which is bumped after every mutation.
-  const tick = useAtomValue(tabTickAtom(tabId));
+  // via the per-graph `tick` atom, which is bumped after every mutation.
+  const tick = useAtomValue(graphTickAtom(graphId));
   const globalPendingFocus = useAtomValue(pendingNodeFocusAtom);
   const setPendingNodeFocus = useSetAtom(pendingNodeFocusAtom);
   const curved = useAtomValue(isCurvedEdgesAtom);
@@ -91,22 +91,22 @@ function CanvasInner({ tabId, pane, actions, rt, layoutEngine, onJumpToIde, onAc
   const rtRef = useRef(rt);
   rtRef.current = rt;
   const flowRootRef = useRef<HTMLDivElement>(null);
-  const lastHashRef = useRef<string>(layoutCache.get(tabId)?.hash ?? '');
+  const lastHashRef = useRef<string>(layoutCache.get(graphId)?.hash ?? '');
   // Layout positions live in a state variable so a fresh layout triggers a
   // re-render of the controlled `nodes` prop. Initialize from the cache so
-  // remounting a previously-laid-out tab is instant.
+  // remounting a previously-laid-out graph is instant.
   const [positions, setPositions] = useState<Map<number, { x: number; y: number; width: number; height: number }>>(
-    () => layoutCache.get(tabId)?.positions ?? new Map(),
+    () => layoutCache.get(graphId)?.positions ?? new Map(),
   );
-  const hasLaidOutRef = useRef(layoutCache.has(tabId));
+  const hasLaidOutRef = useRef(layoutCache.has(graphId));
   const userInteractedRef = useRef(false);
   const wantsAutoFitRef = useRef(false);
-  // Viewport state is session-scoped: the in-memory cache survives tab
+  // Viewport state is session-scoped: the in-memory cache survives graph
   // switches but a fresh page load starts empty, so the user gets a
-  // centered fitView the first time they open a tab in a session.
+  // centered fitView the first time they open a graph in a session.
   // Captured once via useRef so changing it later doesn't restart the
   // layout effect.
-  const startViewport = viewportCache.get(tabId);
+  const startViewport = viewportCache.get(graphId);
   const startViewportRef = useRef(startViewport);
   const hadInitialViewportRef = useRef(!!startViewport);
 
@@ -148,11 +148,11 @@ function CanvasInner({ tabId, pane, actions, rt, layoutEngine, onJumpToIde, onAc
           wantsAutoFitRef.current = true;
         }
         setPositions(map);
-        layoutCache.set(tabId, { hash, positions: map });
+        layoutCache.set(graphId, { hash, positions: map });
         hasLaidOutRef.current = true;
       })
       .catch((err) => {
-        console.error('layout failed for tab', tabId, err);
+        console.error('layout failed for graph', graphId, err);
       });
     return () => {
       cancelled = true;
@@ -160,7 +160,7 @@ function CanvasInner({ tabId, pane, actions, rt, layoutEngine, onJumpToIde, onAc
     // `flow` read via refs. `positions` omitted so setPositions doesn't re-trigger.
     // `tick` replaces `rt.doc.*` deps: the doc arrays keep stable references under in-place mutation.
     // eslint-disable-next-line @eslint-react/exhaustive-deps -- intentional; adding positions.size / rt.doc causes loops or redundant runs
-  }, [tick, layoutEngine, curved, tabId]);
+  }, [tick, layoutEngine, curved, graphId]);
 
   // Auto-fit AFTER the new positions have landed AND React Flow has
   // measured the new node DOM. We rely on useNodesInitialized so the
@@ -201,9 +201,9 @@ function CanvasInner({ tabId, pane, actions, rt, layoutEngine, onJumpToIde, onAc
   }, []);
 
   useLayoutEffect(() => {
-    registerFlowFitView(tabId, pane, () => smartFitView());
-    return () => registerFlowFitView(tabId, pane, null);
-  }, [tabId, pane, smartFitView]);
+    registerFlowFitView(graphId, pane, () => smartFitView());
+    return () => registerFlowFitView(graphId, pane, null);
+  }, [graphId, pane, smartFitView]);
 
   useEffect(() => {
     if (!wantsAutoFitRef.current) return;
@@ -214,11 +214,11 @@ function CanvasInner({ tabId, pane, actions, rt, layoutEngine, onJumpToIde, onAc
   }, [positions, initialized]);
 
   const pendingForThisPane = useMemo(() => {
-    if (!globalPendingFocus || globalPendingFocus.tabId !== tabId || globalPendingFocus.pane !== pane) {
+    if (!globalPendingFocus || globalPendingFocus.tabId !== graphId || globalPendingFocus.pane !== pane) {
       return null;
     }
     return globalPendingFocus;
-  }, [globalPendingFocus, tabId, pane]);
+  }, [globalPendingFocus, graphId, pane]);
 
   const pendingNodeLayoutReady =
     pendingForThisPane != null && positions.has(pendingForThisPane.nodeId) && initialized;
@@ -406,18 +406,18 @@ function CanvasInner({ tabId, pane, actions, rt, layoutEngine, onJumpToIde, onAc
       };
     };
 
-    registerFlowExportBridge(tabId, { getViewportElement, prepareFullGraphSnapshot });
-    return () => registerFlowExportBridge(tabId, null);
-  }, [tabId]);
+    registerFlowExportBridge(graphId, { getViewportElement, prepareFullGraphSnapshot });
+    return () => registerFlowExportBridge(graphId, null);
+  }, [graphId]);
 
   const onMoveEnd = useCallback(
     (e: unknown, viewport: Viewport) => {
       // If the move was triggered by user interaction (mouse/touch), remember
       // it so we don't auto-fitView again on the next layout.
       if (e) userInteractedRef.current = true;
-      viewportCache.set(tabId, { x: viewport.x, y: viewport.y, zoom: viewport.zoom });
+      viewportCache.set(graphId, { x: viewport.x, y: viewport.y, zoom: viewport.zoom });
     },
-    [tabId],
+    [graphId],
   );
 
   return (
@@ -483,7 +483,7 @@ function CanvasInner({ tabId, pane, actions, rt, layoutEngine, onJumpToIde, onAc
             zIndex: 6,
           }}
         >
-          <PenColorSwatch tabId={tabId} />
+          <PenColorSwatch tabId={graphId} />
         </Panel>
         <Controls showInteractive={false} onFitView={smartFitView}></Controls>
         <MiniMap

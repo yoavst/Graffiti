@@ -1,39 +1,29 @@
 import { Command } from 'cmdk';
 import { useMemo } from 'react';
 import { useAtomValue, useSetAtom, useStore } from 'jotai';
-import { useHotkeys } from 'react-hotkeys-hook';
-import { orderedWorkspaceTabs } from '@/navigation/collectNavItems';
+import { orderedWorkspaceGraphs } from '@/navigation/collectNavItems';
 import { appOverlayAtom } from '@/state/appOverlay';
 import {
   activePaneAtom,
-  currentTabIdAtom,
+  currentGraphIdAtom,
   currentWorkspaceIdAtom,
   tabGroupsAtom,
-  tabsAtom,
+  graphsAtom,
 } from '@/state/workspaces';
 
-export function TabJumpPalette() {
+export function GraphJumpPalette() {
   const overlay = useAtomValue(appOverlayAtom);
   const setOverlay = useSetAtom(appOverlayAtom);
   const open = overlay === 'tabJump';
   const store = useStore();
   const wsId = useAtomValue(currentWorkspaceIdAtom);
   const groups = useAtomValue(tabGroupsAtom);
-  const tabs = useAtomValue(tabsAtom);
-  const setCurrentTabId = useSetAtom(currentTabIdAtom);
+  const graphs = useAtomValue(graphsAtom);
+  const setCurrentGraphId = useSetAtom(currentGraphIdAtom);
   const setActivePane = useSetAtom(activePaneAtom);
   // Store identity is stable; include workspace snapshots so the memo invalidates when tabs change.
   // eslint-disable-next-line @eslint-react/exhaustive-deps -- wsId/groups/tabs intentionally bust the cache
-  const workspaceTabs = useMemo(() => orderedWorkspaceTabs(store), [store, wsId, groups, tabs]);
-
-  useHotkeys(
-    'mod+p',
-    (e) => {
-      e.preventDefault();
-      setOverlay('tabJump');
-    },
-    [setOverlay],
-  );
+  const workspaceGraphs = useMemo(() => orderedWorkspaceGraphs(store), [store, wsId, groups, graphs]);
 
   if (!open) return null;
 
@@ -51,24 +41,24 @@ export function TabJumpPalette() {
       >
         <Command.Input
           autoFocus
-          placeholder="Open tab…"
+          placeholder="Open graph…"
           className="w-full rounded border border-(--color-border) bg-(--color-bg-3) px-2 py-1 text-sm outline-none"
         />
         <Command.List className="mt-2 max-h-96 overflow-auto">
-          <Command.Empty className="px-2 py-4 text-sm opacity-60">No matching tab.</Command.Empty>
+          <Command.Empty className="px-2 py-4 text-sm opacity-60">No matching graph.</Command.Empty>
           <Command.Group className="px-2 text-xs opacity-60">
-            {workspaceTabs.map((t) => (
+            {workspaceGraphs.map((g) => (
               <Command.Item
-                key={t.id}
-                value={t.name}
+                key={g.id}
+                value={g.name}
                 onSelect={() => {
-                  setCurrentTabId(t.id);
+                  setCurrentGraphId(g.id);
                   setActivePane('primary');
                   setOverlay('none');
                 }}
                 className="rounded px-2 py-1 text-sm aria-selected:bg-(--color-bg-3)"
               >
-                {t.name}
+                {g.name}
               </Command.Item>
             ))}
           </Command.Group>

@@ -3,7 +3,7 @@
 // component can pop a dialog without prop-drilling.
 
 import { atom, useAtom } from 'jotai';
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
@@ -12,6 +12,7 @@ import DialogActions from '@mui/material/DialogActions';
 import Button from '@mui/material/Button';
 import TextField from '@mui/material/TextField';
 import { isModEnter } from '@/util/keyboard';
+import { getStore } from '@/state/store';
 
 type AlertSpec = {
   kind: 'alert';
@@ -44,17 +45,10 @@ type DialogSpec = AlertSpec | ConfirmSpec | PromptSpec;
 
 const dialogAtom = atom<DialogSpec | null>(null);
 
-let setterRef: ((spec: DialogSpec | null) => void) | null = null;
 
 function open<T>(make: (resolve: (v: T) => void) => DialogSpec): Promise<T> {
   return new Promise<T>((resolve) => {
-    if (!setterRef) {
-      // Fallback if the host isn't mounted — should not happen in normal use.
-      console.warn('DialogHost not mounted; falling back to console.');
-      resolve(undefined as T);
-      return;
-    }
-    setterRef(make(resolve));
+    getStore().set(dialogAtom, make(resolve));
   });
 }
 
@@ -64,7 +58,7 @@ export const dialogs = {
       kind: 'alert',
       message,
       title: opts?.title,
-      resolve: () => resolve(),
+      resolve,
     }));
   },
   confirm(
@@ -105,21 +99,14 @@ export const dialogs = {
 
 export function DialogHost() {
   const [spec, setSpec] = useAtom(dialogAtom);
-  useEffect(() => {
-    setterRef = setSpec;
-    return () => {
-      setterRef = null;
-    };
-  }, [setSpec]);
-
   if (!spec) return null;
 
   function close(result: unknown) {
     if (!spec) return;
     setSpec(null);
-    if (spec.kind === 'alert') (spec.resolve as () => void)();
-    else if (spec.kind === 'confirm') (spec.resolve as (b: boolean) => void)(result as boolean);
-    else (spec.resolve as (v: string | null) => void)(result as string | null);
+    if (spec.kind === 'alert') spec.resolve();
+    else if (spec.kind === 'confirm') spec.resolve(result as boolean);
+    else spec.resolve(result as string | null);
   }
 
   return <DialogShell spec={spec} onClose={close} />;

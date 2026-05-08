@@ -3,23 +3,23 @@ import { useAtomValue, useStore } from 'jotai';
 import Popover from '@mui/material/Popover';
 import Tooltip from '@mui/material/Tooltip';
 import { THEMES, normalizePendingNodeTheme } from '@/graph/model';
-import { patchTabRow, tabsAtom } from '@/state/workspaces';
+import { patchGraphRow, graphsAtom } from '@/state/workspaces';
 
 export function PenColorSwatch({ tabId }: { tabId: string }) {
   const store = useStore();
-  const tabs = useAtomValue(tabsAtom);
-  const tab = tabs.find((t) => t.id === tabId);
+  const graphs = useAtomValue(graphsAtom);
+  const graph = graphs.find((g) => g.id === tabId);
   const anchorRef = useRef<HTMLButtonElement>(null);
   const [open, setOpen] = useState(false);
 
-  if (!tab) return null;
-  const current = normalizePendingNodeTheme(tab.pendingNodeTheme as unknown);
+  if (!graph) return null;
+  const current = normalizePendingNodeTheme(graph.pendingNodeTheme as unknown);
   const swatchBg = THEMES[current]!.bg;
 
   function set(themeIndex: number) {
-    if (!tab) return;
+    if (!graph) return;
     const n = normalizePendingNodeTheme(themeIndex);
-    patchTabRow(store, tab.id, { pendingNodeTheme: n });
+    patchGraphRow(store, graph.id, { pendingNodeTheme: n });
     setOpen(false);
   }
 

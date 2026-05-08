@@ -5,18 +5,18 @@
 
 import { normalizePendingNodeTheme } from '@/graph/model';
 import { handleAddData } from '@/network/protocol/legacy';
-import { tabsAtom } from '@/state/workspaces';
+import { graphsAtom } from '@/state/workspaces';
 import { isExistingToNewAtom, isNewWillBeSelectedAtom } from '@/state/settings';
-import { getActiveTabFromStore } from '@/state/registry';
+import { getActiveGraphFromStore } from '@/state/registry';
 import { dialogs } from '@/ui/dialogs/Dialogs';
 import type { JotaiStore } from '@/state/store';
 
 const TEXTAREA_FOOTER = 'Use **bold** or *italic* — markdown is supported.';
 
 export async function addTextNodeAction(store: JotaiStore): Promise<void> {
-  const target = getActiveTabFromStore(store);
+  const target = getActiveGraphFromStore(store);
   if (!target) {
-    await dialogs.alert('No active tab.', { title: 'Add text node' });
+    await dialogs.alert('No active graph.', { title: 'Add text node' });
     return;
   }
 
@@ -28,7 +28,7 @@ export async function addTextNodeAction(store: JotaiStore): Promise<void> {
   if (value == null || value === '') return;
 
   const pendingNodeTheme = normalizePendingNodeTheme(
-    store.get(tabsAtom).find((t) => t.id === target.tabId)?.pendingNodeTheme as unknown,
+    store.get(graphsAtom).find((g) => g.id === target.graphId)?.pendingNodeTheme as unknown,
   );
 
   handleAddData(
@@ -48,9 +48,9 @@ export async function addTextNodeAction(store: JotaiStore): Promise<void> {
 }
 
 export async function addCommentAction(store: JotaiStore): Promise<void> {
-  const target = getActiveTabFromStore(store);
+  const target = getActiveGraphFromStore(store);
   if (!target) {
-    await dialogs.alert('No active tab.', { title: 'Add comment' });
+    await dialogs.alert('No active graph.', { title: 'Add comment' });
     return;
   }
   if (target.rt.selectedNodeId == null) {
@@ -68,7 +68,7 @@ export async function addCommentAction(store: JotaiStore): Promise<void> {
   if (value == null || value === '') return;
 
   const pendingNodeTheme = normalizePendingNodeTheme(
-    store.get(tabsAtom).find((t) => t.id === target.tabId)?.pendingNodeTheme as unknown,
+    store.get(graphsAtom).find((g) => g.id === target.graphId)?.pendingNodeTheme as unknown,
   );
 
   // Comments always hang off the selected node (selected → new), regardless

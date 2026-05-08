@@ -1,22 +1,20 @@
 import { Command } from 'cmdk';
 import { startTransition, useEffect, useMemo, useState } from 'react';
 import { useAtomValue, useSetAtom, useStore } from 'jotai';
-import { useHotkeys } from 'react-hotkeys-hook';
 import { THEMES } from '@/graph/model';
-import { openNodeSearchInAllTabs, openNodeSearchInCurrentTab } from '@/commands/commands';
-import { loadNavNodeHits, orderedWorkspaceTabs, type NavNodeHit } from '@/navigation/collectNavItems';
+import { loadNavNodeHits, orderedWorkspaceGraphs, type NavNodeHit } from '@/navigation/collectNavItems';
 import { jumpToNodeInWorkspace } from '@/navigation/jumpToNode';
 import { appOverlayAtom } from '@/state/appOverlay';
 import { nodeSearchScopeAtom } from '@/state/quickOpenPalettes';
-import { tabTickAtom } from '@/state/graph';
+import { graphTickAtom } from '@/state/graph';
 import {
   activePaneAtom,
-  activeTabIdAtom,
-  currentTabIdAtom,
+  activeGraphIdAtom,
+  currentGraphIdAtom,
   currentWorkspaceIdAtom,
-  sidePaneTabIdAtom,
+  sidePaneGraphIdAtom,
   tabGroupsAtom,
-  tabsAtom,
+  graphsAtom,
 } from '@/state/workspaces';
 
 function ThemeDot({ theme, flavor }: { theme?: number; flavor: NavNodeHit['flavor'] }) {
@@ -35,35 +33,21 @@ export function NodeSearchPalette() {
   const [loading, setLoading] = useState(false);
   const store = useStore();
 
-  const primary = useAtomValue(currentTabIdAtom);
-  const side = useAtomValue(sidePaneTabIdAtom);
-  const activeTabId = useAtomValue(activeTabIdAtom);
+  const primary = useAtomValue(currentGraphIdAtom);
+  const side = useAtomValue(sidePaneGraphIdAtom);
+  const activeGraphId = useAtomValue(activeGraphIdAtom);
   const wsId = useAtomValue(currentWorkspaceIdAtom);
   const groups = useAtomValue(tabGroupsAtom);
-  const tabs = useAtomValue(tabsAtom);
-  const tickActive = useAtomValue(tabTickAtom(activeTabId ?? ''));
-  const tickPrimary = useAtomValue(tabTickAtom(primary ?? ''));
-  const tickSide = useAtomValue(tabTickAtom(side ?? ''));
+  const graphs = useAtomValue(graphsAtom);
+  const tickActive = useAtomValue(graphTickAtom(activeGraphId ?? ''));
+  const tickPrimary = useAtomValue(graphTickAtom(primary ?? ''));
+  const tickSide = useAtomValue(graphTickAtom(side ?? ''));
 
   // Store identity is stable; include workspace snapshots so the memo invalidates when tabs change.
   // eslint-disable-next-line @eslint-react/exhaustive-deps -- wsId/groups/tabs intentionally bust the cache
-  const workspaceTabsKey = useMemo(() => orderedWorkspaceTabs(store).map((t) => t.id).join(','), [store, wsId, groups, tabs]);
-
-  useHotkeys(
-    'mod+f',
-    (e) => {
-      e.preventDefault();
-      openNodeSearchInCurrentTab(store);
-    },
-    [store],
-  );
-  useHotkeys(
-    'mod+shift+f',
-    (e) => {
-      e.preventDefault();
-      openNodeSearchInAllTabs(store);
-    },
-    [store],
+  const workspaceGraphsKey = useMemo(
+    () => orderedWorkspaceGraphs(store).map((g) => g.id).join(','),
+    [store, wsId, groups, graphs],
   );
 
   useEffect(() => {
@@ -74,12 +58,12 @@ export function NodeSearchPalette() {
       setNodeHits(hits);
       setLoading(false);
     });
-  }, [open, scope, activeTabId, tickActive, tickPrimary, tickSide, workspaceTabsKey, store]);
+  }, [open, scope, activeGraphId, tickActive, tickPrimary, tickSide, workspaceGraphsKey, store]);
 
-  const paneHint = (tabId: string) => {
-    if (tabId === primary && tabId === side) return store.get(activePaneAtom) === 'side' ? 'side' : 'primary';
-    if (tabId === primary) return 'primary';
-    if (tabId === side) return 'side';
+  const paneHint = (graphId: string) => {
+    if (graphId === primary && graphId === side) return store.get(activePaneAtom) === 'side' ? 'side' : 'primary';
+    if (graphId === primary) return 'primary';
+    if (graphId === side) return 'side';
     return null;
   };
 
@@ -88,7 +72,7 @@ export function NodeSearchPalette() {
   const placeholder =
     scope === 'currentTab'
       ? 'Search nodes in focused graph…'
-      : 'Search nodes in all tabs — opens on primary when you pick…';
+      : 'Search nodes in all graphs — opens on primary when you pick…';
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/50 pt-24">
@@ -112,19 +96,19 @@ export function NodeSearchPalette() {
           <Command.Empty className="px-2 py-4 text-sm opacity-60">{loading ? 'Loading…' : 'No matching nodes.'}</Command.Empty>
           <Command.Group className="px-2 text-xs opacity-60">
             {nodeHits.map((h) => {
-              let tabSubtitle: string | null = null;
+              let graphSubtitle: string | null = null;
               if (scope === 'allTabs') {
-                const hint = paneHint(h.tabId);
+                const hint = paneHint(h.graphId);
                 const prefix =
                   hint != null ? (hint === 'primary' ? 'Primary · ' : 'Side · ') : 'Opens on primary · ';
-                tabSubtitle = `${prefix}${h.tabName}`;
+                graphSubtitle = `${prefix}${h.graphName}`;
               }
               return (
                 <Command.Item
-                  key={`${h.tabId}:${h.nodeId}`}
+                  key={`${h.graphId}:${h.nodeId}`}
                   value={h.searchValue}
                   onSelect={() => {
-                    jumpToNodeInWorkspace(h.tabId, h.nodeId, store, { openOnPrimary: scope === 'allTabs' });
+                    jumpToNodeInWorkspace(h.graphId, h.nodeId, store, { openOnPrimary: scope === 'allTabs' });
                     queueMicrotask(() => setOverlay('none'));
                   }}
                   className="flex items-start gap-2 rounded px-2 py-1 text-sm aria-selected:bg-(--color-bg-3)"
@@ -132,8 +116,8 @@ export function NodeSearchPalette() {
                   <ThemeDot theme={h.theme} flavor={h.flavor} />
                   <span className="min-w-0 flex-1">
                     <span className="block truncate font-mono text-xs leading-snug">{h.displayLabel}</span>
-                    {tabSubtitle != null ? (
-                      <span className="block truncate text-xs opacity-50">{tabSubtitle}</span>
+                    {graphSubtitle != null ? (
+                      <span className="block truncate text-xs opacity-50">{graphSubtitle}</span>
                     ) : null}
                   </span>
                 </Command.Item>

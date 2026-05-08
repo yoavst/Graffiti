@@ -1,23 +1,23 @@
 import type { JotaiStore } from '@/state/store';
-import type { TabRow } from '@/state/workspaceTypes';
+import type { GraphRow } from '@/state/workspaceTypes';
 import type { NodeSearchScope } from '@/state/quickOpenPalettes';
 import {
-  activeTabIdAtom,
+  activeGraphIdAtom,
   currentWorkspaceGroupsAtom,
   currentWorkspaceIdAtom,
-  tabsAtom,
-  tabsByGroupAtom,
+  graphsAtom,
+  graphsByGroupAtom,
 } from '@/state/workspaces';
-import { getTab } from '@/state/registry';
+import { getGraph } from '@/state/registry';
 import { graphDocAtomFamily } from '@/state/graphDocAtoms';
 import type { GNode } from '@/graph/model';
 
-export function orderedWorkspaceTabs(store: JotaiStore): TabRow[] {
+export function orderedWorkspaceGraphs(store: JotaiStore): GraphRow[] {
   const wid = store.get(currentWorkspaceIdAtom);
   if (!wid) return [];
   const groups = store.get(currentWorkspaceGroupsAtom);
-  const byGroup = store.get(tabsByGroupAtom);
-  const out: TabRow[] = [];
+  const byGroup = store.get(graphsByGroupAtom);
+  const out: GraphRow[] = [];
   for (const g of groups) {
     out.push(...(byGroup.get(g.id) ?? []));
   }
@@ -25,8 +25,8 @@ export function orderedWorkspaceTabs(store: JotaiStore): TabRow[] {
 }
 
 export type NavNodeHit = {
-  tabId: string;
-  tabName: string;
+  graphId: string;
+  graphName: string;
   nodeId: number;
   searchValue: string;
   displayLabel: string;
@@ -34,16 +34,16 @@ export type NavNodeHit = {
   flavor: 'code' | 'markdown' | 'comment';
 };
 
-function nodesForTab(store: JotaiStore, tabId: string, tabName: string): NavNodeHit[] {
-  const reg = getTab(tabId);
-  const nodes: GNode[] = reg ? reg.rt.doc.nodes : store.get(graphDocAtomFamily(tabId)).nodes;
+function nodesForGraph(store: JotaiStore, graphId: string, graphName: string): NavNodeHit[] {
+  const reg = getGraph(graphId);
+  const nodes: GNode[] = reg ? reg.rt.doc.nodes : store.get(graphDocAtomFamily(graphId)).nodes;
   return nodes.map((n) => {
     const displayLabel = (n.overrideLabel ?? n.label).trim() || `#${n.id}`;
     return {
-      tabId,
-      tabName,
+      graphId,
+      graphName,
       nodeId: n.id,
-      searchValue: `${tabName} ${displayLabel} ${n.extra.project ?? ''} ${n.extra.address ?? ''}`.replace(/\s+/g, ' ').trim(),
+      searchValue: `${graphName} ${displayLabel} ${n.extra.project ?? ''} ${n.extra.address ?? ''}`.replace(/\s+/g, ' ').trim(),
       displayLabel,
       theme: n.theme,
       flavor:
@@ -54,14 +54,14 @@ function nodesForTab(store: JotaiStore, tabId: string, tabName: string): NavNode
   });
 }
 
-/** `currentTab` = focused pane’s graph (`activeTabIdAtom`). `allTabs` = every tab in the workspace. */
+/** `currentTab` = focused pane’s graph (`activeGraphIdAtom`). `allTabs` = every graph in the workspace. */
 export function loadNavNodeHits(store: JotaiStore, scope: NodeSearchScope): NavNodeHit[] {
   if (scope === 'currentTab') {
-    const tabId = store.get(activeTabIdAtom);
-    if (!tabId) return [];
-    const tab = store.get(tabsAtom).find((t) => t.id === tabId);
-    return nodesForTab(store, tabId, tab?.name ?? 'Graph');
+    const graphId = store.get(activeGraphIdAtom);
+    if (!graphId) return [];
+    const graph = store.get(graphsAtom).find((g) => g.id === graphId);
+    return nodesForGraph(store, graphId, graph?.name ?? 'Graph');
   }
-  const ordered = orderedWorkspaceTabs(store);
-  return ordered.flatMap((t) => nodesForTab(store, t.id, t.name));
+  const ordered = orderedWorkspaceGraphs(store);
+  return ordered.flatMap((g) => nodesForGraph(store, g.id, g.name));
 }

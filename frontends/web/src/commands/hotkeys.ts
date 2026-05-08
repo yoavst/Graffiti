@@ -1,13 +1,13 @@
 import { useHotkeys as useHotkeysHook } from 'react-hotkeys-hook';
 import { useAtom, useAtomValue, useSetAtom } from 'jotai';
 import {
-  sidePaneTabIdAtom,
-  currentTabIdAtom,
-  activeTabIdAtom,
+  sidePaneGraphIdAtom,
+  currentGraphIdAtom,
+  activeGraphIdAtom,
   activePaneAtom,
-  patchTabRow,
+  patchGraphRow,
 } from '@/state/workspaces';
-import { getTabFull } from '@/state/registry';
+import { getGraphFull } from '@/state/registry';
 import { requestFitViewForTab } from '@/flow/flowFitViewBridge';
 import { useStore } from 'jotai';
 import {
@@ -16,8 +16,14 @@ import {
   isNewWillBeSelectedAtom,
 } from '@/state/settings';
 import { addCommentAction, addTextNodeAction } from './addNodeActions';
-import { runExportCurrentTabJson, runGraphRedo, runGraphUndo } from './commands';
-import { exportAllTabsToTar } from '@/persistence/importExport';
+import {
+  openNodeSearchInAllTabs,
+  openNodeSearchInCurrentTab,
+  runExportCurrentGraphJson,
+  runGraphRedo,
+  runGraphUndo,
+} from './commands';
+import { exportAllGraphsToTar } from '@/persistence/importExport';
 import { THEMES } from '@/graph/model';
 import { appOverlayAtom } from '@/state/appOverlay';
 
@@ -31,9 +37,9 @@ function themeIndexFromDigitKey(key: string): number | null {
 }
 
 export function useHotkeys() {
-  const setSide = useSetAtom(sidePaneTabIdAtom);
-  const currentTabId = useAtomValue(currentTabIdAtom);
-  const activeTabId = useAtomValue(activeTabIdAtom);
+  const setSide = useSetAtom(sidePaneGraphIdAtom);
+  const currentGraphId = useAtomValue(currentGraphIdAtom);
+  const activeGraphId = useAtomValue(activeGraphIdAtom);
   const activePane = useAtomValue(activePaneAtom);
   const setInspector = useSetAtom(inspectorVisibleAtom);
   const setExistingToNew = useSetAtom(isExistingToNewAtom);
@@ -76,16 +82,16 @@ export function useHotkeys() {
         setOverlay('none');
         return;
       }
-      const t = activeTabId ? getTabFull(activeTabId) : null;
-      t?.actions.select(null);
+      const g = activeGraphId ? getGraphFull(activeGraphId) : null;
+      g?.actions.select(null);
     },
     { preventDefault: true },
-    [overlay, setOverlay, activeTabId],
+    [overlay, setOverlay, activeGraphId],
   );
   useHotkeysHook(
     'shift+/',
     () => {
-      setOverlay('help');
+      setOverlay((o) => (o === 'help' ? 'none' : 'help'));
     },
     { preventDefault: true },
     [setOverlay],
@@ -93,28 +99,64 @@ export function useHotkeys() {
   useHotkeysHook(
     'mod+k',
     () => {
-      setOverlay('token');
+      setOverlay((o) => (o === 'token' ? 'none' : 'token'));
     },
     { preventDefault: true },
     [setOverlay],
   );
   useHotkeysHook(
+    'mod+p',
+    () => {
+      setOverlay((o) => (o === 'tabJump' ? 'none' : 'tabJump'));
+    },
+    { preventDefault: true },
+    [setOverlay],
+  );
+
+
+  useHotkeysHook(
+    'mod+shift+p',
+    () => {
+      setOverlay((o) => (o === 'commandPalette' ? 'none' : 'commandPalette'));
+    },
+    { preventDefault: true },
+    [setOverlay],
+  );
+
+  useHotkeysHook(
+    'mod+f',
+    () => {
+      openNodeSearchInCurrentTab(store);
+    },
+    { preventDefault: true },
+    [store],
+  );
+  useHotkeysHook(
+    'mod+shift+f',
+    () => {
+      openNodeSearchInAllTabs(store);
+    },
+    { preventDefault: true },
+    [store],
+  );
+
+  useHotkeysHook(
     'delete',
     (e) => {
-      const t = activeTabId ? getTabFull(activeTabId) : null;
-      if (!t) return;
-      const sel = t.rt.selectedNodeId;
+      const g = activeGraphId ? getGraphFull(activeGraphId) : null;
+      if (!g) return;
+      const sel = g.rt.selectedNodeId;
       if (sel == null) return;
-      const node = t.rt.doc.nodes.find((n) => n.id === sel);
+      const node = g.rt.doc.nodes.find((n) => n.id === sel);
       if (!node) return;
       e.preventDefault();
-      const edges = t.rt.doc.edges.filter((e2) => e2.from === sel || e2.to === sel);
-      t.actions.applyTransaction([
+      const edges = g.rt.doc.edges.filter((e2) => e2.from === sel || e2.to === sel);
+      g.actions.applyTransaction([
         ...edges.map((e2) => ({ type: 'removeEdge' as const, data: e2 })),
         { type: 'removeNode' as const, data: node },
       ]);
     },
-    [activeTabId],
+    [activeGraphId],
   );
   useHotkeysHook(
     'mod+.',
@@ -127,10 +169,10 @@ export function useHotkeys() {
   useHotkeysHook(
     'mod+\\',
     () => {
-      if (currentTabId) setSide(currentTabId);
+      if (currentGraphId) setSide(currentGraphId);
     },
     { preventDefault: true },
-    [currentTabId, setSide],
+    [currentGraphId, setSide],
   );
   useHotkeysHook(
     'mod+q',
@@ -151,7 +193,7 @@ export function useHotkeys() {
   useHotkeysHook(
     'mod+s',
     () => {
-      void runExportCurrentTabJson(store);
+      void runExportCurrentGraphJson(store);
     },
     { preventDefault: true },
     [store],
@@ -159,7 +201,7 @@ export function useHotkeys() {
   useHotkeysHook(
     'mod+alt+s',
     () => {
-      void exportAllTabsToTar(store);
+      void exportAllGraphsToTar(store);
     },
     { preventDefault: true },
     [store],
@@ -167,11 +209,11 @@ export function useHotkeys() {
   useHotkeysHook(
     'home',
     () => {
-      if (!activeTabId) return;
-      requestFitViewForTab(activeTabId, activePane);
+      if (!activeGraphId) return;
+      requestFitViewForTab(activeGraphId, activePane);
     },
     { preventDefault: true },
-    [activeTabId, activePane],
+    [activeGraphId, activePane],
   );
   useHotkeysHook(
     '1,2,3,4,5,6,7,8,9',
@@ -179,14 +221,14 @@ export function useHotkeys() {
       if (e.ctrlKey || e.metaKey || e.altKey) return;
       const idx = themeIndexFromDigitKey(e.key);
       if (idx === null) return;
-      const t = activeTabId ? getTabFull(activeTabId) : null;
-      if (!t) return;
-      const sel = t.rt.selectedNodeId;
+      const g = activeGraphId ? getGraphFull(activeGraphId) : null;
+      if (!g) return;
+      const sel = g.rt.selectedNodeId;
       if (sel != null) {
-        const node = t.rt.doc.nodes.find((n) => n.id === sel);
+        const node = g.rt.doc.nodes.find((n) => n.id === sel);
         if (!node) return;
         e.preventDefault();
-        t.actions.apply({
+        g.actions.apply({
           type: 'setNodeTheme',
           id: node.id,
           oldTheme: node.theme,
@@ -195,8 +237,8 @@ export function useHotkeys() {
         return;
       }
       e.preventDefault();
-      patchTabRow(store, t.tabId, { pendingNodeTheme: idx });
+      patchGraphRow(store, g.graphId, { pendingNodeTheme: idx });
     },
-    [store, activeTabId],
+    [store, activeGraphId],
   );
 }
