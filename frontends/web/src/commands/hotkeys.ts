@@ -8,7 +8,7 @@ import {
   patchGraphRow,
 } from '@/state/workspaces';
 import { getGraphFull } from '@/state/registry';
-import { requestFitViewForTab } from '@/flow/flowFitViewBridge';
+import { requestFitViewForGraph } from '@/flow/flowFitViewBridge';
 import { useStore } from 'jotai';
 import {
   inspectorVisibleAtom,
@@ -17,8 +17,8 @@ import {
 } from '@/state/settings';
 import { addCommentAction, addTextNodeAction } from './addNodeActions';
 import {
-  openNodeSearchInAllTabs,
-  openNodeSearchInCurrentTab,
+  openNodeSearchInAllGraphs,
+  openNodeSearchInCurrentGraph,
   runExportCurrentGraphJson,
   runGraphRedo,
   runGraphUndo,
@@ -107,7 +107,7 @@ export function useHotkeys() {
   useHotkeysHook(
     'mod+p',
     () => {
-      setOverlay((o) => (o === 'tabJump' ? 'none' : 'tabJump'));
+      setOverlay((o) => (o === 'graphJump' ? 'none' : 'graphJump'));
     },
     { preventDefault: true },
     [setOverlay],
@@ -126,7 +126,7 @@ export function useHotkeys() {
   useHotkeysHook(
     'mod+f',
     () => {
-      openNodeSearchInCurrentTab(store);
+      openNodeSearchInCurrentGraph(store);
     },
     { preventDefault: true },
     [store],
@@ -134,7 +134,7 @@ export function useHotkeys() {
   useHotkeysHook(
     'mod+shift+f',
     () => {
-      openNodeSearchInAllTabs(store);
+      openNodeSearchInAllGraphs(store);
     },
     { preventDefault: true },
     [store],
@@ -210,7 +210,7 @@ export function useHotkeys() {
     'home',
     () => {
       if (!activeGraphId) return;
-      requestFitViewForTab(activeGraphId, activePane);
+      requestFitViewForGraph(activeGraphId, activePane);
     },
     { preventDefault: true },
     [activeGraphId, activePane],

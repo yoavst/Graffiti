@@ -214,7 +214,7 @@ function CanvasInner({ graphId, pane, actions, rt, layoutEngine, onJumpToIde, on
   }, [positions, initialized]);
 
   const pendingForThisPane = useMemo(() => {
-    if (!globalPendingFocus || globalPendingFocus.tabId !== graphId || globalPendingFocus.pane !== pane) {
+    if (!globalPendingFocus || globalPendingFocus.graphId !== graphId || globalPendingFocus.pane !== pane) {
       return null;
     }
     return globalPendingFocus;
@@ -483,7 +483,7 @@ function CanvasInner({ graphId, pane, actions, rt, layoutEngine, onJumpToIde, on
             zIndex: 6,
           }}
         >
-          <PenColorSwatch tabId={graphId} />
+          <PenColorSwatch graphId={graphId} />
         </Panel>
         <Controls showInteractive={false} onFitView={smartFitView}></Controls>
         <MiniMap

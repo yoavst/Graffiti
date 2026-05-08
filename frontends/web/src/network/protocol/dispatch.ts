@@ -74,7 +74,7 @@ export function dispatchInbound(env: DispatchEnv, raw: unknown) {
     case 'updateNodes': {
       const parsed = updateNodesSchema.safeParse(raw);
       if (!parsed.success) return console.warn('updateNodes parse failed', parsed.error);
-      // Apply to all tabs (matches legacy behavior).
+      // Apply to all graphs (matches legacy behavior).
       // In our atoms we don't have a list iterator yet; for now just current.
       const target = env.getCurrentGraph();
       if (!target) return;

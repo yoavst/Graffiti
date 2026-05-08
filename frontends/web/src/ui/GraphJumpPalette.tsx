@@ -7,22 +7,22 @@ import {
   activePaneAtom,
   currentGraphIdAtom,
   currentWorkspaceIdAtom,
-  tabGroupsAtom,
+  graphGroupsAtom,
   graphsAtom,
 } from '@/state/workspaces';
 
 export function GraphJumpPalette() {
   const overlay = useAtomValue(appOverlayAtom);
   const setOverlay = useSetAtom(appOverlayAtom);
-  const open = overlay === 'tabJump';
+  const open = overlay === 'graphJump';
   const store = useStore();
   const wsId = useAtomValue(currentWorkspaceIdAtom);
-  const groups = useAtomValue(tabGroupsAtom);
+  const groups = useAtomValue(graphGroupsAtom);
   const graphs = useAtomValue(graphsAtom);
   const setCurrentGraphId = useSetAtom(currentGraphIdAtom);
   const setActivePane = useSetAtom(activePaneAtom);
-  // Store identity is stable; include workspace snapshots so the memo invalidates when tabs change.
-  // eslint-disable-next-line @eslint-react/exhaustive-deps -- wsId/groups/tabs intentionally bust the cache
+  // Store identity is stable; include workspace snapshots so the memo invalidates when graphs change.
+  // eslint-disable-next-line @eslint-react/exhaustive-deps -- wsId/groups/graphs intentionally bust the cache
   const workspaceGraphs = useMemo(() => orderedWorkspaceGraphs(store), [store, wsId, groups, graphs]);
 
   if (!open) return null;
@@ -67,3 +67,4 @@ export function GraphJumpPalette() {
     </div>
   );
 }
+

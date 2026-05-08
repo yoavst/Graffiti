@@ -5,3 +5,4 @@ import { graphTickAtom } from '@/state/graph';
 export function useSubscribeGraphDocMutations(graphId: string): void {
   useAtomValue(graphTickAtom(graphId));
 }
+

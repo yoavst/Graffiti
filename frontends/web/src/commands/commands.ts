@@ -63,19 +63,19 @@ export async function runCopyCurrentGraphMermaid(store: JotaiStore): Promise<voi
   }
 }
 
-export function openTabJumpPalette(store: JotaiStore): void {
-  store.set(appOverlayAtom, 'tabJump');
+export function openGraphJumpPalette(store: JotaiStore): void {
+  store.set(appOverlayAtom, 'graphJump');
 }
 
 /** Mod+F — search only the graph in the focused pane (primary or side). */
-export function openNodeSearchInCurrentTab(store: JotaiStore): void {
-  store.set(nodeSearchScopeAtom, 'currentTab');
+export function openNodeSearchInCurrentGraph(store: JotaiStore): void {
+  store.set(nodeSearchScopeAtom, 'currentGraph');
   store.set(appOverlayAtom, 'nodeSearch');
 }
 
-/** Mod+Shift+F — search all workspace graphs; choosing a result opens that tab on primary and jumps. */
-export function openNodeSearchInAllTabs(store: JotaiStore): void {
-  store.set(nodeSearchScopeAtom, 'allTabs');
+/** Mod+Shift+F — search all workspace graphs; choosing a result opens that graph on primary and jumps. */
+export function openNodeSearchInAllGraphs(store: JotaiStore): void {
+  store.set(nodeSearchScopeAtom, 'allGraphs');
   store.set(appOverlayAtom, 'nodeSearch');
 }
 
@@ -114,11 +114,11 @@ export function buildCommands(store: JotaiStore): Command[] {
       run: runGraphRedo,
     },
     {
-      id: 'nav.tabs',
-      title: 'Go to tab…',
+      id: 'nav.graphs',
+      title: 'Go to graph…',
       hotkey: 'Mod+P',
       section: 'Navigate',
-      run: () => openTabJumpPalette(store),
+      run: () => openGraphJumpPalette(store),
     },
     {
       id: 'nav.nodes.current',
@@ -126,7 +126,7 @@ export function buildCommands(store: JotaiStore): Command[] {
       hint: 'Active pane only',
       hotkey: 'Mod+F',
       section: 'Navigate',
-      run: () => openNodeSearchInCurrentTab(store),
+      run: () => openNodeSearchInCurrentGraph(store),
     },
     {
       id: 'nav.nodes.workspace',
@@ -134,7 +134,7 @@ export function buildCommands(store: JotaiStore): Command[] {
       hint: 'Opens result on primary',
       hotkey: 'Mod+Shift+F',
       section: 'Navigate',
-      run: () => openNodeSearchInAllTabs(store),
+      run: () => openNodeSearchInAllGraphs(store),
     },
     {
       id: 'export.graph',

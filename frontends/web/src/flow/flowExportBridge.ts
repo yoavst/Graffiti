@@ -1,4 +1,4 @@
-// Lets non–React Flow code (Share dialog) snapshot the active tab's canvas:
+// Lets non–React Flow code (Share dialog) snapshot the active graph's canvas:
 // temporarily fit the full graph so `onlyRenderVisibleElements` includes every
 // node, capture the viewport DOM, then restore pan/zoom.
 
@@ -10,11 +10,11 @@ export type FlowExportBridge = {
 
 const bridges = new Map<string, FlowExportBridge>();
 
-export function registerFlowExportBridge(tabId: string, bridge: FlowExportBridge | null) {
-  if (bridge) bridges.set(tabId, bridge);
-  else bridges.delete(tabId);
+export function registerFlowExportBridge(graphId: string, bridge: FlowExportBridge | null) {
+  if (bridge) bridges.set(graphId, bridge);
+  else bridges.delete(graphId);
 }
 
-export function getFlowExportBridge(tabId: string): FlowExportBridge | undefined {
-  return bridges.get(tabId);
+export function getFlowExportBridge(graphId: string): FlowExportBridge | undefined {
+  return bridges.get(graphId);
 }

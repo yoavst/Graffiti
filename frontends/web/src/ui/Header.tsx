@@ -34,8 +34,8 @@ import { dispatchInbound } from '@/network/protocol/dispatch';
 import { getStore } from '@/state/store';
 import { getActiveGraphFromStore, getGraphFull } from '@/state/registry';
 import { addCommentAction, addTextNodeAction } from '@/commands/addNodeActions';
-import { openNodeSearchInCurrentTab, runExportCurrentGraphJson } from '@/commands/commands';
-import { importUserPickedFiles } from '@/persistence/tabImport';
+import { openNodeSearchInCurrentGraph, runExportCurrentGraphJson } from '@/commands/commands';
+import { importUserPickedFiles } from '@/persistence/graphImport';
 import { exportAllGraphsToTar } from '@/persistence/importExport';
 import { activeGraphIdAtom, currentGraphIdAtom } from '@/state/workspaces';
 import { dialogs } from '@/ui/dialogs/Dialogs';
@@ -111,14 +111,14 @@ export function Header() {
     const list = input.files;
     input.value = '';
     if (!list?.length) return;
-    const { firstTabId, targetMissing } = await importUserPickedFiles(Array.from(list));
+    const { firstGraphId, targetMissing } = await importUserPickedFiles(Array.from(list));
     if (targetMissing) {
       await dialogs.alert('No graph group to import into. Open a workspace with at least one graph first.', {
         title: 'Import',
       });
       return;
     }
-    if (firstTabId) setCurrentGraphId(firstTabId);
+    if (firstGraphId) setCurrentGraphId(firstGraphId);
   }
 
   const statusColor =
@@ -201,7 +201,7 @@ export function Header() {
           </IconButton>
         </Tooltip>
         <Tooltip title="Search nodes in the focused graph (Ctrl+F)">
-          <IconButton size="small" onClick={() => openNodeSearchInCurrentTab(store)}>
+          <IconButton size="small" onClick={() => openNodeSearchInCurrentGraph(store)}>
             <SearchOutlinedIcon fontSize="small" />
           </IconButton>
         </Tooltip>

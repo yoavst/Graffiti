@@ -4,7 +4,7 @@ import { atom } from 'jotai';
 export type AppOverlay =
   | 'none'
   | 'commandPalette'
-  | 'tabJump'
+  | 'graphJump'
   | 'nodeSearch'
   | 'shareGraph'
   | 'token'

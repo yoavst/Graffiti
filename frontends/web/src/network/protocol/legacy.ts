@@ -1,7 +1,7 @@
 // Legacy backend → frontend message handlers.
 //
 // They translate `addData`, `addDataBulk`, `updateNodes` into reducer ops
-// against a target tab.
+// against a target graph.
 
 import { applyComputedProperties } from '@/graph/computedProperties';
 import {

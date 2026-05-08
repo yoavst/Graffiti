@@ -1,6 +1,6 @@
 import { useSetAtom } from 'jotai';
 import { useEffect, useState } from 'react';
-import { importUserPickedFiles } from '@/persistence/tabImport';
+import { importUserPickedFiles } from '@/persistence/graphImport';
 import { currentGraphIdAtom } from '@/state/workspaces';
 
 export function FileDropImport() {
@@ -45,13 +45,13 @@ export function FileDropImport() {
       const files = e.dataTransfer ? Array.from(e.dataTransfer.files) : [];
       if (files.length === 0) return;
 
-      const { firstTabId: firstImportedTabId, targetMissing } = await importUserPickedFiles(files);
+      const { firstGraphId: firstImportedGraphId, targetMissing } = await importUserPickedFiles(files);
       if (targetMissing) {
-        console.warn('drop: no target tab group');
+        console.warn('drop: no target graph group');
         return;
       }
 
-      if (firstImportedTabId) setCurrentGraphId(firstImportedTabId);
+      if (firstImportedGraphId) setCurrentGraphId(firstImportedGraphId);
     }
 
     window.addEventListener('dragenter', onDragEnter, true);

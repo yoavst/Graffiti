@@ -70,7 +70,7 @@ export const workspacesAtom = atom((get) => {
   });
 });
 
-export const tabGroupsAtom = atom((get) => {
+export const graphGroupsAtom = atom((get) => {
   const ids = get(workspaceIdsAtom);
   const out: GraphGroupRow[] = [];
   for (const id of ids) {
@@ -96,7 +96,7 @@ export const currentWorkspaceAtom = atom((get) => {
 export const currentWorkspaceGroupsAtom = atom((get) => {
   const wid = get(currentWorkspaceIdAtom);
   if (!wid) return [];
-  return get(tabGroupsAtom)
+  return get(graphGroupsAtom)
     .filter((g) => g.workspaceId === wid)
     .sort((a, b) => a.orderIndex - b.orderIndex);
 });

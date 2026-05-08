@@ -25,7 +25,7 @@ import {
   type GNode,
   type GraphConfig,
 } from '@/graph/model';
-import { useSubscribeGraphDocMutations } from '@/hooks/useSubscribeTabDocMutations';
+import { useSubscribeGraphDocMutations } from '@/hooks/useSubscribeGraphDocMutations';
 import type { WSClient } from '@/network/websocket';
 import { wsClientAtom } from '@/state/wsClient';
 import { jumpToPayload } from '@/network/protocol/legacy';

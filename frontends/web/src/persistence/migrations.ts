@@ -1,4 +1,4 @@
-// One-shot migration of the original localStorage tab format (`__SAVED_DATA` / version).
+// One-shot migration of the original localStorage graph format (`__SAVED_DATA` / version).
 // Does not read IndexedDB; users who only had Dexie data are not migrated here.
 
 import { normalizePendingNodeTheme, type GraphDoc } from '@/graph/model';
@@ -16,7 +16,7 @@ const LEGACY_DEXIE_MARKER = 'graffiti.migratedToDexie';
 export interface MigrationResult {
   imported: boolean;
   workspaceId?: string;
-  tabIds?: string[];
+  graphIds?: string[];
 }
 
 export function migrateLegacyIfNeeded(store: JotaiStore): MigrationResult {
@@ -106,7 +106,7 @@ export function migrateLegacyIfNeeded(store: JotaiStore): MigrationResult {
   }
 
   localStorage.setItem(LEGACY_SAVE_MIGRATED_KEY, '1');
-  return { imported: true, workspaceId, tabIds: graphRows.map((r) => r.id) };
+  return { imported: true, workspaceId, graphIds: graphRows.map((r) => r.id) };
 }
 
 export function parseInnerDoc(s: string): GraphDoc | null {

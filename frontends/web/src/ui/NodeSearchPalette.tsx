@@ -13,7 +13,7 @@ import {
   currentGraphIdAtom,
   currentWorkspaceIdAtom,
   sidePaneGraphIdAtom,
-  tabGroupsAtom,
+  graphGroupsAtom,
   graphsAtom,
 } from '@/state/workspaces';
 
@@ -37,14 +37,14 @@ export function NodeSearchPalette() {
   const side = useAtomValue(sidePaneGraphIdAtom);
   const activeGraphId = useAtomValue(activeGraphIdAtom);
   const wsId = useAtomValue(currentWorkspaceIdAtom);
-  const groups = useAtomValue(tabGroupsAtom);
+  const groups = useAtomValue(graphGroupsAtom);
   const graphs = useAtomValue(graphsAtom);
   const tickActive = useAtomValue(graphTickAtom(activeGraphId ?? ''));
   const tickPrimary = useAtomValue(graphTickAtom(primary ?? ''));
   const tickSide = useAtomValue(graphTickAtom(side ?? ''));
 
-  // Store identity is stable; include workspace snapshots so the memo invalidates when tabs change.
-  // eslint-disable-next-line @eslint-react/exhaustive-deps -- wsId/groups/tabs intentionally bust the cache
+  // Store identity is stable; include workspace snapshots so the memo invalidates when graphs change.
+  // eslint-disable-next-line @eslint-react/exhaustive-deps -- wsId/groups/graphs intentionally bust the cache
   const workspaceGraphsKey = useMemo(
     () => orderedWorkspaceGraphs(store).map((g) => g.id).join(','),
     [store, wsId, groups, graphs],
@@ -70,7 +70,7 @@ export function NodeSearchPalette() {
   if (!open) return null;
 
   const placeholder =
-    scope === 'currentTab'
+    scope === 'currentGraph'
       ? 'Search nodes in focused graph…'
       : 'Search nodes in all graphs — opens on primary when you pick…';
 
@@ -97,7 +97,7 @@ export function NodeSearchPalette() {
           <Command.Group className="px-2 text-xs opacity-60">
             {nodeHits.map((h) => {
               let graphSubtitle: string | null = null;
-              if (scope === 'allTabs') {
+              if (scope === 'allGraphs') {
                 const hint = paneHint(h.graphId);
                 const prefix =
                   hint != null ? (hint === 'primary' ? 'Primary · ' : 'Side · ') : 'Opens on primary · ';
@@ -108,7 +108,7 @@ export function NodeSearchPalette() {
                   key={`${h.graphId}:${h.nodeId}`}
                   value={h.searchValue}
                   onSelect={() => {
-                    jumpToNodeInWorkspace(h.graphId, h.nodeId, store, { openOnPrimary: scope === 'allTabs' });
+                    jumpToNodeInWorkspace(h.graphId, h.nodeId, store, { openOnPrimary: scope === 'allGraphs' });
                     queueMicrotask(() => setOverlay('none'));
                   }}
                   className="flex items-start gap-2 rounded px-2 py-1 text-sm aria-selected:bg-(--color-bg-3)"

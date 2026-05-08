@@ -54,9 +54,9 @@ function nodesForGraph(store: JotaiStore, graphId: string, graphName: string): N
   });
 }
 
-/** `currentTab` = focused pane’s graph (`activeGraphIdAtom`). `allTabs` = every graph in the workspace. */
+/** `currentGraph` = focused pane’s graph (`activeGraphIdAtom`). `allGraphs` = every graph in the workspace. */
 export function loadNavNodeHits(store: JotaiStore, scope: NodeSearchScope): NavNodeHit[] {
-  if (scope === 'currentTab') {
+  if (scope === 'currentGraph') {
     const graphId = store.get(activeGraphIdAtom);
     if (!graphId) return [];
     const graph = store.get(graphsAtom).find((g) => g.id === graphId);

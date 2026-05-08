@@ -2,7 +2,7 @@ import { useAtom, useAtomValue } from 'jotai';
 import { Suspense } from 'react';
 import CloseIcon from '@mui/icons-material/Close';
 import { GraphCanvas } from '@/flow/GraphCanvas';
-import { GraphHost } from '@/ui/TabHost';
+import { GraphHost } from '@/ui/GraphHost';
 import {
   activePaneAtom,
   currentGraphIdAtom,
@@ -74,4 +74,4 @@ export function SplitView() {
   );
 }
 
-void GraphCanvas; // referenced indirectly via TabHost
+void GraphCanvas; // referenced indirectly via GraphHost

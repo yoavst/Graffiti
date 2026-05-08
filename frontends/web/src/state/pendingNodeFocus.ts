@@ -4,7 +4,7 @@ import type { JotaiStore } from '@/state/store';
 export type FlowPane = 'primary' | 'side';
 
 export type PendingNodeFocus = {
-  tabId: string;
+  graphId: string;
   pane: FlowPane;
   nodeId: number;
   token: number;
@@ -17,10 +17,10 @@ export const pendingNodeFocusAtom = atom<PendingNodeFocus | null>(null);
 
 export function enqueuePendingNodeFocus(
   store: JotaiStore,
-  tabId: string,
+  graphId: string,
   nodeId: number,
   pane: FlowPane,
 ): void {
   nextToken += 1;
-  store.set(pendingNodeFocusAtom, { tabId, pane, nodeId, token: nextToken });
+  store.set(pendingNodeFocusAtom, { graphId, pane, nodeId, token: nextToken });
 }

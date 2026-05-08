@@ -6,17 +6,17 @@ import {
   sidePaneGraphIdAtom,
 } from '@/state/workspaces';
 
-export function resolveTargetPane(tabId: string, store: JotaiStore): FlowPane {
-  const primary = store.get(currentGraphIdAtom);
-  const side = store.get(sidePaneGraphIdAtom);
-  if (tabId === primary && tabId === side) return store.get(activePaneAtom);
-  if (tabId === primary) return 'primary';
-  if (tabId === side) return 'side';
+export function resolveTargetPane(graphId: string, store: JotaiStore): FlowPane {
+  const primaryGraphId = store.get(currentGraphIdAtom);
+  const sideGraphId = store.get(sidePaneGraphIdAtom);
+  if (graphId === primaryGraphId && graphId === sideGraphId) return store.get(activePaneAtom);
+  if (graphId === primaryGraphId) return 'primary';
+  if (graphId === sideGraphId) return 'side';
   return 'primary';
 }
 
 export function jumpToNodeInWorkspace(
-  tabId: string,
+  graphId: string,
   nodeId: number,
   store: JotaiStore,
   opts?: { openOnPrimary?: boolean },
@@ -24,18 +24,18 @@ export function jumpToNodeInWorkspace(
   const primary = store.get(currentGraphIdAtom);
   const side = store.get(sidePaneGraphIdAtom);
 
-  // Global search: always primary. Otherwise: switch tab only if it isn't open in either pane.
+  // Global search: always primary. Otherwise: switch graph only if it isn't open in either pane.
   const usePrimary =
-    opts?.openOnPrimary === true || (tabId !== primary && tabId !== side);
+    opts?.openOnPrimary === true || (graphId !== primary && graphId !== side);
 
   if (usePrimary) {
-    store.set(currentGraphIdAtom, tabId);
+    store.set(currentGraphIdAtom, graphId);
     store.set(activePaneAtom, 'primary');
-    enqueuePendingNodeFocus(store, tabId, nodeId, 'primary');
+    enqueuePendingNodeFocus(store, graphId, nodeId, 'primary');
     return;
   }
 
-  const pane = resolveTargetPane(tabId, store);
+  const pane = resolveTargetPane(graphId, store);
   store.set(activePaneAtom, pane);
-  enqueuePendingNodeFocus(store, tabId, nodeId, pane);
+  enqueuePendingNodeFocus(store, graphId, nodeId, pane);
 }

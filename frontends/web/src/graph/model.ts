@@ -115,7 +115,7 @@ export const THEMES: Array<{ bg: string; fg: string }> = [
   { bg: '#2c387e', fg: 'white' },
 ];
 
-/** Pen color / tab default for new nodes — always a palette index (0 = first / green). */
+/** Pen color / graph default for new nodes — always a palette index (0 = first / green). */
 export function normalizePendingNodeTheme(v: unknown): number {
   if (typeof v === 'number' && Number.isFinite(v)) {
     const i = Math.trunc(v);

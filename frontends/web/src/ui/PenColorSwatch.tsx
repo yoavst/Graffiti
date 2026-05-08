@@ -5,10 +5,10 @@ import Tooltip from '@mui/material/Tooltip';
 import { THEMES, normalizePendingNodeTheme } from '@/graph/model';
 import { patchGraphRow, graphsAtom } from '@/state/workspaces';
 
-export function PenColorSwatch({ tabId }: { tabId: string }) {
+export function PenColorSwatch({ graphId }: { graphId: string }) {
   const store = useStore();
   const graphs = useAtomValue(graphsAtom);
-  const graph = graphs.find((g) => g.id === tabId);
+  const graph = graphs.find((g) => g.id === graphId);
   const anchorRef = useRef<HTMLButtonElement>(null);
   const [open, setOpen] = useState(false);
 

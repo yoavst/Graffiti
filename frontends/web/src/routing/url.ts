@@ -1,8 +1,8 @@
-// URL state: ?workspace=<id>&tab=<id>&pane2=<id>
+// URL state: ?workspace=<id>&graph=<id>&pane2=<id>
 //
 // Updates use history.replaceState so they don't pollute browser history.
 
-const KEYS = ['workspace', 'tab', 'pane2'] as const;
+const KEYS = ['workspace', 'graph', 'pane2'] as const;
 type Key = (typeof KEYS)[number];
 
 export function readUrlState(): Partial<Record<Key, string>> {

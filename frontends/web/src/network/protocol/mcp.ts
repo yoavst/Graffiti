@@ -62,7 +62,7 @@ export async function handleMcp(env: DispatchEnv, req: Req) {
         return {
           id: wid,
           name: b.workspace.name,
-          tabGroups: groups.map((g) => ({
+          graphGroups: groups.map((g) => ({
             id: g.id,
             name: g.name,
             color: g.color,

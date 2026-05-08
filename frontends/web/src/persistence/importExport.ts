@@ -1,5 +1,5 @@
-// Import / export: legacy per-tab JSON `[idCounter, nodes, edges, config?]`, TAR bundles,
-// and `graffiti-v2` TAR with manifest (workspaces, tab metadata, notes) + `graphs/<tabId>.json`.
+// Import / export: legacy per-graph JSON `[idCounter, nodes, edges, config?]`, TAR bundles,
+// and `graffiti-v2` TAR with manifest (workspaces, graph metadata, notes) + `graphs/<graphId>.json`.
 
 import { newId } from '@/util/ids';
 import { normalizePendingNodeTheme, type GraphDoc } from '@/graph/model';
@@ -23,11 +23,11 @@ export interface GraffitiTarManifestV2 {
 
 // --- JSON encode/decode -------------------------------------------------
 
-export function encodeTabJson(name: string, doc: GraphDoc, tab: GraphRow): string {
+export function encodeGraphJson(name: string, doc: GraphDoc, graph: GraphRow): string {
   const config = {
-    elkRenderer: tab.layout === 'elk',
-    notes: tab.notes,
-    pendingNodeTheme: normalizePendingNodeTheme(tab.pendingNodeTheme as unknown),
+    elkRenderer: graph.layout === 'elk',
+    notes: graph.notes,
+    pendingNodeTheme: normalizePendingNodeTheme(graph.pendingNodeTheme as unknown),
     ...(doc.config?.colorLegend && Object.keys(doc.config.colorLegend).length > 0
       ? { colorLegend: doc.config.colorLegend }
       : {}),
@@ -36,9 +36,9 @@ export function encodeTabJson(name: string, doc: GraphDoc, tab: GraphRow): strin
   void name;
 }
 
-export function decodeTabJson(s: string): GraphDoc {
+export function decodeGraphJson(s: string): GraphDoc {
   const arr = JSON.parse(s);
-  if (!Array.isArray(arr) || arr.length < 3) throw new Error('invalid tab JSON');
+  if (!Array.isArray(arr) || arr.length < 3) throw new Error('invalid graph JSON');
   const [idCounter, nodes, edges, config] = arr as [
     number,
     GraphDoc['nodes'],
@@ -74,7 +74,7 @@ export function exportGraphToFile(store: JotaiStore, graphId: string): void {
   }
   if (!row) return;
   const doc = store.get(graphDocAtomFamily(graphId));
-  const json = encodeTabJson(row.name, doc, row);
+  const json = encodeGraphJson(row.name, doc, row);
   download(`${row.name}.json`, new Blob([json], { type: 'application/json' }));
 }
 
@@ -96,7 +96,7 @@ export function exportAllWorkspacesToTar(store: JotaiStore): void {
     const b = bundles[wid]!;
     for (const g of b.graphs) {
       const doc = store.get(graphDocAtomFamily(g.id));
-      files.push({ name: `graphs/${g.id}.json`, content: encodeTabJson(g.name, doc, g) });
+      files.push({ name: `graphs/${g.id}.json`, content: encodeGraphJson(g.name, doc, g) });
     }
   }
   const bytes = packTar(files);
@@ -128,7 +128,7 @@ function importV2Tar(store: JotaiStore, entries: Array<{ name: string; content: 
 
   const wsIdMap = new Map<string, string>();
   const groupIdMap = new Map<string, string>();
-  const tabIdMap = new Map<string, string>();
+  const graphIdMap = new Map<string, string>();
 
   for (const oldW of manifest.workspaceIds) {
     wsIdMap.set(oldW, newId());
@@ -140,11 +140,11 @@ function importV2Tar(store: JotaiStore, entries: Array<{ name: string; content: 
       groupIdMap.set(g.id, newId());
     }
     for (const t of b.graphs) {
-      tabIdMap.set(t.id, newId());
+      graphIdMap.set(t.id, newId());
     }
   }
 
-  const newTabIds: string[] = [];
+  const newGraphIds: string[] = [];
   const nextWorkspaceList = [...store.get(workspaceIdsAtom)];
 
   for (const oldW of manifest.workspaceIds) {
@@ -164,8 +164,8 @@ function importV2Tar(store: JotaiStore, entries: Array<{ name: string; content: 
       workspaceId: newW,
     }));
     const graphs = b.graphs.map((t) => {
-      const nid = tabIdMap.get(t.id)!;
-      newTabIds.push(nid);
+      const nid = graphIdMap.get(t.id)!;
+      newGraphIds.push(nid);
       return {
         ...t,
         id: nid,
@@ -177,15 +177,15 @@ function importV2Tar(store: JotaiStore, entries: Array<{ name: string; content: 
     nextWorkspaceList.push(newW);
 
     for (const t of b.graphs) {
-      const newTid = tabIdMap.get(t.id)!;
+      const newGid = graphIdMap.get(t.id)!;
       const raw = graphFiles.get(t.id);
-      const doc = raw ? decodeTabJson(raw) : emptyGraphDoc();
-      store.set(graphDocAtomFamily(newTid), doc);
+      const doc = raw ? decodeGraphJson(raw) : emptyGraphDoc();
+      store.set(graphDocAtomFamily(newGid), doc);
     }
   }
 
   store.set(workspaceIdsAtom, nextWorkspaceList);
-  return newTabIds;
+  return newGraphIds;
 }
 
 function persistImportedGraph(store: JotaiStore, name: string, doc: GraphDoc, targetGroupId: string): string {
@@ -236,7 +236,7 @@ export function importFile(store: JotaiStore, file: File, targetGroupId: string)
         if (norm === TAR_MANIFEST_NAME || norm.endsWith(`/${TAR_MANIFEST_NAME}`)) continue;
         if (norm.startsWith('graphs/')) continue;
         try {
-          const doc = decodeTabJson(entry.content);
+          const doc = decodeGraphJson(entry.content);
           ids.push(persistImportedGraph(store, stripJson(entry.name), doc, targetGroupId));
         } catch (e) {
           console.warn('skipped tar entry', entry.name, e);
@@ -245,7 +245,7 @@ export function importFile(store: JotaiStore, file: File, targetGroupId: string)
       return ids;
     }
     const text = new TextDecoder().decode(buf);
-    const doc = decodeTabJson(text);
+    const doc = decodeGraphJson(text);
     return [persistImportedGraph(store, stripJson(file.name), doc, targetGroupId)];
   });
 }

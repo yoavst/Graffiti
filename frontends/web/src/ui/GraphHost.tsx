@@ -9,7 +9,7 @@
 import { useAtomValue, useStore } from 'jotai';
 import { useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import { GraphCanvas } from '@/flow/GraphCanvas';
-import { useSubscribeGraphDocMutations } from '@/hooks/useSubscribeTabDocMutations';
+import { useSubscribeGraphDocMutations } from '@/hooks/useSubscribeGraphDocMutations';
 import { graphRuntimeAtom, graphTickAtom, makeGraphActions } from '@/state/graph';
 import { graphsAtom } from '@/state/workspaces';
 import { registerGraph, unregisterGraph } from '@/state/registry';
@@ -104,10 +104,7 @@ function MountedGraph({
   }
 
   return (
-    <div
-      className="absolute inset-0"
-      onContextMenu={(e) => e.preventDefault()}
-    >
+    <div className="absolute inset-0" onContextMenu={(e) => e.preventDefault()}>
       <GraphCanvas
         graphId={graphId}
         pane={pane}
@@ -125,3 +122,4 @@ function MountedGraph({
     </div>
   );
 }
+

@@ -20,7 +20,7 @@ import { DialogHost } from './ui/dialogs/Dialogs';
 import { useHotkeys } from './commands/hotkeys';
 import { CommandPalette } from './ui/CommandPalette';
 import { NodeSearchPalette } from './ui/NodeSearchPalette';
-import { GraphJumpPalette } from './ui/TabJumpPalette';
+import { GraphJumpPalette } from './ui/GraphJumpPalette';
 import { writeUrlState } from './routing/url';
 import { FileDropImport } from './ui/FileDropImport';
 
@@ -34,7 +34,7 @@ function Inner() {
   useEffect(() => {
     writeUrlState({
       workspace: currentWsId ?? null,
-      tab: currentGraphId ?? null,
+      graph: currentGraphId ?? null,
       pane2: sidePane ?? null,
     });
   }, [currentWsId, currentGraphId, sidePane]);

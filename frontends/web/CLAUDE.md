@@ -29,10 +29,10 @@ Browser app at graffiti.quest. Renders the call graph and talks to the IDE backe
 - [src/main.tsx](src/main.tsx) — entry point.
 - [src/state/](src/state/) — Jotai atoms.
   - [store.ts](src/state/store.ts) — the singleton Jotai store. Always go through `getStore()` outside React.
-  - [workspaces.ts](src/state/workspaces.ts) — workspaces / tab groups / tabs atoms, derived selectors, CRUD that writes through to Dexie. `activeTabIdAtom` resolves to whichever pane (`primary`/`side`) the user last clicked.
-  - [graph.ts](src/state/graph.ts) — per-tab `TabRuntime` via `atomFamily`. Doc/history are mutated in place; a `tabTickAtom` is bumped to drive React re-renders. Persistence is debounced (`PERSIST_DEBOUNCE_MS = 250`).
-  - [registry.ts](src/state/registry.ts) — `tabId → { runtime, actions }` map for the WS dispatcher / palette to reach tabs without React.
-  - [connection.ts](src/state/connection.ts), [wsClient.ts](src/state/wsClient.ts), [settings.ts](src/state/settings.ts), [appOverlay.ts](src/state/appOverlay.ts) (`appOverlayAtom` — mutually exclusive command palette / tab jump / node search / share / token / help).
+  - [workspaces.ts](src/state/workspaces.ts) — workspaces / graph groups / graphs atoms, derived selectors, CRUD that writes through to Dexie. `activeGraphIdAtom` resolves to whichever pane (`primary`/`side`) the user last clicked.
+  - [graph.ts](src/state/graph.ts) — per-graph runtime (`GraphRuntime`) via `atomFamily`. Doc/history are mutated in place; a `graphTickAtom` is bumped to drive React re-renders. Persistence is debounced (`PERSIST_DEBOUNCE_MS = 250`).
+  - [registry.ts](src/state/registry.ts) — `graphId → { runtime, actions }` map for the WS dispatcher / palette to reach graphs without React.
+  - [connection.ts](src/state/connection.ts), [wsClient.ts](src/state/wsClient.ts), [settings.ts](src/state/settings.ts), [appOverlay.ts](src/state/appOverlay.ts) (`appOverlayAtom` — mutually exclusive command palette / graph jump / node search / share / token / help).
 - [src/graph/](src/graph/) — pure graph layer.
   - [model.ts](src/graph/model.ts) — `GNode`/`GEdge`/`GraphDoc`/`NodeExtra`. **Field names match the legacy on-disk JSON** so old `.json` exports still import; don't rename them.
   - [reducer.ts](src/graph/reducer.ts) — tagged-union `Op` + `applyOp` returning inverse ops. Multi-op transactions use `HISTORY_MARKER`.
@@ -43,10 +43,10 @@ Browser app at graffiti.quest. Renders the call graph and talks to the IDE backe
   - [protocol/dispatch.ts](src/network/protocol/dispatch.ts) — Zod-validates inbound messages and routes legacy vs. MCP. Unknown messages are logged and dropped (forward-compat).
   - [protocol/legacy.ts](src/network/protocol/legacy.ts) — `addData` / `addDataBulk` / `updateNodes` translated into reducer ops.
   - [protocol/mcp.ts](src/network/protocol/mcp.ts), [protocol/types.ts](src/network/protocol/types.ts), [protocol/selection.ts](src/network/protocol/selection.ts).
-- [src/persistence/](src/persistence/) — [Dexie schema](src/persistence/db.ts) (`workspaces`/`tabGroups`/`tabs`/`graphs`), [legacy localStorage migration](src/persistence/migrations.ts), [import/export](src/persistence/importExport.ts), [tar packing](src/persistence/tar.ts).
-- [src/ui/](src/ui/) — [Header](src/ui/Header.tsx), [Sidebar](src/ui/sidebar/Sidebar.tsx), [SplitView](src/ui/SplitView.tsx), [Inspector](src/ui/Inspector.tsx), [TabHost](src/ui/TabHost.tsx), [CommandPalette](src/ui/CommandPalette.tsx) (cmdk), [ContextMenu](src/ui/ContextMenu.tsx), [PenColorSwatch](src/ui/PenColorSwatch.tsx), [theme.ts](src/ui/theme.ts) (MUI theme bridge), [dialogs/](src/ui/dialogs/).
+- [src/persistence/](src/persistence/) — [Dexie schema](src/persistence/db.ts) (`workspaces`/`graphGroups`/`graphs`), [legacy localStorage migration](src/persistence/migrations.ts), [import/export](src/persistence/importExport.ts), [tar packing](src/persistence/tar.ts).
+- [src/ui/](src/ui/) — [Header](src/ui/Header.tsx), [Sidebar](src/ui/sidebar/Sidebar.tsx), [SplitView](src/ui/SplitView.tsx), [Inspector](src/ui/Inspector.tsx), [GraphHost](src/ui/TabHost.tsx), [CommandPalette](src/ui/CommandPalette.tsx) (cmdk), [ContextMenu](src/ui/ContextMenu.tsx), [PenColorSwatch](src/ui/PenColorSwatch.tsx), [theme.ts](src/ui/theme.ts) (MUI theme bridge), [dialogs/](src/ui/dialogs/).
 - [src/commands/](src/commands/) — command registry + react-hotkeys-hook bindings.
-- [src/routing/url.ts](src/routing/url.ts) — workspace/tab/pane2 ↔ URL.
+- [src/routing/url.ts](src/routing/url.ts) — workspace/graph/side-pane ↔ URL.
 - [src/util/](src/util/) — `ids.ts`, `escape.ts`.
 
 ## Protocol invariants (do not break)
@@ -63,10 +63,10 @@ When adding fields, prefer extending `extra` on nodes (`NodeExtra` is open-ended
 
 ## State conventions
 
-- **Atom mutations are in-place.** `TabRuntime.doc` and `TabRuntime.history` are mutated directly for performance; `tabTickAtom` is bumped to trigger re-renders. Don't `.map`/spread the doc.
+- **Atom mutations are in-place.** `GraphRuntime.doc` and `GraphRuntime.history` are mutated directly for performance; `graphTickAtom` is bumped to trigger re-renders. Don't `.map`/spread the doc.
 - **Reducer ops are JSON-safe** and return their inverse — that's what powers undo. Group multi-op edits with `HISTORY_MARKER`.
 - **Use `getStore()`** in non-React modules (dispatcher, registry, command palette). Never instantiate a second Jotai store.
-- **Active vs. current tab:** `currentTabIdAtom` is the primary pane; `activeTabIdAtom` resolves to whichever pane the user last clicked. WS dispatch / hotkeys / inspector should target `activeTabIdAtom`.
+- **Active vs. current graph:** `currentGraphIdAtom` is the primary pane; `activeGraphIdAtom` resolves to whichever pane the user last clicked. WS dispatch / hotkeys / inspector should target `activeGraphIdAtom`.
 - **Persistence debounce** is 250ms; call `actions.flush()` if you need a synchronous write (e.g. before export).
 - **StrictMode safety:** `ensureDefaultWorkspace` memoizes its promise to defeat double-invoke in dev. Follow the same pattern for any other "create on first boot" effects.
 

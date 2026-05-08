@@ -44,8 +44,8 @@ export function initPersistence(store: JotaiStore): void {
   if (url.workspace && ids.includes(url.workspace)) {
     store.set(currentWorkspaceIdAtom, url.workspace);
   }
-  if (url.tab && graphs.some((g) => g.id === url.tab)) {
-    store.set(currentGraphIdAtom, url.tab);
+  if (url.graph && graphs.some((g) => g.id === url.graph)) {
+    store.set(currentGraphIdAtom, url.graph);
   }
   if (url.pane2 && graphs.some((g) => g.id === url.pane2)) {
     store.set(sidePaneGraphIdAtom, url.pane2);

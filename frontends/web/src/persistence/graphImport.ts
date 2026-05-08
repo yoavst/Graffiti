@@ -14,9 +14,9 @@ export function resolveImportTargetGroupId(store: JotaiStore): string | null {
     const graph = store.get(graphsAtom).find((g) => g.id === cur.graphId);
     if (graph) return graph.graphGroupId;
   }
-  const tabIdFromAtom = store.get(currentGraphIdAtom);
-  if (tabIdFromAtom) {
-    const graph = store.get(graphsAtom).find((g) => g.id === tabIdFromAtom);
+  const graphIdFromAtom = store.get(currentGraphIdAtom);
+  if (graphIdFromAtom) {
+    const graph = store.get(graphsAtom).find((g) => g.id === graphIdFromAtom);
     if (graph) return graph.graphGroupId;
   }
   const wid = store.get(currentWorkspaceIdAtom);
@@ -29,11 +29,11 @@ export function resolveImportTargetGroupId(store: JotaiStore): string | null {
 
 export async function importUserPickedFiles(
   files: readonly File[],
-): Promise<{ firstTabId: string | null; targetMissing: boolean }> {
+): Promise<{ firstGraphId: string | null; targetMissing: boolean }> {
   const store = getStore();
   const targetGroupId = resolveImportTargetGroupId(store);
   if (!targetGroupId) {
-    return { firstTabId: null, targetMissing: true };
+    return { firstGraphId: null, targetMissing: true };
   }
   let firstImportedGraphId: string | null = null;
   for (const f of files) {
@@ -44,5 +44,6 @@ export async function importUserPickedFiles(
       console.error('import failed for', f.name, err);
     }
   }
-  return { firstTabId: firstImportedGraphId, targetMissing: false };
+  return { firstGraphId: firstImportedGraphId, targetMissing: false };
 }
+

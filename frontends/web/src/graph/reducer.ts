@@ -1,6 +1,6 @@
 // Pure reducer for graph mutations + inverse-op tracking for undo/redo.
 // Each `apply*` function returns the inverse op so callers can push it
-// onto a per-tab history stack. A history "marker" groups multi-op
+// onto a per-graph history stack. A history "marker" groups multi-op
 // transactions into a single undo step (matches the legacy semantics).
 
 import type {

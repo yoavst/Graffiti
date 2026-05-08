@@ -15,7 +15,7 @@ import {
   reconcileNavigationPointers,
   removeGraphStorageForGraph,
   sidePaneGraphIdAtom,
-  tabGroupsAtom,
+  graphGroupsAtom,
   graphsAtom,
   updateWorkspaceBundle,
   workspaceBundleAtomFamily,
@@ -35,7 +35,7 @@ export function Sidebar() {
   const visible = useAtomValue(sidebarVisibleAtom);
   const setVisible = useSetAtom(sidebarVisibleAtom);
   const workspaces = useAtomValue(workspacesAtom);
-  const groups = useAtomValue(tabGroupsAtom);
+  const groups = useAtomValue(graphGroupsAtom);
   const graphs = useAtomValue(graphsAtom);
   const [currentWsId, setCurrentWsId] = useAtom(currentWorkspaceIdAtom);
   const [currentGraphId, setCurrentGraphId] = useAtom(currentGraphIdAtom);
@@ -44,7 +44,7 @@ export function Sidebar() {
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>(() => ({}));
   const [search, setSearch] = useState('');
 
-  const tabsByWorkspace = useMemo(() => {
+  const graphsByWorkspace = useMemo(() => {
     const groupToWs = new Map<string, string>();
     for (const g of groups) groupToWs.set(g.id, g.workspaceId);
     const out = new Map<string, GraphRow[]>();
@@ -77,8 +77,8 @@ export function Sidebar() {
         let next = c;
         for (const w of workspaces) {
           if (!c[w.id]) continue;
-          const wsTabs = tabsByWorkspace.get(w.id) ?? [];
-          const hasMatch = wsTabs.some((t) => t.name.toLowerCase().includes(query));
+          const wsGraphs = graphsByWorkspace.get(w.id) ?? [];
+          const hasMatch = wsGraphs.some((t) => t.name.toLowerCase().includes(query));
           if (hasMatch) {
             if (next === c) next = { ...c };
             next[w.id] = false;
@@ -87,7 +87,7 @@ export function Sidebar() {
         return next;
       });
     });
-  }, [query, workspaces, tabsByWorkspace]);
+  }, [query, workspaces, graphsByWorkspace]);
 
   if (!visible) {
     return (
@@ -189,10 +189,10 @@ export function Sidebar() {
       </div>
       <div className="flex-1 overflow-auto">
         {workspaces.map((w) => {
-          const wsTabs = tabsByWorkspace.get(w.id) ?? [];
+          const wsGraphs = graphsByWorkspace.get(w.id) ?? [];
           const filtered = query
-            ? wsTabs.filter((t) => t.name.toLowerCase().includes(query))
-            : wsTabs;
+            ? wsGraphs.filter((t) => t.name.toLowerCase().includes(query))
+            : wsGraphs;
           if (query && filtered.length === 0) return null;
           const isCurrent = w.id === currentWsId;
           const userCollapsed = !!collapsed[w.id];
@@ -205,7 +205,7 @@ export function Sidebar() {
               isCurrent={isCurrent}
               isExpanded={isExpanded}
               graphs={filtered}
-              graphCount={wsTabs.length}
+              graphCount={wsGraphs.length}
               currentGraphId={currentGraphId}
               sidePaneGraphId={sidePaneGraphId}
               allWorkspaces={workspaces}
@@ -470,7 +470,7 @@ function SidebarGraph({
       onSelect: () => setSidePane(isInSidePane ? null : graph.id),
     },
     ...(moveSubmenu.length > 0
-      ? [{ label: 'Move to workspace', onSelect: () => {}, submenu: moveSubmenu }]
+      ? [{ label: 'Move to workspace', onSelect: () => { }, submenu: moveSubmenu }]
       : []),
     { label: 'Linked projects', onSelect: () => void showLinkedProjects() },
     { label: 'Remove', destructive: true, onSelect: () => void remove() },
