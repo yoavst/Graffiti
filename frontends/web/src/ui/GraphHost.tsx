@@ -7,7 +7,7 @@
 // doesn't re-run ELK.
 
 import { useAtomValue, useStore } from 'jotai';
-import { useEffect, useLayoutEffect, useMemo, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo } from 'react';
 import { GraphCanvas } from '@/flow/GraphCanvas';
 import { useSubscribeGraphDocMutations } from '@/hooks/useSubscribeGraphDocMutations';
 import { graphRuntimeAtom, graphTickAtom, makeGraphActions } from '@/state/graph';
@@ -69,11 +69,8 @@ function MountedGraph({
     [graphId, store],
   );
 
-  const [hydrated, setHydrated] = useState(rt.loaded);
-
   useLayoutEffect(() => {
     actions.hydrate();
-    setHydrated(true);
   }, [actions]);
 
   // Register with the global graph registry for the WS dispatcher.
@@ -90,7 +87,7 @@ function MountedGraph({
 
   const ws = useAtomValue(wsClientAtom);
 
-  if (!hydrated) {
+  if (!rt.loaded) {
     return (
       <div className="absolute inset-0 flex items-center justify-center text-xs opacity-50">
         loading {graph.name}…

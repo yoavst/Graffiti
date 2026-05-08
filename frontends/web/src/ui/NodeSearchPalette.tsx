@@ -44,9 +44,15 @@ export function NodeSearchPalette() {
   const tickSide = useAtomValue(graphTickAtom(side ?? ''));
 
   // Store identity is stable; include workspace snapshots so the memo invalidates when graphs change.
-  // eslint-disable-next-line @eslint-react/exhaustive-deps -- wsId/groups/graphs intentionally bust the cache
   const workspaceGraphsKey = useMemo(
-    () => orderedWorkspaceGraphs(store).map((g) => g.id).join(','),
+    () => {
+      // Intentionally depend on workspace atoms so this key invalidates when graphs/groups change,
+      // even though `orderedWorkspaceGraphs` reads them via the store.
+      void wsId;
+      void groups;
+      void graphs;
+      return orderedWorkspaceGraphs(store).map((g) => g.id).join(',');
+    },
     [store, wsId, groups, graphs],
   );
 
